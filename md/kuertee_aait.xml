@@ -1,0 +1,626 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="kuertee_aait" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+	<cues>
+		<cue name="kAAIT2" namespace="this">
+			<actions>
+				<set_value name="global.$kAAIT" exact="this" />
+			</actions>
+			<cues>
+				<cue name="kAAIT2_OnLuaLoaderReady">
+					<conditions>
+						<event_ui_triggered screen="'Lua_Loader'" control="'Ready'" />
+					</conditions>
+					<actions>
+						<!-- <raise_lua_event name="'Lua_Loader.Load'" param="'extensions.kuertee_aait.ui.kuertee_aait'" /> -->
+					</actions>
+				</cue>
+				<cue name="kAAIT2_OnLuaLoaderReadyCompleted">
+					<conditions>
+						<event_cue_completed cue="kAAIT2_OnLuaLoaderReady" />
+					</conditions>
+					<actions>
+						<reset_cue cue="this" />
+						<reset_cue cue="kAAIT2_OnLuaLoaderReady" />
+					</actions>
+				</cue>
+				<cue name="kAAIT2_Config" namespace="this" version="2">
+					<actions>
+						<set_value name="global.$kAAIT_Config" exact="this" />
+						<set_value name="global.$kAAIT_Config.$debugChance" exact="0" />
+						<!-- configs: -->
+						<debug_text text="'patch sinceversion 3, state: ' + this.state" />
+						<!-- kAAIT_XSSM_AttackOrNot, kAAIT_MoveAroundOrNot -->
+						<set_value name="global.$kAAIT_Config.$xssm_isAvoidHighRisk" exact="true" />
+						<set_value name="global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions" exact="false" />
+						<!-- kAAIT_MoveAroundOrNot -->
+						<set_value name="global.$kAAIT_Config.$lxl_isAvoidHighRisk" exact="true" />
+						<set_value name="global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions" exact="false" />
+						<!-- kAAIT_LXL_StepForwardOrMoveOutOfRange -->
+						<set_value name="global.$kAAIT_Config.$lxl_isStepForward" exact="true" />
+						<set_value name="global.$kAAIT_Config.$lxl_isStepForward_allFactions" exact="false" />
+						<set_value name="global.$kAAIT_Config.$lxl_isMoveOutOfRange" exact="true" />
+						<set_value name="global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions" exact="false" />
+					</actions>
+					<patch sinceversion="2">
+						<debug_text text="'sinceversion 2, state: ' + this.state" />
+						<set_value name="global.$kAAIT_Config.$optimalRangeIsMax" exact="true" />
+					</patch>
+				</cue>
+			</cues>
+		</cue>
+		<cue name="kAAIT_ExtOpts">
+			<conditions>
+				<event_cue_signalled cue="md.Simple_Menu_Options.Reloaded"/>
+			</conditions>
+			<actions>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Register_Options_Menu"
+					param="table[
+						$id = 'kuertee_aait.kAAIT2_Config.on_options_menu',
+						$columns = 2,
+						$title = {1111920, 1},
+						$onOpen = kAAIT_ExtOpts_Build
+					]" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_ExtOpts_Build">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<!-- <t id="1">kuertee: Attack AI tweaks</t>
+				<t id="2">Debug log</t>
+				<t id="3">Avoid high-risk</t>
+				<t id="4">Player faction</t>
+				<t id="5">All other factions</t>
+				<t id="6">Step forward on no damage</t>
+				<t id="7">Move out of range on damage</t>
+				<t id="8">XS, S, and M ships</t>
+				<t id="9">L, and XL ships</t>
+				<t id="10">Optimal weapon range is max weapon range</t> -->
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 8}]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 3}]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 4}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'xssm_isAvoidHighRisk',
+						$checked = global.$kAAIT_Config.$xssm_isAvoidHighRisk,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 5}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'xssm_isAvoidHighRisk_allFactions',
+						$checked = global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 9}]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 3}]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 4}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'lxl_isAvoidHighRisk',
+						$checked = global.$kAAIT_Config.$lxl_isAvoidHighRisk,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 5}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'lxl_isAvoidHighRisk_allFactions',
+						$checked = global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 6}]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 4}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'lxl_isStepForward',
+						$checked = global.$kAAIT_Config.$lxl_isStepForward,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 5}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'lxl_isStepForward_allFactions',
+						$checked = global.$kAAIT_Config.$lxl_isStepForward_allFactions,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 7}]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 4}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'lxl_isMoveOutOfRange',
+						$checked = global.$kAAIT_Config.$lxl_isMoveOutOfRange,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 5}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'lxl_isMoveOutOfRange_allFactions',
+						$checked = global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='']" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 10}]" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'optimalRangeIsMax',
+						$checked = global.$kAAIT_Config.$optimalRangeIsMax,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='']"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 2}, $color='Helper.color.red']"/>
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'debugChance',
+						$checked = if global.$kAAIT_Config.$debugChance == 100 then true else false,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$bgColor = 'Helper.color.red',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_ExtOpts_OnSliderChange" instantiate="true">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<debug_text text="event.param.$id + ' pre: ' + global.$kAAIT_Config.{'$' + event.param.$id}" chance="global.$kAAIT_Config.$debugChance"/>
+				<set_value name="global.$kAAIT_Config.{'$' + event.param.$id}" exact="event.param.$value" />
+				<debug_text text="event.param.$id + ' post: ' + global.$kAAIT_Config.{'$' + event.param.$id}" chance="global.$kAAIT_Config.$debugChance"/>
+				<cancel_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_ExtOpts_OnCheckboxChange">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<debug_text text="event.param.$id + ' pre: ' + global.$kAAIT_Config.{'$' + event.param.$id}" chance="global.$kAAIT_Config.$debugChance"/>
+				<do_if value="event.param.$id == 'debugChance'">
+					<set_value name="global.$kAAIT_Config.{'$' + event.param.$id}" exact="if event.param.$checked then 100 else 0" />
+				</do_if>
+				<do_else>
+					<set_value name="global.$kAAIT_Config.{'$' + event.param.$id}" exact="event.param.$checked" />
+				</do_else>
+				<debug_text text="event.param.$id + ' post: ' + global.$kAAIT_Config.{'$' + event.param.$id}" chance="global.$kAAIT_Config.$debugChance"/>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_ExtOpts_OnDropDownConfirmed">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<debug_text text="event.param.$id + ' to: ' + @event.param.$option.$text + ' value: ' + @event.param.$option.$value" chance="global.$kAAIT_Config.$debugChance" />
+				<debug_text text="event.param.$id + ' pre: ' + global.$kAAIT_Config.{'$' + event.param.$id}" chance="global.$kAAIT_Config.$debugChance"/>
+				<set_value name="global.$kAAIT_Config.{'$' + event.param.$id}" exact="(event.param.$option.$value)" />
+				<debug_text text="event.param.$id + ' post: ' + global.$kAAIT_Config.{'$' + event.param.$id}" chance="global.$kAAIT_Config.$debugChance"/>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Debug2" namespace="this">
+			<conditions>
+				<event_ui_triggered screen="'Chat_Window_API'" control="'text_entered'" />
+				<check_any>
+					<check_value value="event.param3.$text == 'debug aait enable'" />
+					<check_value value="event.param3.$text == 'debug aait disable'" />
+					<check_value value="event.param3.$text == 'debug aait modules'" />
+					<check_value value="event.param3.$text == 'debug aait forward'" />
+					<check_value value="event.param3.$text == 'debug aait forward2'" />
+					<check_value value="event.param3.$text == 'debug aait forward3'" />
+					<check_value value="event.param3.$text == 'debug aait forward4'" />
+					<check_value value="event.param3.$text == 'debug aait beacon'" />
+					<check_value value="event.param3.$text == 'debug aait dps'" />
+					<check_value value="event.param3.$text == 'debug aait attackers'" />
+					<check_value value="event.param3.$text == 'debug aait target'" />
+				</check_any>
+			</conditions>
+			<actions>
+				<debug_text text="event.param3" />
+				<do_if value="event.param3.$text == 'debug aait enable'">
+					<set_value name="global.$kAAIT_Config.$debugChance" exact="100" />
+				</do_if>
+				<do_elseif value="event.param3.$text == 'debug aait disable'">
+					<set_value name="global.$kAAIT_Config.$debugChance" exact="0" />
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait modules'">
+					<find_object_component object="player.target" name="$kAAIT_modules" multiple="true" class="class.module" checkoperational="true" />
+					<do_for_each name="$module_inList" in="$kAAIT_modules">
+						<debug_text text="'$module_inList.hullpercentage: ' + $module_inList.hullpercentage" />
+					</do_for_each>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait forward'">
+					<!-- <get_safe_pos result="$pos" sector="player.ship.sector" object="player.ship" radius="player.ship.size * 1" direction="quadrant.front" directionobject="player.ship" ignored="player.ship" />
+					<create_object name="parent.$beacon" sector="player.ship.sector" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="$pos" />
+					</create_object> -->
+					<!-- point on a line
+					https://math.stackexchange.com/questions/251792/vector-equation-spelled-out?noredirect=1&lq=1
+					v=(x1,y1)−(x0,y0)
+					v=(9,13)−(3,4)=(6,9)
+					||v||=squareroot(6^2+9^2)≈10.8
+					u=v/||v||≈(0.55,0.83)
+					from (3,4) will be (3,4)+3u, or about (4.66,6.50).
+					-->
+					<create_position name="$pos_ship" space="player.ship.sector" object="player.ship" />
+					<create_position name="$pos_target" space="player.ship.sector" object="player.target" />
+					<create_position name="$v_shipToTarget" space="player.ship.sector"
+						x="$pos_target.x - $pos_ship.x"
+						y="$pos_target.y - $pos_ship.y"
+						z="$pos_target.z - $pos_ship.z"
+					/>
+					<set_value name="$dist_shipToTarget" exact="player.ship.distanceto.{player.target}" />
+					<create_position name="$u_shipToTarget" space="player.ship.sector"
+						x="$v_shipToTarget.x / $dist_shipToTarget"
+						y="$v_shipToTarget.y / $dist_shipToTarget"
+						z="$v_shipToTarget.z / $dist_shipToTarget"
+					/>
+					<create_position name="$pos_inchFront" space="player.ship.sector"
+						x="$pos_ship.x + $u_shipToTarget.x * player.ship.size"
+						y="$pos_ship.y + $u_shipToTarget.y * player.ship.size"
+						z="$pos_ship.z + $u_shipToTarget.z * player.ship.size"
+					/>
+					<do_if value="@parent.$beacon">
+						<destroy_object object="parent.$beacon" />
+					</do_if>
+					<create_object name="parent.$beacon" sector="player.ship.sector" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="$pos_inchFront" />
+					</create_object>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait forward2'">
+					<!-- from point 1, get point 2 at distance and vector
+					https://stackoverflow.com/questions/52781607/3d-point-from-two-angles-and-a-distance
+					Px = distance * sin(yaw) * cos(pitch) 
+					Py = distance * sin(pitch) 
+					Pz = distance * cos(yaw) * cos(pitch)
+					-->
+					<create_position name="$pos_ship" space="player.ship.sector" object="player.ship" />
+					<create_position name="$pos_inchFront" space="player.ship.sector"
+						x="$pos_ship.x + player.ship.size * sin (player.ship.rotation.yaw) * cos (player.ship.rotation.pitch)"
+						y="$pos_ship.y + player.ship.size * sin (player.ship.rotation.pitch)"
+						z="$pos_ship.z + player.ship.size * cos (player.ship.rotation.yaw) * cos (player.ship.rotation.pitch)"
+					/>
+					<do_if value="@parent.$beacon">
+						<destroy_object object="parent.$beacon" />
+					</do_if>
+					<create_object name="parent.$beacon" sector="player.ship.sector" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="$pos_inchFront" />
+					</create_object>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait forward3'">
+					<!-- from point 1, get point 2 at distance and vector
+					https://stackoverflow.com/questions/52781607/3d-point-from-two-angles-and-a-distance
+					Px = distance * sin(yaw) * cos(pitch) 
+					Py = distance * sin(pitch) 
+					Pz = distance * cos(yaw) * cos(pitch)
+					-->
+					<create_position name="$pos_ship" space="player.ship.sector" object="player.ship" />
+					<create_position name="$pos_target" space="player.ship.sector" object="player.target" />
+					<create_orientation name="$rot_shipToTarget" orientation="look_at" refposition="$pos_target">
+						<position object="player.ship" space="player.ship.sector"/>
+					</create_orientation>
+					<create_position name="$pos_inchFront" space="player.ship.sector"
+						x="$pos_ship.x + player.ship.size * sin ($rot_shipToTarget.yaw) * cos ($rot_shipToTarget.pitch)"
+						y="$pos_ship.y + player.ship.size * sin ($rot_shipToTarget.pitch)"
+						z="$pos_ship.z + player.ship.size * cos ($rot_shipToTarget.yaw) * cos ($rot_shipToTarget.pitch)"
+					/>
+					<do_if value="@parent.$beacon">
+						<destroy_object object="parent.$beacon" />
+					</do_if>
+					<create_object name="parent.$beacon" sector="player.ship.sector" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="$pos_inchFront" />
+					</create_object>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait forward4'">
+					<create_position name="$pos_ship" space="player.target.sector" object="player.target" />
+					<find_gravidar_contact name="$enemies" object="player.target" class="[class.ship_l, class.ship_xl, class.station]" docked="false" functional="true" maybeattackedby="player.target" multiple="true" sortbydistanceto="player.target">
+						<match_context macro="this.sector.macro"/>
+						<match class="class.buildstorage" negate="true"/>
+					</find_gravidar_contact>
+					<set_value name="$object_other" exact="$enemies.{1}" />
+					<create_position name="$pos_target" space="player.target.sector" object="$object_other" />
+					<create_orientation name="$rot_shipToTarget" orientation="look_at" refposition="$pos_target">
+						<position object="player.target" space="player.target.sector"/>
+					</create_orientation>
+					<create_position name="$pos_inchFront" space="player.target.sector"
+						x="$pos_ship.x + player.target.size * 2 * sin ($rot_shipToTarget.yaw) * cos ($rot_shipToTarget.pitch)"
+						y="$pos_ship.y + player.target.size * 2 * sin ($rot_shipToTarget.pitch)"
+						z="$pos_ship.z + player.target.size * 2 * cos ($rot_shipToTarget.yaw) * cos ($rot_shipToTarget.pitch)"
+					/>
+					<do_if value="@parent.$beacon">
+						<destroy_object object="parent.$beacon" />
+					</do_if>
+					<create_object name="parent.$beacon" sector="player.target.sector" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="$pos_inchFront" />
+					</create_object>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait beacon'">
+					<do_if value="@parent.$beacon">
+						<destroy_object object="parent.$beacon" />
+					</do_if>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait dps'">
+					<debug_text text="'$dps: ' + player.target.dps.all" />
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait attackers'">
+					<debug_text text="@player.target.defencenpc.$kAAIT_attackers" />
+					<debug_text text="@player.target.assignedaipilot.$kAAIT_attackers" />
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait target'">
+					<debug_text text="@player.target.assignedaipilot.$kAAIT_target + ' ' + @player.target.assignedaipilot.$kAAIT_target.knownname + ' ' + @player.target.assignedaipilot.$kAAIT_target.idcode + ' ' + @player.target.assignedaipilot.$kAAIT_target.defensible + ' ' + @player.target.assignedaipilot.$kAAIT_target.defensible.knownname + ' ' + @player.target.assignedaipilot.$kAAIT_target.defensible.idcode" />
+				</do_elseif>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_InteractMenu">
+			<conditions>
+				<event_cue_signalled cue="md.Interact_Menu_API.Get_Actions" />
+			</conditions>
+			<actions>
+				<debug_text text="'event.param.$object: ' + event.param.$object" chance="global.$kAAIT_Config.$debugChance" />
+				<do_for_each name="$key" in="event.param">
+					<debug_text text="$key + ': ' + '(' + typeof (event.param.{$key}) + ') ' + event.param.{$key}" chance="global.$kAAIT_Config.$debugChance" />
+				</do_for_each>
+				<set_value name="$interact_ships" exact="@event.param.$selectedplayerships" />
+				<do_if value="typeof ($interact_ships) != datatype.list">
+					<set_value name="$interact_ships" exact="[]" />
+				</do_if>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<do_if value="$interact_target.isplayerowned">
+					<append_to_list name="$interact_ships" exact="$interact_target" />
+				</do_if>
+				<debug_text text="'event.name: ' + event.name" chance="global.$kAAIT_Config.$debugChance" />
+				<do_if value="@$interact_target.exists">
+					<debug_text text="'$interact_target: ' + $interact_target + ' (' + $interact_target.knownname + ')'" chance="global.$kAAIT_Config.$debugChance" />
+					<do_if value="global.$kAAIT_Config.$debugChance">
+						<set_value name="$weapons" exact="@$interact_target.turrets.operational.count + @$interact_target.weapons.operational.count" />
+						<do_if value="$weapons">
+							<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+								$id = 'kaait_destroy_weapons',
+								$section = 'main',
+								$text = 'debug: destroy ' + [$weapons, 25].min + ' of ' + $weapons + ' turrets/weapons',
+								$icon = null,
+								$callback = kAAIT_Debug2_DestroyWeapons
+							]" />
+						</do_if>
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_show_debug_becons',
+							$section = 'main',
+							$text = 'debug: log activities',
+							$icon = null,
+							$callback = kAAIT_Debug2_AddMoveAroundBeacons
+						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_remove_debug_beacons',
+							$section = 'main',
+							$text = 'debug: stop logging',
+							$icon = null,
+							$callback = kAAIT_Debug2_RemoveMoveAroundBeacons
+						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_remove_debug_weapon_ranges',
+							$section = 'main',
+							$text = 'debug: log weapon ranges',
+							$icon = null,
+							$callback = kAAIT_Debug2_DebugLogWeaponRanges
+						]" />
+					</do_if>
+				</do_if>
+				<!-- <t id="101">Attack all enemies</t>
+				<t id="102">Attack only the targeted enemy</t> -->
+				<debug_text text="'$interact_ships.count: ' + $interact_ships.count" chance="global.$kAAIT_Config.$debugChance" />
+				<set_value name="$sections" exact="[]" />
+				<do_if value="$interact_ships.count == 1 and $interact_ships.{1} == $interact_target">
+					<append_to_list name="$sections" exact="'main_orders'" />
+				</do_if>
+				<do_elseif value="@$interact_ships.count">
+					<do_if value="(not $interact_target.isplayerowned) or (not $interact_target.isclass.ship)">
+						<append_to_list name="$sections" exact="'selected_orders'" />
+					</do_if>
+					<do_else>
+						<append_to_list name="$sections" exact="'selected_orders_all'" />
+					</do_else>
+				</do_elseif>
+				<set_value name="$isAllow" exact="false" />
+				<set_value name="$isDisallow" exact="false" />
+				<do_for_each name="$ship" in="$interact_ships">
+					<do_if value="$ship.isclass.ship and @$ship.orders.count">
+						<do_for_each name="$order" in="$ship.orders">
+							<do_if value="$order.$allowothertargets?">
+								<do_if value="$order.$allowothertargets">
+									<set_value name="$isDisallow" exact="true" />
+								</do_if>
+								<do_if value="not $order.$allowothertargets">
+									<set_value name="$isAllow" exact="true" />
+								</do_if>
+							</do_if>
+							<do_if value="$isAllow and $isDisallow">
+								<break />
+							</do_if>
+						</do_for_each>
+					</do_if>
+				</do_for_each>
+				<do_for_each name="$section" in="$sections">
+					<do_if value="$isAllow">
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_attack_all_section_' + $section,
+							$section = $section,
+							$text = {1111920, 101},
+							$icon = 'widget_tick_01',
+							$callback = kAAIT_Attack_all_enemies
+						]" />
+					</do_if>
+					<do_if value="$isDisallow">
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_attack_one_section_' + $section,
+							$section = $section,
+							$text = {1111920, 102},
+							$icon = 'widget_cross_01',
+							$callback = kAAIT_Attack_one_only
+						]" />
+					</do_if>
+				</do_for_each>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Attack_all_enemies" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_ships" exact="@event.param.$selectedplayerships" />
+				<do_if value="typeof ($interact_ships) != datatype.list">
+					<set_value name="$interact_ships" exact="[]" />
+				</do_if>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<do_if value="$interact_target.isplayerowned">
+					<append_to_list name="$interact_ships" exact="$interact_target" />
+				</do_if>
+				<do_if value="$interact_ships.count">
+					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Config.$debugChance" />
+					<do_for_each name="$ship" in="$interact_ships">
+						<do_for_each name="$order" in="$ship.orders">
+							<do_if value="$order.$allowothertargets?">
+								<!-- <set_value name="$order.$allowothertargets" exact="true" /> -->
+								<edit_order_param order="$order" param="'allowothertargets'" value="true" />
+							</do_if>
+						</do_for_each>
+					</do_for_each>
+				</do_if>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Attack_one_only" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_ships" exact="@event.param.$selectedplayerships" />
+				<do_if value="typeof ($interact_ships) != datatype.list">
+					<set_value name="$interact_ships" exact="[]" />
+				</do_if>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<do_if value="$interact_target.isplayerowned">
+					<append_to_list name="$interact_ships" exact="$interact_target" />
+				</do_if>
+				<do_if value="$interact_ships.count">
+					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Config.$debugChance" />
+					<do_for_each name="$ship" in="$interact_ships">
+						<do_for_each name="$order" in="$ship.orders">
+							<do_if value="$order.$allowothertargets?">
+								<!-- <set_value name="$order.$allowothertargets" exact="false" /> -->
+								<edit_order_param order="$order" param="'allowothertargets'" value="false" />
+							</do_if>
+						</do_for_each>
+					</do_for_each>
+				</do_if>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Debug2_DestroyWeapons">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<debug_text text="'$interact_target: ' + $interact_target + ' (' + $interact_target.knownname + ')'" />
+				<set_value name="$weapons" exact="$interact_target.turrets.operational.list" />
+				<do_for_each name="$weapon" in="$interact_target.weapons.operational.list">
+					<append_to_list name="$weapons" exact="$weapons" />
+				</do_for_each>
+				<do_all counter="$i" exact="[25, $weapons.count].min">
+					<destroy_object object="$weapons.{$i}" />
+				</do_all>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Debug2_AddMoveAroundBeacons">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<debug_text text="'$interact_target: ' + $interact_target + ' (' + $interact_target.knownname + ')'" />
+				<set_value name="kAAIT2.$debugChance_idCode" exact="$interact_target.idcode" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Debug2_RemoveMoveAroundBeacons">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<remove_value name="kAAIT2.$debugChance_idCode" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Debug2_DebugLogWeaponRanges">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<debug_text text="'interact_target: ' + $interact_target + ', ' + $interact_target.knownname + ', ' + $interact_target.idcode" />
+				<debug_text text="'size: ' + $interact_target.size" />
+				<debug_text text="'primary: ' + $interact_target.maxcombatrange.primary" />
+				<debug_text text="'secondary: ' + $interact_target.maxcombatrange.secondary" />
+				<debug_text text="'lasers.all: ' + $interact_target.maxcombatrange.lasers.all" />
+				<debug_text text="'missiles.all: ' + $interact_target.maxcombatrange.missiles.all" />
+				<debug_text text="'turrets: ' + $interact_target.maxcombatrange.turrets" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+	</cues>
+</mdscript>

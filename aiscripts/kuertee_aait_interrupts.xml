@@ -1,0 +1,859 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aiscript name="kuertee_aait_interrupts" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+	<interrupts>
+		<library>
+			<actions name="kAAIT_Init">
+				<do_if value="@this.$beacon_from or @this.$kAAIT_target or @this.$kAAIT_orders">
+					<include_interrupt_actions ref="kAAIT_CleanUpOldVersionData" />
+				</do_if>
+				<set_value name="$kAAIT_isActive" exact="true" />
+				<do_if value="not @$kAAITParam_data">
+					<do_if value="@this.$kAAITParam_dataRemember">
+						<debug_text text="this.assignedcontrolled.idcode + ' REMEMBERED ATTACK ORDER'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="$kAAITParam_data" exact="this.$kAAITParam_dataRemember" />
+						<remove_value name="this.$kAAITParam_dataRemember" />
+					</do_if>
+					<do_else>
+						<debug_text text="this.assignedcontrolled.idcode + ' NEW ATTACK ORDER'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="$kAAITParam_data" exact="table[]" />
+					</do_else>
+				</do_if>
+				<do_else>
+					<debug_text text="this.assignedcontrolled.idcode + ' CONTINUTED ATTACK ORDER'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				</do_else>
+				<set_value name="$kAAIT_defensibleTarget" exact="@$primarytarget" />
+				<do_if value="not @$kAAIT_defensibleTarget.exists">
+					<set_value name="$kAAIT_defensibleTarget" exact="@$target" />
+				</do_if>
+				<do_if value="@$kAAIT_defensibleTarget.defensible.exists">
+					<set_value name="$kAAIT_defensibleTarget" exact="$kAAIT_defensibleTarget.defensible" />
+				</do_if>
+				<do_if value="@$kAAIT_defensibleTarget.assignedaipilot.isoperational">
+					<set_value name="$kAAIT_defensibleTargetEntity" exact="$kAAIT_defensibleTarget.assignedaipilot" />
+				</do_if>
+				<do_elseif value="@$kAAIT_defensibleTarget.defencenpc.isoperational">
+					<set_value name="$kAAIT_defensibleTargetEntity" exact="$kAAIT_defensibleTarget.defencenpc" />
+				</do_elseif>
+				<do_if value="$kAAIT_defensibleTarget.isclass.station">
+					<find_object_component object="$kAAIT_defensibleTarget" name="$kAAIT_defensibleTargetEntity.$kAAIT_modules" multiple="true" class="class.module" checkoperational="true" sortbydistanceto="this.assignedcontrolled"/>
+				</do_if>
+				<do_if value="$target != @$kAAITParam_data.$target and (not @$kAAITParam_data.$target.isoperational)">
+					<do_if value="@$target.defensible == $kAAIT_defensibleTarget and @$kAAITParam_data.$defensibleTarget_stopKamikaze == $kAAIT_defensibleTarget">
+						<!-- removing this MAY make the ship move away first then find a new attack position -->
+						<debug_text text="this.assignedcontrolled.idcode + ' NEW ATTACK POSITION? check that stop kamikaze var was set again after null.'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="$kAAITParam_data.$defensibleTarget_stopKamikaze" exact="null" />
+						<set_value name="$kAAITParam_data.$inchForwardCount" exact="0" />
+					</do_if>
+				</do_if>
+				<set_value name="$kAAITParam_data.$target" exact="if @$target then $target else @$primarytarget" />
+				<include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
+				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_defensibleTarget: ' + $kAAIT_defensibleTarget + ', ' + $kAAIT_defensibleTarget.knownname + ', ' + $kAAIT_defensibleTarget.idcode" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$target: ' + $kAAITParam_data.$target + ', ' + @$kAAITParam_data.$target.knownname + ', ' + @$kAAITParam_data.$target.idcode" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			</actions>
+
+			<actions name="kAAIT_CleanUpOldVersionData">
+				<!-- start: clean-up obsolete data from previous version -->
+				<do_if value="@this.$beacon_from.exists"><destroy_object object="this.$beacon_from" /></do_if>
+				<do_if value="@this.$beacon_to.exists"><destroy_object object="this.$beacon_to" /></do_if>
+				<do_if value="@this.$beacon_avoid1.exists"><destroy_object object="this.$beacon_avoid1" /></do_if>
+				<do_if value="@this.$beacon_avoid2.exists"><destroy_object object="this.$beacon_avoid2" /></do_if>
+				<remove_value name="this.$beacon_from" />
+				<remove_value name="this.$beacon_to" />
+				<remove_value name="this.$beacon_avoid1" />
+				<remove_value name="this.$beacon_avoid2" />
+				<remove_value name="this.$kAAIT_defensibleTarget_stopKamikaze" />
+				<remove_value name="this.$kAAIT_target" />
+				<remove_value name="this.$kAAIT_orders" />
+				<remove_value name="this.$kAAIT_aroundDir" />
+				<remove_value name="this.$kAAIT_lastAttack_enemy" />
+				<remove_value name="this.$kAAIT_lastAttack_time" />
+				<remove_value name="this.$kAAIT_lastAttack_timeLastSafe" />
+				<remove_value name="this.$kAAIT_inchForwardCount" />
+				<remove_value name="this.$kAAIT_movedOutOfRangeCount" />
+				<remove_value name="this.$kAAIT_orderLocation_space" />
+				<remove_value name="this.$kAAIT_orderLocation_pos" />
+				<!-- end: clean-up obsolete data from previous version -->
+			</actions>
+
+			<actions name="kAAIT_AddAttackerToTarget">
+				<do_if value="@$kAAIT_defensibleTargetEntity.isoperational">
+					<do_if value="not $kAAIT_defensibleTargetEntity.$kAAIT_attackers?">
+						<create_group groupname="$kAAIT_defensibleTargetEntity.$kAAIT_attackers" />
+					</do_if>
+					<add_to_group groupname="$kAAIT_defensibleTargetEntity.$kAAIT_attackers" object="this.assignedcontrolled" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_attackers (add to ' + $kAAIT_defensibleTarget + ' ' + $kAAIT_defensibleTarget.knownname + '): ' + $kAAIT_defensibleTargetEntity.$kAAIT_attackers.count" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				</do_if>
+			</actions>
+
+			<actions name="kAAIT_RemoveAttackerFromTarget">
+				<do_if value="@$kAAIT_defensibleTargetEntity.isoperational">
+					<do_if value="not $kAAIT_defensibleTargetEntity.$kAAIT_attackers?">
+						<create_group groupname="$kAAIT_defensibleTargetEntity.$kAAIT_attackers" />
+					</do_if>
+					<remove_from_group group="$kAAIT_defensibleTargetEntity.$kAAIT_attackers" object="this.assignedcontrolled" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_attackers (remove from ' + $kAAIT_defensibleTarget + ' ' + $kAAIT_defensibleTarget.knownname + '): ' + $kAAIT_defensibleTargetEntity.$kAAIT_attackers.count" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<do_if value="not @$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count">
+						<remove_value name="$kAAIT_defensibleTargetEntity.$kAAIT_attackers" />
+					</do_if>
+				</do_if>
+			</actions>
+			<!--
+				
+				                       ,,
+				                     `7MM
+				                       MM
+				 ,pW"Wq.`7Mb,od8  ,M""bMM  .gP"Ya `7Mb,od8 ,pP"Ybd
+				6W'   `Wb MM' "',AP    MM ,M'   Yb  MM' "' 8I   `"
+				8M     M8 MM    8MI    MM 8M""""""  MM     `YMMMa.
+				YA.   ,A9 MM    `Mb    MM YM.    ,  MM     L.   I8
+				 `Ybmd9'.JMML.   `Wbmd"MML.`Mbmmd'.JMML.   M9mmmP'
+				
+				
+			 -->
+			<actions name="kAAIT_InitOrders">
+				<do_if value="not @$kAAITParam_data.$orders">
+					<set_value name="$kAAITParam_data.$orders" exact="table[]" /> 
+				</do_if>
+			</actions>
+
+			<actions name="kAAIT_CleanOrders">
+				<do_for_each name="$order_inList" in="this.assignedcontrolled.orders" reverse="true">
+					<do_if value="$order_inList.$primarytarget? and (not $order_inList.$primarytarget.isoperational)">
+						<cancel_order order="$order_inList" />
+					</do_if>
+				</do_for_each>
+				<!-- <do_if value="@$kAAITParam_data.$orders.keys.count">
+					<do_for_each name="$orderType" in="$kAAITParam_data.$orders.keys.list">
+						<do_if value="$kAAITParam_data.$orders.{$orderType}.$kAAIT_isActive and (not @$kAAITParam_data.$orders.{$orderType}.$kAAIT_defensibleTarget.isoperational)">
+							<cancel_order order="$order_inList" />
+						</do_if>
+					</do_for_each>
+				</do_if> -->
+			</actions>
+
+			<actions name="kAAIT_Order_AttackOther">
+				<include_interrupt_actions ref="kAAIT_InitOrders" />
+				<debug_text text="'$attackOther.exists (kAAIT_Order_AttackOther): ' + @$kAAITParam_data.$orders.$attackOther.exists + ' $pimrarytarget: ' + @$kAAITParam_data.$orders.$attackOther.$primarytarget" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<do_if value="not @$kAAITParam_data.$orders.$attackOther.exists">
+					<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
+					<do_if value="@$kAAIT_smallerTarget.isoperational">
+						<debug_text text="this.assignedcontrolled.idcode + ' create_order Attack'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="$kAAIT_isActive" exact="true" />
+						<create_order name="$kAAITParam_data.$orders.$attackOther" object="this.assignedcontrolled" id="'Attack'">
+							<param name="primarytarget" value="$kAAIT_smallerTarget" />
+							<param name="pursuedistance" value="this.assignedcontrolled.sector.size" />
+							<param name="pursuetargets" value="true" />
+							<param name="kAAITParam_data" value="$kAAITParam_data" />
+							<param name="debugchance" value="$debugchance"/>
+						</create_order>
+						<debug_text text="this.assignedcontrolled.idcode + ' post create_order Attack'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<!-- <debug_text text="'$attackOther.exists (post create_order): ' + @$kAAITParam_data.$orders.$attackOther.exists + ' $pimrarytarget: ' + @$kAAITParam_data.$orders.$attackOther.$primarytarget" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+						<!-- <set_value name="$kAAIT_orderIndex" exact="1" />
+						<set_value name="$kAAIT_i" exact="1" />
+						<do_for_each name="$order_inList" in="this.assignedcontrolled.orders">
+							<do_if value="
+								(@$order_inList.$kAAIT_isActive and ($order_inList.id == 'MoveGeneric'))
+								or
+								$order_inList.id == 'Flee'
+							">
+								<set_value name="$kAAIT_orderIndex" exact="$kAAIT_i + 1" />
+								<break />
+							</do_if>
+							<do_else>
+								<set_value name="$kAAIT_i" exact="1" operation="add" />
+							</do_else>
+						</do_for_each>
+						<move_order order="$kAAITParam_data.$orders.$attackOther" newindex="$kAAIT_orderIndex" /> -->
+					</do_if>
+				</do_if>
+				<do_else>
+					<do_if value="this.assignedcontrolled.orders.indexof.{$kAAITParam_data.$orders.$attackOther} gt 1">
+						<move_order order="$kAAITParam_data.$orders.$attackOther" newindex="1" />
+					</do_if>
+				</do_else>
+				<include_interrupt_actions ref="kAAIT_CleanOrders" />
+			</actions>
+
+			<actions name="kAAIT_GetAvoidPos">
+				<set_value name="$direction" exact="@$kAAITParam_data.$aroundDir" />
+				<do_if value="not $direction">
+					<set_value name="$direction" exact="[-1, 1].random" />
+				</do_if>
+				<!-- chance of reversal -->
+				<set_value name="$direction" exact="$direction * [-1, 1, 1, 1].random" />
+				<set_value name="$kAAITParam_data.$aroundDir" exact="$direction" />
+				<set_value name="$kAAIT_avoidDist" exact="this.assignedcontrolled.maxradarrange * 0.5" />
+				<do_if value="this.assignedcontrolled.sector == @$kAAIT_enemyAvoid.sector">
+					<set_value name="$kAAIT_avoidSpace" exact="this.assignedcontrolled.zone" />
+					<create_position name="$pos_bigEnemy" space="$kAAIT_avoidSpace" object="$kAAIT_enemyAvoid" />
+					<create_orientation name="$rotation_targetToShip" orientation="look_at" refposition="this.assignedcontrolled.position">
+						<position value="$pos_bigEnemy" space="$kAAIT_avoidSpace" />
+					</create_orientation>
+					<set_value name="$yaw_targetToShip_deg" exact="$rotation_targetToShip.yaw * 180 / pi" />
+					<set_value name="$yaw_adj" min="30" max="45" />
+					<set_value name="$yaw_targetToShip_next_deg" exact="$yaw_targetToShip_deg + $yaw_adj * $direction" />
+					<set_value name="$yaw_targetToShip_next_rad" exact="$yaw_targetToShip_next_deg * pi / 180" />
+					<set_value name="$pitch_targetToShip_deg" exact="$rotation_targetToShip.pitch * 180 / pi" />
+					<set_value name="$pitch_adj" min="0" max="15" />
+					<!-- <set_value name="$pitch_targetToShip_next_deg" exact="$pitch_targetToShip_deg + (30 + $pitch_adj) * $direction" /> -->
+					<set_value name="$pitch_targetToShip_next_deg" exact="(30 + $pitch_adj) * $direction" />
+					<set_value name="$pitch_targetToShip_next_rad" exact="$pitch_targetToShip_next_deg * pi / 180" />
+					<create_position name="$kAAIT_avoidPos" space="$kAAIT_avoidSpace"
+						x="$pos_bigEnemy.x + $kAAIT_avoidDist * sin ($yaw_targetToShip_next_rad) * cos ($pitch_targetToShip_next_rad)"
+						y="$pos_bigEnemy.y + $kAAIT_avoidDist * sin ($pitch_targetToShip_next_rad)"
+						z="$pos_bigEnemy.z + $kAAIT_avoidDist * cos ($yaw_targetToShip_next_rad) * cos ($pitch_targetToShip_next_rad)"
+					/>
+				</do_if>
+				<do_elseif value="true">
+					<set_value name="$kAAIT_avoidSpace" exact="$kAAIT_enemyAvoid.sector" />
+					<set_value name="$yaw_targetToShip_next_deg" min="1" max="360" />
+					<set_value name="$pitch_targetToShip_next_deg" min="-30" max="30" />
+					<set_value name="$yaw_targetToShip_next_rad" exact="$yaw_targetToShip_next_deg * pi / 180" />
+					<set_value name="$pitch_targetToShip_next_rad" exact="$pitch_targetToShip_next_deg * pi / 180" />
+					<create_position name="$pos_bigEnemy" space="$kAAIT_avoidSpace" object="$kAAIT_enemyAvoid" />
+					<create_position name="$kAAIT_avoidPos" sector="$kAAIT_avoidSpace"
+						x="$pos_bigEnemy.x + $kAAIT_avoidDist * sin ($yaw_targetToShip_next_rad) * cos ($pitch_targetToShip_next_rad)"
+						y="$pos_bigEnemy.y + $kAAIT_avoidDist * sin ($pitch_targetToShip_next_rad)"
+						z="$pos_bigEnemy.z + $kAAIT_avoidDist * cos ($yaw_targetToShip_next_rad) * cos ($pitch_targetToShip_next_rad)"
+					/>
+				</do_elseif>
+			</actions>
+
+			<actions name="kAAIT_Order_Avoid">
+				<include_interrupt_actions ref="kAAIT_InitOrders" />
+				<do_if value="not @$kAAITParam_data.$orders.$avoid.exists">
+					<set_value name="$kAAIT_enemyAvoid" exact="$kAAIT_defensibleTarget" />
+					<include_interrupt_actions ref="kAAIT_GetAvoidPos" />
+					<set_value name="$kAAIT_isActive" exact="true" />
+					<set_flight_behaviour object="this.assignedcontrolled" flightbehaviour="flightbehaviour.attackrun" />
+					<debug_text text="this.assignedcontrolled.idcode + ' create_order MoveGeneric (avoid attack)'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<create_order name="$kAAITParam_data.$orders.$avoid" object="this.assignedcontrolled" id="'MoveGeneric'" immediate="true">
+						<param name="destination" value="$kAAIT_avoidSpace" />
+						<param name="position" value="$kAAIT_avoidPos" />
+						<param name="kAAITParam_data" value="$kAAITParam_data" />
+						<param name="kAAITParam_aroundDir" value="$direction" />
+						<param name="kAAITParam_enemyAvoid" value="if $kAAIT_enemyAvoid.sector == this.assignedcontrolled.sector then $kAAIT_enemyAvoid else null" />
+						<param name="kAAITParam_isSkipAvoidance" value="if $kAAIT_enemyAvoid.sector == this.assignedcontrolled.sector then @$kAAIT_isStopKamikaze else false" />
+						<param name="debugchance" value="$debugchance"/>
+					</create_order>
+					<debug_text text="this.assignedcontrolled.idcode + ' post create_order MoveGeneric (avoid attack)'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				</do_if>
+				<do_else>
+					<do_if value="this.assignedcontrolled.orders.indexof.{$kAAITParam_data.$orders.$avoid} gt 1">
+						<move_order order="$kAAITParam_data.$orders.$avoid" newindex="1" />
+					</do_if>
+				</do_else>
+				<include_interrupt_actions ref="kAAIT_CleanOrders" />
+			</actions>
+
+			<actions name="kAAIT_Order_Flee">
+				<include_interrupt_actions ref="kAAIT_InitOrders" />
+				<do_if value="not @$kAAITParam_data.$orders.$flee.exists">
+					<debug_text text="this.assignedcontrolled.idcode + ' create_order Flee'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<set_value name="$kAAIT_isActive" exact="true" />
+					<create_order name="$kAAITParam_data.$orders.$flee" id="'Flee'" object="this.assignedcontrolled" immediate="true">
+						<param name="method" value="'boost'"/>
+						<param name="attacker" value="$kAAIT_defensibleTarget"/>
+						<param name="donotdrop" value="true"/>
+						<param name="deploydistraction" value="$kAAIT_defensibleTarget.isclass.ship"/>
+						<param name="log" value="false"/>
+						<param name="debugchance" value="$debugchance"/>
+					</create_order>
+				</do_if>
+				<do_else>
+					<do_if value="this.assignedcontrolled.orders.indexof.{$kAAITParam_data.$orders.$flee} gt 1">
+						<move_order order="$kAAITParam_data.$orders.$flee" newindex="1" />
+					</do_if>
+				</do_else>
+				<include_interrupt_actions ref="kAAIT_CleanOrders" />
+			</actions>
+
+			<actions name="kAAIT_LXL_Order_StepForward">
+				<include_interrupt_actions ref="kAAIT_InitOrders" />
+				<do_if value="not @$kAAITParam_data.$orders.$avoid.exists">
+					<do_if value="this.assignedcontrolled.attention ge attention.visible">
+						<do_if value="this.assignedcontrolled.dps.all gt @$kAAIT_defensibleTarget.dps.all * 1.5">
+							<set_value name="$kAAIT_inchDistance" exact="this.assignedcontrolled.size * 1.5" />
+						</do_if>
+						<do_elseif value="this.assignedcontrolled.dps.all gt @$kAAIT_defensibleTarget.dps.all">
+							<set_value name="$kAAIT_inchDistance" exact="this.assignedcontrolled.size * 1" />
+						</do_elseif>
+						<do_else>
+							<set_value name="$kAAIT_inchDistance" exact="this.assignedcontrolled.size * 0.5" />
+						</do_else>
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_inchDistance" exact="this.assignedcontrolled.size * 1" />
+					</do_else>
+					<include_interrupt_actions ref="kAAIT_LXL_Order_AttackMove" />
+				</do_if>
+				<do_else>
+					<do_if value="this.assignedcontrolled.orders.indexof.{$kAAITParam_data.$orders.$avoid} gt 1">
+						<move_order order="$kAAITParam_data.$orders.$avoid" newindex="1" />
+					</do_if>
+				</do_else>
+			</actions>
+
+			<actions name="kAAIT_LXL_Order_MoveOutOfRange">
+				<include_interrupt_actions ref="kAAIT_InitOrders" />
+				<do_if value="not @$kAAITParam_data.$orders.$avoid.exists">
+					<!-- <set_value name="$kAAIT_inchDistance" exact="-1 * (this.assignedcontrolled.size * 3 + 5km * ((100 - this.assignedcontrolled.shieldpercentage) / 100))" /> -->
+					<set_value name="$kAAIT_inchDistance" exact="-1 * (5km + 5km * ((100 - this.assignedcontrolled.shieldpercentage) / 100))" />
+					<!-- <set_value name="$kAAIT_inchDistance" exact="
+						-1 * (this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget} + 5km + 5km * ((100 - this.assignedcontrolled.shieldpercentage) / 100))
+					" /> -->
+					<include_interrupt_actions ref="kAAIT_LXL_Order_AttackMove" />
+				</do_if>
+				<do_else>
+					<do_if value="this.assignedcontrolled.orders.indexof.{$kAAITParam_data.$orders.$avoid} gt 1">
+						<move_order order="$kAAITParam_data.$orders.$avoid" newindex="1" />
+					</do_if>
+				</do_else>
+			</actions>
+
+			<actions name="kAAIT_LXL_Order_AttackMove">
+				<include_interrupt_actions ref="kAAIT_InitOrders" />
+				<create_position name="$kAAIT_pos" space="this.assignedcontrolled.zone" object="$target" />
+				<create_orientation name="$kAAIT_rotShipToTarget" orientation="look_at" refposition="$kAAIT_pos">
+					<position object="this.assignedcontrolled" space="this.assignedcontrolled.zone"/>
+				</create_orientation>
+				<!-- <do_if value="$kAAIT_inchDistance lt 0 or [$kAAIT_inchDistance, -1 * $kAAIT_inchDistance].max gt this.assignedcontrolled.size * 2"> -->
+					<set_value name="$yaw_adj" min="-1.625" max="1.625" />
+					<set_value name="$yaw_deg" exact="$kAAIT_rotShipToTarget.yaw * 180 / pi + $yaw_adj" />
+					<set_value name="$yaw_new" exact="$yaw_deg * pi / 180" />
+				<!-- </do_if>
+				<do_else>
+					<set_value name="$yaw_new" exact="$kAAIT_rotShipToTarget.yaw" />
+				</do_else> -->
+				<do_if value="$kAAIT_inchDistance gt 0">
+					<create_position name="$kAAIT_pos" space="this.assignedcontrolled.zone"
+						x="this.assignedcontrolled.position.x + $kAAIT_inchDistance * sin ($yaw_new) * cos ($kAAIT_rotShipToTarget.pitch)"
+						y="this.assignedcontrolled.position.y + $kAAIT_inchDistance * sin ($kAAIT_rotShipToTarget.pitch)"
+						z="this.assignedcontrolled.position.z + $kAAIT_inchDistance * cos ($yaw_new) * cos ($kAAIT_rotShipToTarget.pitch)"
+					/>
+				</do_if>
+				<do_else>
+					<create_position name="$kAAIT_pos" space="this.assignedcontrolled.zone"
+						x="this.assignedcontrolled.position.x + $kAAIT_inchDistance * sin ($yaw_new) * cos (0)"
+						y="this.assignedcontrolled.position.y + $kAAIT_inchDistance * sin (0)"
+						z="this.assignedcontrolled.position.z + $kAAIT_inchDistance * cos ($yaw_new) * cos (0)"
+					/>
+				</do_else>
+				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.pos (inching): ' + this.assignedcontrolled.distanceto.{$kAAIT_pos}" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.target: ' + this.assignedcontrolled.distanceto.{$target}" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.defensible: ' + this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget}" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' pos.distanceto.defensible: ' + $kAAIT_defensibleTarget.distanceto.{$kAAIT_pos} + ' pos.bboxdistanceto.$kAAIT_defensibleTarget: ' + $kAAIT_defensibleTarget.bboxdistanceto.{$kAAIT_pos}" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<set_value name="$kAAIT_isActive" exact="true" />
+				<debug_text text="this.assignedcontrolled.idcode + ' create_order MoveGeneric (inch: ' + $kAAIT_inchDistance + ')'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+					<do_if value="@$kAAITParam_data.$beacon_from.exists">
+						<destroy_object object="$kAAITParam_data.$beacon_from" />
+					</do_if>
+					<create_object name="$kAAITParam_data.$beacon_from" zone="this.assignedcontrolled.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="this.assignedcontrolled.position" />
+					</create_object>
+					<set_object_name object="$kAAITParam_data.$beacon_from" name="this.assignedcontrolled.idcode + ' from'" />
+					<debug_text text="this.assignedcontrolled.idcode + ' beaconfrom.distanceto.ship: ' + ($kAAITParam_data.$beacon_from.distanceto.{this.assignedcontrolled})" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<do_if value="@$kAAITParam_data.$beacon_to.exists">
+						<destroy_object object="$kAAITParam_data.$beacon_to" />
+					</do_if>
+					<create_object name="$kAAITParam_data.$beacon_to" zone="this.assignedcontrolled.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="$kAAIT_pos" />
+					</create_object>
+				</do_if>
+				<create_order name="$kAAITParam_data.$orders.$avoid" object="this.assignedcontrolled" id="'MoveGeneric'" immediate="true">
+					<param name="destination" value="this.assignedcontrolled.zone" />
+					<param name="position" value="$kAAIT_pos" />
+					<param name="forcesteering" value="false" />
+					<param name="precise" value="$kAAIT_inchDistance gt 0 and $kAAIT_inchDistance lt this.assignedcontrolled.size * 2" />
+					<param name="kAAITParam_data" value="$kAAITParam_data" />
+					<param name="kAAITParam_enemyAvoid" value="$kAAIT_defensibleTarget" />
+					<param name="kAAITParam_isSkipAvoidance" value="true" />
+					<param name="debugchance" value="$debugchance"/>
+				</create_order>
+				<debug_text text="this.assignedcontrolled.idcode + ' post create_order MoveGeneric (inch or witdraw)'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			</actions>
+			<!--
+				
+				  ,,               ,,
+				`7MM             `7MM
+				  MM               MM
+				  MM  `7M'   `MF'  MM
+				  MM    `VA ,V'    MM
+				  MM      XMX      MM
+				  MM    ,V' VA.    MM
+				.JMML..AM.   .MA..JMML.
+				
+				
+			 -->
+			<actions name="kAAIT_LXL_GetCombatRange">
+				<do_if value="@$kAAITParam_data.$movedOutOfRangeCount lt 0">
+					<set_value name="$kAAITParam_data.$movedOutOfRangeCount" exact="0" />
+				</do_if>
+				<set_value name="$kAAIT_maxCombatRange" exact="[
+					this.assignedcontrolled.maxcombatrange.primary,
+					this.assignedcontrolled.maxcombatrange.secondary,
+					this.assignedcontrolled.maxcombatrange.lasers.all,
+					this.assignedcontrolled.maxcombatrange.missiles.all,
+					this.assignedcontrolled.maxcombatrange.turrets,
+				].max * 0.9" />
+				<set_value name="$kAAIT_minCombatRange" exact="[
+					if this.assignedcontrolled.maxcombatrange.primary then this.assignedcontrolled.maxcombatrange.primary else 1000000,
+					if this.assignedcontrolled.maxcombatrange.secondary then this.assignedcontrolled.maxcombatrange.secondary else 1000000,
+					if this.assignedcontrolled.maxcombatrange.lasers.all then this.assignedcontrolled.maxcombatrange.lasers.all else 1000000,
+					if this.assignedcontrolled.maxcombatrange.missiles.all then this.assignedcontrolled.maxcombatrange.missiles.all else 1000000,
+					if this.assignedcontrolled.maxcombatrange.turrets then this.assignedcontrolled.maxcombatrange.turrets else 1000000,
+				].min * 0.9" />
+				<do_if value="@$kAAIT_defensibleTarget.isoperational">
+					<debug_text text="this.assignedcontrolled.idcode + ' $optimalRangeIsMax: ' + @global.$kAAIT_Config.$optimalRangeIsMax" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<do_if value="not @global.$kAAIT_Config.$optimalRangeIsMax">
+						<set_value name="$kAAIT_combatRange" exact="
+							[
+								$kAAIT_maxCombatRange - ($kAAIT_maxCombatRange - $kAAIT_minCombatRange) * ((this.assignedcontrolled.dps.all + 1) / (($kAAIT_defensibleTarget.dps.all + 1) * 1.5)f)m,
+								$kAAIT_minCombatRange,
+							].max + 1km * [@$kAAITParam_data.$movedOutOfRangeCount, 0].max
+						" />
+					</do_if>
+					<do_else>
+						<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_movedOutOfRangeCount: ' + (1km * [@$kAAITParam_data.$movedOutOfRangeCount, 0].max)" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+						<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_inchForwardCount: ' + (1km * [@$kAAITParam_data.$inchForwardCount, 0].max)" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+						<set_value name="$kAAIT_combatRange" exact="[
+							[
+								$kAAIT_maxCombatRange + 1km * [@$kAAITParam_data.$movedOutOfRangeCount, 0].max - 1km * [@$kAAITParam_data.$inchForwardCount, 0].max,
+								$kAAIT_minCombatRange
+							].max,
+							this.assignedcontrolled.maxradarrange * 0.5
+						].min" />
+					</do_else>
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$movedOutOfRangeCount: ' + @$kAAITParam_data.$movedOutOfRangeCount + ' $kAAITParam_data.$inchForwardCount: ' + @$kAAITParam_data.$inchForwardCount" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_combatRange: ' + @$kAAIT_combatRange + ' $kAAIT_minCombatRange: ' + @$kAAIT_minCombatRange + ' $kAAIT_maxCombatRange: ' + @$kAAIT_maxCombatRange + ' $kAAIT_movedOutOfRangeCount: ' + @$kAAIT_movedOutOfRangeCount" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				</do_if>
+				<do_else>
+					<set_value name="$kAAIT_combatRange" exact="$kAAIT_minCombatRange" />
+				</do_else>
+			</actions>
+
+			<actions name="kAAIT_LXL_StepForwardOrMoveOutOfRange">
+				<do_if value="@$kAAIT_isTargetPotentialHighRisk">
+					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_LXL_StepForwardOrMoveOutOfRange'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<include_interrupt_actions ref="kAAIT_LXL_GetCombatRange" />
+					<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_distToTarget: ' + $kAAIT_distToTarget" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<set_value name="$kAAIT_isInching" exact="false" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_enemy: ' + @$kAAITParam_data.$lastAttack_enemy.idcode" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_time: ' + @$kAAITParam_data.$lastAttack_time" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<do_if value="@$kAAITParam_data.$lastAttack_enemy != $kAAIT_defensibleTarget or player.age - @$kAAITParam_data.$lastAttack_time gt 1min">
+						<do_if value="this.assignedcontrolled.shieldpercentage ge 90">
+							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_time: ' + @$kAAITParam_data.$lastAttack_timeLastSafe" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<do_if value="player.age - @$kAAITParam_data.$lastAttack_timeLastSafe gt 1min">
+								<set_value name="$kAAITParam_data.$lastAttack_timeLastSafe" exact="player.age" />
+								<do_if value="@$kAAITParam_data.$movedOutOfRangeCount">
+									<set_value name="$kAAITParam_data.$movedOutOfRangeCount" exact="[$kAAITParam_data.$movedOutOfRangeCount - 1, 0].max" />
+								</do_if>
+								<do_elseif value="@$kAAITParam_data.$inchForwardCount">
+									<set_value name="$kAAITParam_data.$inchForwardCount" exact="$kAAITParam_data.$inchForwardCount + 1" />
+								</do_elseif>
+								<do_else>
+									<set_value name="$kAAITParam_data.$inchForwardCount" exact="1" />
+								</do_else>
+								<do_if value="$kAAIT_distToTarget gt $kAAIT_combatRange">
+									<!-- inch forward -->
+									<set_value name="$kAAIT_isInching" exact="true" />
+									<include_interrupt_actions ref="kAAIT_LXL_Order_StepForward" />
+								</do_if>
+							</do_if>
+						</do_if>
+					</do_if>
+					<do_elseif value="(@$kAAITParam_data.$lastAttack_enemy == $kAAIT_defensibleTarget and player.age - @$kAAITParam_data.$lastAttack_time lt 1min) or this.assignedcontrolled.shieldpercentage lt 90">
+						<do_if value="this.assignedcontrolled.shieldpercentage lt 90">
+							<!-- inch backward -->
+							<set_value name="$kAAIT_isInching" exact="true" />
+							<set_value name="$kAAITParam_data.$inchForwardCount" exact="0" />
+							<do_if value="@$kAAITParam_data.$movedOutOfRangeCount">
+								<set_value name="$kAAITParam_data.$movedOutOfRangeCount" exact="[$kAAITParam_data.$movedOutOfRangeCount + 1, 5].min" />
+							</do_if>
+							<do_else>
+								<set_value name="$kAAITParam_data.$movedOutOfRangeCount" exact="1" />
+							</do_else>
+							<include_interrupt_actions ref="kAAIT_LXL_Order_MoveOutOfRange" />
+						</do_if>
+					</do_elseif>
+				</do_if>
+			</actions>
+			<!--
+				
+				
+				
+				
+				`7M'   `MF',pP"Ybd ,pP"Ybd `7MMpMMMb.pMMMb.
+				  `VA ,V'  8I   `" 8I   `"   MM    MM    MM
+				    XMX    `YMMMa. `YMMMa.   MM    MM    MM
+				  ,V' VA.  L.   I8 L.   I8   MM    MM    MM
+				.AM.   .MA.M9mmmP' M9mmmP' .JMML  JMML  JMML.
+				
+				
+			 -->
+			<actions name="kAAIT_XSSM_AttackOrNot">
+				<debug_text text="this.assignedcontrolled.idcode + ' (kAAIT_XSSM_AttackOrNot) ' + this.assignedcontrolled.knownname + ' ' + this.assignedcontrolled.idcode + ' size: ' + this.assignedcontrolled.size" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<do_if value="@$kAAIT_defensibleTarget.isoperational">
+					<include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
+					<do_if value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
+						<do_if value="$kAAIT_isTargetHighRisk_explosion">
+							<include_interrupt_actions ref="kAAIT_Order_Flee" />
+						</do_if>
+						<do_elseif value="$kAAIT_isTargetHighRisk">
+							<debug_text text="this.assignedcontrolled.idcode + ' $allowothertargets: ' + $allowothertargets" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.commander: ' + this.assignedcontrolled.commander + ' ' + @this.assignedcontrolled.commander.knownname" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<do_if value="$allowothertargets">
+								<do_if value="this.assignedcontrolled.sector == $kAAIT_defensibleTarget.sector">
+									<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+								</do_if>
+							</do_if>
+							<do_if value="not @$kAAITParam_data.$orders.$attackOther.exists">
+								<do_if value="$kAAIT_defensibleTarget.distanceto.{this.assignedcontrolled} lt $kAAIT_defensibleTarget.maxcombatrange.all">
+									<include_interrupt_actions ref="kAAIT_Order_Flee" />
+								</do_if>
+								<do_else>
+									<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+								</do_else>
+							</do_if>
+						</do_elseif>
+						<do_elseif value="$kAAIT_isTargetPotentialHighRisk">
+							<!-- still big target but attack is allowed. check if there are other small ships nearby anyway. -->
+							<!-- if no new attack order is given, attack will continue on big target -->
+							<do_if value="$allowothertargets">
+								<do_if value="this.assignedcontrolled.sector == $kAAIT_defensibleTarget.sector">
+									<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+								</do_if>
+							</do_if>
+						</do_elseif>
+					</do_if>
+					<!-- <do_elseif value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and $kAAIT_defensibleTarget.isclass.station"> -->
+					<do_elseif value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+						<do_if value="$kAAIT_isTargetPotentialHighRisk">
+							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetPotentialHighRisk: ' + $kAAIT_isTargetPotentialHighRisk" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$defensibleTarget_stopKamikaze: ' + @$kAAITParam_data.$defensibleTarget_stopKamikaze + ' $kAAIT_defensibleTarget: ' + $kAAIT_defensibleTarget" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<do_if value="$kAAIT_isTargetHighRisk_explosion">
+								<include_interrupt_actions ref="kAAIT_Order_Flee" />
+							</do_if>
+							<do_elseif value="@$kAAITParam_data.$defensibleTarget_stopKamikaze != @$kAAIT_defensibleTarget">
+								<set_value name="$kAAITParam_data.$defensibleTarget_stopKamikaze" exact="$kAAIT_defensibleTarget" />
+								<set_value name="$kAAIT_isStopKamikaze" exact="true" />
+								<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isStopKamikaze: ' + $kAAIT_isStopKamikaze" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+								<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+								<set_value name="$kAAIT_isStopKamikaze" exact="false" />
+							</do_elseif>
+						</do_if>
+					</do_elseif>
+				</do_if>
+			</actions>
+
+			<actions name="kAAIT_GetIsTargetHighRisk">
+				<do_if value="@$kAAIT_defensibleTarget.isoperational">
+					<set_value name="$kAAIT_isTargetHighRisk" exact="false" />
+					<do_if value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
+						<set_value name="$kAAIT_isTargetPotentialHighRisk" exact="$kAAIT_defensibleTarget.size gt this.assignedcontrolled.size * 1.5" />
+						<set_value name="$kAAIT_isTargetHighRisk" exact="
+							$kAAIT_isTargetPotentialHighRisk and
+							(
+								@$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count lt (@$kAAIT_defensibleTarget.turrets.operational.count + @$kAAIT_defensibleTarget.weapons.operational.count) * 0.75
+								or
+								$kAAIT_defensibleTarget.hullpercentage lt 2
+							) and
+							(
+								(not this.assignedcontrolled.dps.missiles.all) or
+								(not this.assignedcontrolled.ammostorage.missile.count)
+							)
+						"/>
+					</do_if>
+					<do_elseif value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+						<set_value name="$kAAIT_isTargetPotentialHighRisk" exact="$kAAIT_defensibleTarget.size gt this.assignedcontrolled.size * 1.5" />
+						<set_value name="$kAAIT_isTargetHighRisk" exact="
+							$kAAIT_isTargetPotentialHighRisk and
+							@$kAAIT_defensibleTarget.dps.all gt this.assignedcontrolled.dps.all * 1.5
+						" />
+					</do_elseif>
+					<do_if value="@$kAAIT_defensibleTargetEntity.isclass.station and @$kAAIT_defensibleTargetEntity.$kAAIT_modules.count">
+						<set_value name="$kAAIT_isTargetHighRisk_explosion" exact="false" />
+						<do_for_each name="$module_inList" in="$kAAIT_defensibleTargetEntity.$kAAIT_modules">
+							<do_if value="@$module_inList.isoperational and $module_inList.hullpercentage lt 2">
+								<debug_text text="this.assignedcontrolled.idcode + ' $module_inList.hullpercentage: ' + $module_inList.hullpercentage" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+								<set_value name="$kAAIT_isTargetHighRisk_explosion" exact="true" />
+								<break />
+							</do_if>
+						</do_for_each>
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_isTargetHighRisk_explosion" exact="false" />
+					</do_else>
+				</do_if>
+			</actions>
+
+			<actions name="kAAIT_GetBigEnemies">
+				<do_if value="not @$kAAIT_bigEnemies.count or @$kAAIT_bigEnemies.{1}.bboxdistanceto.{this.assignedcontrolled} gt this.assignedcontrolled.maxradarrange">
+					<set_value name="$kAAIT_bigEnemies" exact="[]" />
+					<find_gravidar_contact name="$kAAIT_bigEnemies" object="this.assignedcontrolled" class="[class.ship_l, class.ship_xl, class.station]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" multiple="true">
+						<match_context macro="this.sector.macro"/>
+						<match class="class.buildstorage" negate="true"/>
+					</find_gravidar_contact>
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_bigEnemies: ' + $kAAIT_bigEnemies" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				</do_if>
+			</actions>
+
+			<actions name="kAAIT_GetIsNearBigEnemies">
+				<set_value name="$kAAIT_shipIsNearBigEnemy" exact="false" />
+				<set_value name="$kAAIT_targetIsNearBigEnemy" exact="false" />
+				<do_if value="@$kAAIT_bigEnemies.count">
+					<do_for_each name="$kAAIT_bigEnemy" in="$kAAIT_bigEnemies">
+						<do_if value="
+							(
+								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
+								and
+								this.race != race.drone
+							)
+							or
+							(
+								this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+								(
+									(
+										$kAAIT_bigEnemy != @$kAAITParam_data.$target and
+										$kAAIT_bigEnemy != @$kAAITParam_data.$target.defensible
+									)
+									or
+									(not @$kAAITParam_data.$target.isoperational)
+								)
+							)
+						">
+							<do_if value="$kAAIT_bigEnemy.bboxdistanceto.{this.assignedcontrolled} lt 5km">
+								<set_value name="$kAAIT_shipIsNearBigEnemy" exact="true" />
+							</do_if>
+							<do_if value="@$kAAIT_defensibleTarget.isoperational and $kAAIT_bigEnemy.bboxdistanceto.{$kAAIT_defensibleTarget} lt 5km">
+								<set_value name="$kAAIT_targetIsNearBigEnemy" exact="true" />
+							</do_if>
+							<do_if value="$kAAIT_shipIsNearBigEnemy or $kAAIT_targetIsNearBigEnemy">
+								<break />
+							</do_if>
+						</do_if>
+					</do_for_each>
+				</do_if>
+				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_shipIsNearBigEnemy: ' + $kAAIT_shipIsNearBigEnemy + ' $kAAIT_targetIsNearBigEnemy: ' + $kAAIT_targetIsNearBigEnemy" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			</actions>
+
+			<actions name="kAAIT_FindSmallerTargetFarFromBigTarget">
+				<do_if value="@$kAAIT_defensibleTarget.isoperational">
+					<set_value name="$kAAIT_smallerTarget" exact="null" />
+					<find_gravidar_contact name="$kAAIT_smallerTarget" object="this.assignedcontrolled" class="[class.ship_xs, class.ship_s, class.ship_m]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" sortbydistanceto="this.assignedcontrolled">
+						<match_context macro="this.sector.macro"/>
+						<match class="class.buildstorage" negate="true"/>
+						<match_distance min="10km" max="this.assignedcontrolled.maxradarrange" object="$kAAIT_defensibleTarget" />
+					</find_gravidar_contact>
+					<do_if value="@$kAAIT_smallerTarget.isoperational">
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_smallerTarget: ' + @$kAAIT_smallerTarget.knownname + ' ' + @$kAAIT_smallerTarget.idcode + ' size: ' + @$kAAIT_smallerTarget.size + ' turrets: ' + @$kAAIT_smallerTarget.turrets.operational.count + ' weapons: ' + @$kAAIT_smallerTarget.weapons.operational.count" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<!-- <create_position name="$pos_bigEnemy" space="this.assignedcontrolled.zone" object="$kAAIT_defensibleTarget" />
+						<create_orientation name="$rot_toBigEnemy" orientation="look_at" refposition="$pos_bigEnemy">
+							<position object="this.assignedcontrolled" space="this.assignedcontrolled.zone" />
+						</create_orientation>
+						<set_value name="$yaw_toBigEnemy" exact="($rot_toBigEnemy.yaw * 180 / pi) + (this.assignedcontrolled.rotation.yaw * 180 / pi)" />
+						<create_position name="$pos_smallerTarget" space="this.assignedcontrolled.zone" object="$kAAIT_smallerTarget" />
+						<create_orientation name="$rot_toSmallerTarget" orientation="look_at" refposition="$pos_smallerTarget">
+							<position object="this.assignedcontrolled" space="this.assignedcontrolled.zone" />
+						</create_orientation>
+						<set_value name="$yaw_toSmallerTarget" exact="($rot_toSmallerTarget.yaw * 180 / pi) + (this.assignedcontrolled.rotation.yaw * 180 / pi)" />
+						<set_value name="$yaw_diff" exact="$yaw_toSmallerTarget - $yaw_toBigEnemy" />
+						<do_if value="
+							$yaw_diff gt -60 and $yaw_diff lt 60
+							and
+							this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget} lt this.assignedcontrolled.distanceto.{$kAAIT_smallerTarget}
+						"> -->
+						<do_if value="this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget} lt this.assignedcontrolled.distanceto.{$kAAIT_smallerTarget}">
+							<!-- because this is circling a big target already, any object farther away would put the big target in the way -->
+							<set_value name="$kAAIT_smallerTarget" exact="null" />
+						</do_if>
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_smallerTarget (post-obstruction test): ' + @$kAAIT_smallerTarget.knownname + ' ' + @$kAAIT_smallerTarget.idcode + ' size: ' + @$kAAIT_smallerTarget.size + ' turrets: ' + @$kAAIT_smallerTarget.turrets.operational.count + ' weapons: ' + @$kAAIT_smallerTarget.weapons.operational.count" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</do_if>
+				</do_if>
+			</actions>
+			<!--
+				
+				                                                                                                       ,,
+				                                                                                                     `7MM
+				                                                                                                       MM
+				`7MMpMMMb.pMMMb.  ,pW"Wq.`7M'   `MF'.gP"Ya       ,6"Yb.  `7Mb,od8 ,pW"Wq.`7MM  `7MM  `7MMpMMMb.   ,M""bMM
+				  MM    MM    MM 6W'   `Wb VA   ,V ,M'   Yb     8)   MM    MM' "'6W'   `Wb MM    MM    MM    MM ,AP    MM
+				  MM    MM    MM 8M     M8  VA ,V  8M""""""      ,pm9MM    MM    8M     M8 MM    MM    MM    MM 8MI    MM
+				  MM    MM    MM YA.   ,A9   VVV   YM.    ,     8M   MM    MM    YA.   ,A9 MM    MM    MM    MM `Mb    MM
+				.JMML  JMML  JMML.`Ybmd9'     W     `Mbmmd'     `Moo9^Yo..JMML.   `Ybmd9'  `Mbod"YML..JMML  JMML.`Wbmd"MML.
+				
+				
+			 -->
+			<actions name="kAAIT_MoveAroundOrNot">
+				<!-- from move.attack.object.capital. it looks like it creates a point in front of the ship regardless of the ship's heading -->
+				<!-- <create_position name="$pos" space="$target.sector" z="$dist_horizontal - $aimdist" object="this.ship"/> -->
+				<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_bigEnemies.count (kAAIT_MoveAroundOrNot): ' + $kAAIT_bigEnemies.count" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<do_if value="$kAAIT_bigEnemies.count and (not @$kAAITParam_isSkipAvoidance)">
+					<!-- note: at this time, both ship and big enemies ARE in the same sector and in nearby zones 'coz the big enemies are from the ship's radar. -->
+					<sort_list list="$kAAIT_bigEnemies" sortbyvalue="this.assignedcontrolled.distanceto.{loop.element}" />
+					<do_if value="$positionspace and @$position">
+						<create_position name="$kAAIT_posAhead" space="this.assignedcontrolled.zone" object="$positionspace" value="$position" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_posAhead (from $positionspace): ' + $kAAIT_posAhead" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</do_if>
+					<do_elseif value="@this.assignedcontrolled.hascontext.{$kAAIT_preciseDestination}">
+						<!-- $kAAIT_preciseDestination is always a sector -->
+						<create_position name="$kAAIT_posAhead" space="this.assignedcontrolled.zone" object="$kAAIT_preciseDestination" value="$kAAIT_precisePosition" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_posAhead (from $kAAIT_preciseDestination): ' + $kAAIT_posAhead" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</do_elseif>
+					<do_else>
+						<create_position name="$kAAIT_posAhead" space="this.assignedcontrolled.zone" z="this.assignedcontrolled.maxradarrange * 2" object="this.assignedcontrolled" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_posAhead (from ship heading): ' + $kAAIT_posAhead" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</do_else>
+					<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+						<do_if value="@$kAAITParam_data.$beacon_from.exists">
+							<destroy_object object="$kAAITParam_data.$beacon_from" />
+						</do_if>
+						<create_object name="$kAAITParam_data.$beacon_from" zone="this.assignedcontrolled.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+							<position value="this.assignedcontrolled.position" />
+						</create_object>
+						<set_object_name object="$kAAITParam_data.$beacon_from" name="this.assignedcontrolled.idcode + ' from'" />
+						<debug_text text="this.assignedcontrolled.idcode + ' beaconfrom.distanceto.ship: ' + ($kAAITParam_data.$beacon_from.distanceto.{this.assignedcontrolled})" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<do_if value="@$kAAITParam_data.$beacon_to.exists">
+							<destroy_object object="$kAAITParam_data.$beacon_to" />
+						</do_if>
+						<create_object name="$kAAITParam_data.$beacon_to" zone="this.assignedcontrolled.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+							<position value="$kAAIT_posAhead" />
+						</create_object>
+						<set_object_name object="$kAAITParam_data.$beacon_to" name="this.assignedcontrolled.idcode + ' to'" />
+						<debug_text text="this.assignedcontrolled.idcode + ' beaconto.distanceto.ship: ' + ($kAAITParam_data.$beacon_to.distanceto.{this.assignedcontrolled})" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</do_if>
+					<set_value name="$dist_toDest" exact="this.assignedcontrolled.distanceto.{$kAAIT_posAhead}" />
+					<create_orientation name="$rot_toDest" orientation="look_at" refposition="$kAAIT_posAhead">
+						<position object="this.assignedcontrolled" space="this.assignedcontrolled.zone" />
+					</create_orientation>
+					<set_value name="$yaw_toDest" exact="($rot_toDest.yaw * 180 / pi) + (this.assignedcontrolled.rotation.yaw * 180 / pi)" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $dist_toDest: ' + $dist_toDest + ' $yaw_toDest: ' + $yaw_toDest" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<do_for_each name="$kAAIT_bigEnemy" in="$kAAIT_bigEnemies">
+						<do_if value="
+							$kAAIT_bigEnemy != @$kAAITParam_enemyAvoid and
+							$kAAIT_bigEnemy.size gt this.assignedcontrolled.size * 1.5
+						">
+							<create_position name="$pos_bigEnemy" space="this.assignedcontrolled.zone" object="$kAAIT_bigEnemy" />
+							<set_value name="$dist_toBigEnemy" exact="this.assignedcontrolled.distanceto.{$pos_bigEnemy}" />
+							<create_orientation name="$rot_toBigEnemy" orientation="look_at" refposition="$pos_bigEnemy">
+								<position object="this.assignedcontrolled" space="this.assignedcontrolled.zone" />
+							</create_orientation>
+							<set_value name="$yaw_toBigEnemy" exact="($rot_toBigEnemy.yaw * 180 / pi) + (this.assignedcontrolled.rotation.yaw * 180 / pi)" />
+							<debug_text text="this.assignedcontrolled.idcode + ' $dist_toBigEnemy (' + $kAAIT_bigEnemy.idcode + '): ' + $dist_toBigEnemy + ' $yaw_toBigEnemy: ' + $yaw_toBigEnemy" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<set_value name="$dist_bigEnemyToDest" exact="$pos_bigEnemy.distanceto.{$kAAIT_posAhead}" />
+							<set_value name="$yaw_diff" exact="$yaw_toDest - $yaw_toBigEnemy" />
+							<do_if value="
+								$dist_toBigEnemy lt $dist_toDest
+								and
+								$yaw_diff gt -60 and $yaw_diff lt 60
+							">
+								<set_value name="$pos_avoids" exact="[]" />
+								<do_if value="false and @$kAAIT_aroundDir">
+									<!-- use previous around direction. -->
+									<!-- prevents going back on previous around orders. -->
+									<set_value name="$dirs" exact="[$kAAIT_aroundDir]" />
+								</do_if>
+								<do_else>
+									<set_value name="$dirs" exact="[-1, 1]" />
+								</do_else>
+								<do_for_each name="$dir" in="$dirs">
+									<create_orientation name="$rot_bigEnemyToShip" orientation="look_at" refposition="this.assignedcontrolled.position">
+										<position value="$pos_bigEnemy" space="this.assignedcontrolled.zone" />
+									</create_orientation>
+									<!-- <set_value name="$yaw_bigEnemyToShip" exact="($rot_bigEnemyToShip.yaw * 180 / pi) + (this.assignedcontrolled.rotation.yaw * 180 / pi)" /> -->
+									<set_value name="$yaw_bigEnemyToShip" exact="$rot_bigEnemyToShip.yaw * 180 / pi" />
+									<set_value name="$yaw_bigEnemyToShip_next" exact="$yaw_bigEnemyToShip + $dir * 30" />
+									<debug_text text="this.assignedcontrolled.idcode + ' $yaw_bigEnemyToShip: ' + $yaw_bigEnemyToShip + ' $yaw_bigEnemyToShip_next: ' + $yaw_bigEnemyToShip_next" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									<set_value name="$yaw_bigEnemyToShip_next_rad" exact="$yaw_bigEnemyToShip_next * pi / 180" />
+									<set_value name="$kAAIT_avoidDistance" exact="this.assignedcontrolled.maxradarrange" />
+									<do_if value="$dist_toBigEnemy lt this.assignedcontrolled.maxradarrange * 0.75">
+										<set_value name="$kAAIT_avoidDistance" exact="this.assignedcontrolled.maxradarrange * 0.5" />
+									</do_if>
+									<!-- <get_safe_pos result="$pos_avoid" zone="this.assignedcontrolled.zone"
+										x="$pos_bigEnemy.x + $kAAIT_avoidDistance * sin ($yaw_bigEnemyToShip_next_rad) * cos ($rot_bigEnemyToShip.pitch)"
+										y="$pos_bigEnemy.y + $kAAIT_avoidDistance * sin ($rot_bigEnemyToShip.pitch)"
+										z="$pos_bigEnemy.z + $kAAIT_avoidDistance * cos ($yaw_bigEnemyToShip_next_rad) * cos ($rot_bigEnemyToShip.pitch)"
+									/> -->
+									<create_position name="$pos_avoid" space="this.assignedcontrolled.zone"
+										x="$pos_bigEnemy.x + $kAAIT_avoidDistance * sin ($yaw_bigEnemyToShip_next_rad) * cos ($rot_bigEnemyToShip.pitch)"
+										y="$pos_bigEnemy.y + $kAAIT_avoidDistance * sin ($rot_bigEnemyToShip.pitch)"
+										z="$pos_bigEnemy.z + $kAAIT_avoidDistance * cos ($yaw_bigEnemyToShip_next_rad) * cos ($rot_bigEnemyToShip.pitch)"
+									/>
+									<append_to_list name="$pos_avoids" exact="$pos_avoid" />
+								</do_for_each>
+								<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+									<do_if value="@$kAAITParam_data.$beacon_avoid1.exists">
+										<destroy_object object="$kAAITParam_data.$beacon_avoid1" />
+									</do_if>
+									<create_object name="$kAAITParam_data.$beacon_avoid1" zone="this.assignedcontrolled.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+										<position value="$pos_avoids.{1}" />
+									</create_object>
+									<set_object_name object="$kAAITParam_data.$beacon_avoid1" name="this.assignedcontrolled.idcode + ' avoid 1'" />
+									<debug_text text="this.assignedcontrolled.idcode + ' avoid1.distanceto.dest: ' + ($kAAITParam_data.$beacon_avoid1.distanceto.{$kAAIT_posAhead})" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									<do_if value="@$kAAITParam_data.$beacon_avoid2.exists">
+										<destroy_object object="$kAAITParam_data.$beacon_avoid2" />
+									</do_if>
+									<do_if value="$pos_avoids.count gt 1">
+										<create_object name="$kAAITParam_data.$beacon_avoid2" zone="this.assignedcontrolled.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+											<position value="$pos_avoids.{2}" />
+										</create_object>
+										<set_object_name object="$kAAITParam_data.$beacon_avoid2" name="this.assignedcontrolled.idcode + ' avoid 2'" />
+										<debug_text text="this.assignedcontrolled.idcode + ' avoid2.distanceto.dest: ' + ($kAAITParam_data.$beacon_avoid2.distanceto.{$kAAIT_posAhead})" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</do_if>
+								</do_if>
+								<do_if value="$pos_avoids.count == 1 or this.assignedcontrolled.distanceto.{$pos_avoids.{1}} lt this.assignedcontrolled.distanceto.{$pos_avoids.{2}}">
+									<set_value name="$pos_avoid" exact="$pos_avoids.{1}" />
+									<set_value name="$kAAIT_aroundDir" exact="$dirs.{1}" />
+								</do_if>
+								<do_else>
+									<set_value name="$pos_avoid" exact="$pos_avoids.{2}" />
+									<set_value name="$kAAIT_aroundDir" exact="$dirs.{2}" />
+								</do_else>
+								<set_value name="$kAAIT_isActive" exact="true" />
+								<debug_text text="this.assignedcontrolled.idcode + ' create_order $pos_avoid: ' + $pos_avoid" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+								<do_if value="not @$kAAITParam_data.$orders">
+									<set_value name="$kAAITParam_data.$orders" exact="table[]" />
+								</do_if>
+								<do_if value="@$kAAITParam_data.$orders.$around.exists">
+									<cancel_order order="$kAAITParam_data.$orders.$around" />
+								</do_if>
+								<create_order name="$kAAITParam_data.$orders.$around" object="this.assignedcontrolled" id="'MoveGeneric'" immediate="true">
+									<param name="destination" value="this.assignedcontrolled.zone" />
+									<param name="position" value="$pos_avoid" />
+									<param name="noboost" value="$noboost" />
+									<param name="disablecollisionavoidance" value="$disablecollisionavoidance" />
+									<param name="abortpath" value="$abortpath" />
+									<param name="forcesteering" value="true" />
+									<param name="endintargetzone" value="false" />
+									<param name="recallsubordinates" value="$recallsubordinates" />
+									<param name="strictblacklist" value="$strictblacklist" />
+									<param name="precise" value="$precise" />
+									<param name="waitforatgate" value="$waitforatgate" />
+									<param name="uselocalhighways" value="$uselocalhighways" />
+									<param name="pursuetargets" value="$pursuetargets" />
+									<param name="escort" value="$escort" />
+									<param name="pursuedistance" value="$pursuedistance" />
+									<param name="changecommandaction" value="$changecommandaction" />
+									<param name="targetclasses" value="$targetclasses" />
+									<param name="radius" value="$radius" />
+									<param name="radiusanchorpos" value="$radiusanchorpos" />
+									<param name="radiusanchorspace" value="$radiusanchorspace" />
+									<param name="stopondetect" value="$stopondetect" />
+									<param name="allowwreck" value="$allowwreck" />
+									<param name="kAAITParam_data" value="$kAAITParam_data" />
+									<param name="kAAITParam_enemyAvoid" value="$kAAIT_bigEnemy" />
+									<param name="kAAITParam_aroundDir" value="$kAAIT_aroundDir" />
+									<param name="debugchance" value="$debugchance" />
+								</create_order>
+								<break />
+							</do_if>
+						</do_if>
+					</do_for_each>
+				</do_if>
+			</actions>
+		</library>
+	</interrupts>
+</aiscript>

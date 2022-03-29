@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<diff>
+<!-- add. purpose: data store
+	<params>
+-->
+	<add sel="//params">
+		<param name="kAAITParam_data" required="false" default="null" type="internal" />
+	</add>
+<!-- add before at 4 instances. purpose: debug and show move in map.
+	the order location properties are in order.fight.attack.object as $kAAITParam_data.$orderLocation_space and $kAAITParam_data.$orderLocation_pos.
+	setting $kAAITParam_data.$orderLocation_space and $kAAITParam_data.$orderLocation_pos will show the order performing the move instead of as the attack.
+	<move_to>
+-->
+	<add pos="before" sel="(//move_to)[1]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (1)'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+	<add pos="before" sel="(//move_to)[2]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (2)'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+	<add pos="before" sel="//move_strafe">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' move_strafe'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+	<add pos="before" sel="(//move_to)[3]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@global.$kAAIT_Config.$lxl_isStepForward or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
+						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
+					)
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (3)'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<!-- <set_value name="$kAAIT_orderLocation_space" exact="this.assignedcontrolled.zone" />
+			<create_position name="$kAAIT_orderLocation_pos" space="$kAAIT_orderLocation_space" object="$target" value="$pos" />
+			<do_if value="this.assignedcontrolled.distanceto.{$kAAIT_orderLocation_pos} gt this.assignedcontrolled.size">
+				<set_value name="$kAAITParam_data.$orderLocation_space" exact="$kAAIT_orderLocation_space" />
+				<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$kAAIT_orderLocation_pos" />
+			</do_if> -->
+			<set_value name="$kAAITParam_data.$orderLocation_space" exact="$target" />
+			<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$pos" />
+		</do_if>
+	</add>
+	<add pos="after" sel="(//move_to)[3]">
+		<do_if value="@$kAAITParam_data">
+			<remove_value name="$kAAITParam_data.$orderLocation_space" />
+			<remove_value name="$kAAITParam_data.$orderLocation_pos" />
+		</do_if>
+	</add>
+<!-- add prepend. purpose: init var.
+	<init>
+-->
+	<add pos="prepend" sel="//init">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@global.$kAAIT_Config.$lxl_isStepForward or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
+						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
+					)
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_Init" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetPotentialHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetPotentialHighRisk + ' $kAAIT_isTargetHighRisk: ' + @$kAAIT_isTargetHighRisk" chance="100" />
+		</do_if>
+	</add>
+<!-- add prepend in first instance. purpose: init. disallow boosts.
+	<actions>
+-->
+	<add pos="prepend" sel="(//actions)[1]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<do_if value="@$kAAIT_isTargetPotentialHighRisk">
+				<set_value name="$allowboost" exact="false" />
+			</do_if>
+		</do_if>
+	</add>
+<!-- add after 1st instance. purpose: replace aimdist. more stable combat range.
+	<set_value name="$aimdist" min="$maxeffectivecombatrange * (0.4 * (1.0 + (($skill_piloting + $skill_morale)f / 30.0)))" max="$maxeffectivecombatrange * (1.0 - (($skill_piloting + $skill_morale)f / 300.0))"/>
+-->
+	<add pos="after" sel="(//set_value[@name=&quot;$aimdist&quot;])[1]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@global.$kAAIT_Config.$lxl_isStepForward or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
+						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
+					)
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_LXL_GetCombatRange" />
+			<set_value name="$aimdist" exact="$kAAIT_combatRange" />
+		</do_if>
+	</add>
+<!-- add after. purpose: hijack effective range and move thresholds.
+	<set_value name="$movethreshold_max" exact="$maxeffectivecombatrange"/>
+-->
+	<add pos="after" sel="//set_value[@name=&quot;$movethreshold_max&quot;][@exact=&quot;$maxeffectivecombatrange&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@global.$kAAIT_Config.$lxl_isStepForward or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
+						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
+					)
+				)
+			)
+		">
+			<set_value name="$maxeffectivecombatrange" exact="$kAAIT_maxCombatRange"/>
+			<!-- <set_value name="$movethreshold_min" exact="$kAAIT_minCombatRange"/> -->
+			<!-- <set_value name="$movethreshold_min" exact="[$movethreshold_min, $kAAIT_combatRange].max"/> -->
+			<set_value name="$movethreshold_max" exact="[$movethreshold_max, $kAAIT_maxCombatRange].max"/>
+		</do_if>
+	</add>
+<!-- add before. purpose: debug
+	<do_if value="$distance gt $movethreshold_max or $distance lt $movethreshold_min">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;$distance gt $movethreshold_max or $distance lt $movethreshold_min&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' $distance: ' + $distance + ' $aimdist: ' + $aimdist + ' $maxeffectivecombatrange: ' + $maxeffectivecombatrange + ' $movethreshold_min: ' + $movethreshold_min + ' $movethreshold_max: ' + $movethreshold_max" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+<!-- add "not isstation" to value. purpose: prevent going to the other side of target, if target is a station module!
+	<do_if value="$target.distanceto.[$target.sector, $pos] gt $movethreshold_max or $target.distanceto.[$target.sector, $pos] lt $movethreshold_min">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;$target.distanceto.[$target.sector, $pos] gt $movethreshold_max or $target.distanceto.[$target.sector, $pos] lt $movethreshold_min&quot;]">
+		<do_if value="
+			@$kAAIT_isTargetPotentialHighRisk and
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@global.$kAAIT_Config.$lxl_isStepForward or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(
+						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
+						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
+					)
+				)
+			)
+		">
+			<set_value name="$kAAIT_findPosOnOtherSide" exact="false" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_findPosOnOtherSide (1): ' + $kAAIT_findPosOnOtherSide" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<do_if value="$target.distanceto.[$target.sector, $pos] gt $movethreshold_max">
+				<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
+			</do_if>
+		</do_if>
+		<do_else>
+			<set_value name="$kAAIT_findPosOnOtherSide" exact="$target.distanceto.[$target.sector, $pos] gt $movethreshold_max or $target.distanceto.[$target.sector, $pos] lt $movethreshold_min" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_findPosOnOtherSide (2): ' + $kAAIT_findPosOnOtherSide" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_else>
+	</add>
+	<replace sel="//do_if[@value=&quot;$target.distanceto.[$target.sector, $pos] gt $movethreshold_max or $target.distanceto.[$target.sector, $pos] lt $movethreshold_min&quot;]/@value">$kAAIT_findPosOnOtherSide</replace>
+<!-- replace check value. purpose: consider shield for reaction.
+	<wait exact="$updatetime">
+		<interrupt>
+			<conditions>
+				...
+				<check_value value="player.age ge $time_waitend"/>
+-->
+	<replace sel="//wait[@exact=&quot;$updatetime&quot;]//conditions//check_value[@value=&quot;player.age ge $time_waitend&quot;]">
+		<check_value value="
+			player.age ge $time_waitend or
+			(
+				this.assignedcontrolled.shieldpercentage le 90 and
+				this.race != race.drone and
+				(
+					(
+						this.assignedcontrolled.isplayerowned and
+						(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+					) or
+					(
+						(not this.assignedcontrolled.isplayerowned) and
+						(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+					)
+				)
+			)
+		" />
+	</replace>
+<!-- add before. purspoe: inch forward or backwards.
+	<wait exact="$updatetime">
+-->
+	<add pos="before" sel="//wait[@exact=&quot;$updatetime&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' player.age (before wait): ' + player.age + ' $time_waitend: ' + $time_waitend" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+	<add pos="prepend" sel="//wait[@exact=&quot;$updatetime&quot;]/interrupt/actions">
+		<!-- <debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + event.param + ' ' + @event.param.knownname" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+				)
+			)
+		">
+			<do_if value="event.param == $kAAIT_defensibleTarget or @event.param.defensible == $kAAIT_defensibleTarget">
+				<set_value name="$kAAITParam_data.$lastAttack_enemy" exact="event.param" />
+				<set_value name="$kAAITParam_data.$lastAttack_time" exact="player.age" />
+			</do_if>
+		</do_if>
+	</add>
+	<add pos="after" sel="//wait[@exact=&quot;$updatetime&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' player.age (after wait): ' + player.age + ' $time_waitend: ' + $time_waitend" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<include_interrupt_actions ref="kAAIT_LXL_StepForwardOrMoveOutOfRange" />
+			<do_if value="@$kAAIT_isInching">
+				<remove_value name="$kAAIT_isInching" />
+				<resume label="finish" />
+			</do_if>
+		</do_if>
+	</add>
+<!-- add after 2nd instance. purpose: if chasing small ships near big enemy, move away.
+	<get_safe_pos result="$pos" object="$target" min="$minoperationalrange" max="$maxoperationalrange" sector="$target.sector" direction="$weakquadrant" directionobject="$target" radius="this.ship.size/2.0" ignored="this.ship"/>
+-->
+	<add pos="after" sel="(//get_safe_pos[@result=&quot;$pos&quot;][@object=&quot;$target&quot;][@min=&quot;$minoperationalrange&quot;][@max=&quot;$maxoperationalrange&quot;][@sector=&quot;$target.sector&quot;][@direction=&quot;$weakquadrant&quot;][@directionobject=&quot;$target&quot;][@radius=&quot;this.ship.size/2.0&quot;][@ignored=&quot;this.ship&quot;])[2]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_shipIsNearBigEnemy: ' + $kAAIT_shipIsNearBigEnemy + ' $kAAIT_targetIsNearBigEnemy: ' + $kAAIT_targetIsNearBigEnemy" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<do_if value="@$kAAIT_shipIsNearBigEnemy or @$kAAIT_targetIsNearBigEnemy">
+				<!-- move away -->
+				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+				<do_if value="this.assignedcontrolled.attention lt attention.visible">
+					<resume label="finish" />
+				</do_if>
+			</do_if>
+		</do_if>
+	</add>
+<!-- add after. purpose: debugging
+	<create_position name="$pos" space="$target" value="$pos" object="$target.sector"/>
+-->
+	<add pos="after" sel="//create_position[@name=&quot;$pos&quot;][@space=&quot;$target&quot;][@value=&quot;$pos&quot;][@object=&quot;$target.sector&quot;]">
+		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+			<!-- <create_position name="$pos" space="$target" value="$pos" object="$target.sector"/> -->
+			<create_position name="$kAAIT_posAttack" space="$target.sector" object="$target" value="$pos" />
+			<do_if value="@$kAAITParam_data.$beacon_to2.exists">
+				<destroy_object object="$kAAITParam_data.$beacon_to2" />
+			</do_if>
+			<create_object name="$kAAITParam_data.$beacon_to2" sector="$target.sector" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+				<position value="$kAAIT_posAttack"/>
+			</create_object>
+			<set_object_name object="$kAAITParam_data.$beacon_to2" name="this.assignedcontrolled.idcode + ' to (move to attack pos)'" />
+			<debug_text text="this.assignedcontrolled.idcode + ' beaconto.distanceto.ship: ' + ($kAAITParam_data.$beacon_to2.distanceto.{this.assignedcontrolled})" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+<!-- add. purpose: consider shield for reaction.
+	<move_strafe destination="$target" abortpath="not @$abortpath" object="this.assignedcontrolled" finishonapproach="false" forcerotation="true" sinceversion="10">
+		<interrupt>
+			<conditions>
+				<check_any>
+-->
+	<add sel="//move_strafe[@destination=&quot;$target&quot;]/interrupt/conditions/check_any">
+		<check_all>
+			<event_object_attacked object="this.assignedcontrolled" />
+			<check_value value="this.assignedcontrolled.shieldpercentage le 90" />
+			<check_value value="
+				this.race != race.drone and
+				(
+					(
+						this.assignedcontrolled.isplayerowned and
+						(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+					) or
+					(
+						(not this.assignedcontrolled.isplayerowned) and
+						(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+					)
+				)
+			" />
+		</check_all>
+	</add>
+<!-- add after. purpose: var for last attack.
+	<move_strafe destination="$target" abortpath="not @$abortpath" object="this.assignedcontrolled" finishonapproach="false" forcerotation="true" sinceversion="10">
+		<interrupt>
+			<conditions>
+-->
+	<add pos="after" sel="//move_strafe[@destination=&quot;$target&quot;]/interrupt/conditions">
+		<actions>
+			<do_if value="
+				this.race != race.drone and
+				(
+					(
+						this.assignedcontrolled.isplayerowned and
+						(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+					) or
+					(
+						(not this.assignedcontrolled.isplayerowned) and
+						(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+					)
+				)
+			">
+				<set_value name="$kAAITParam_data.$lastAttack_enemy" exact="event.param" />
+				<set_value name="$kAAITParam_data.$lastAttack_time" exact="player.age" />
+			</do_if>
+		</actions>
+	</add>
+<!-- add. purpose: consider shield for reaction.
+	<move_to destination="$target" abortpath="not @$noabortpath" object="this.assignedcontrolled" finishonapproach="false" forceposition="false" forcerotation="false" uselocalhighways="false" boost="@$boost" travel="@$travel">
+		<interrupt>
+			<conditions>
+				<check_any>
+-->
+	<add sel="//move_to[@destination=&quot;$target&quot;]/interrupt/conditions/check_any">
+		<check_all>
+			<event_object_attacked object="this.assignedcontrolled" />
+			<check_value value="this.assignedcontrolled.shieldpercentage le 90" />
+			<check_value value="
+				this.race != race.drone and
+				(
+					(
+						this.assignedcontrolled.isplayerowned and
+						(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+					) or
+					(
+						(not this.assignedcontrolled.isplayerowned) and
+						(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+					)
+				)
+			" />
+		</check_all>
+	</add>
+<!-- add after. purpose: var for last attack.
+	<move_to destination="$target" abortpath="not @$noabortpath" object="this.assignedcontrolled" finishonapproach="false" forceposition="false" forcerotation="false" uselocalhighways="false" boost="@$boost" travel="@$travel">
+		<interrupt>
+			<conditions>
+-->
+	<add pos="after" sel="//move_to[@destination=&quot;$target&quot;]/interrupt/conditions">
+		<actions>
+			<do_if value="
+				this.race != race.drone and
+				(
+					(
+						this.assignedcontrolled.isplayerowned and
+						(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+					) or
+					(
+						(not this.assignedcontrolled.isplayerowned) and
+						(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+					)
+				)
+			">
+				<set_value name="$kAAITParam_data.$lastAttack_enemy" exact="event.param" />
+				<set_value name="$kAAITParam_data.$lastAttack_time" exact="player.age" />
+			</do_if>
+		</actions>
+	</add>
+<!-- add after. purpose: inch forward if no recent damage from big target.
+	<do_if value="this.ship.sector == $target.sector">
+		...
+		<do_if value="@$boost">
+-->
+	<add pos="after" sel="//do_if[@value=&quot;this.ship.sector == $target.sector&quot;]/do_if[@value=&quot;@$boost&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(@global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(@global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_LXL_StepForwardOrMoveOutOfRange" />
+			<do_if value="@$kAAIT_isInching">
+				<remove_value name="$kAAIT_isInching" />
+				<resume label="finish" />
+			</do_if>
+		</do_if>
+	</add>
+</diff>

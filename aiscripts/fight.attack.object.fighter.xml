@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<diff>
+<!-- add. purpose: data store
+	<params>
+-->
+	<add sel="//params">
+		<param name="kAAITParam_data" required="false" default="null" type="internal" />
+	</add>
+<!-- add prepend. purpose: init var.
+	<init>
+-->
+	<add pos="prepend" sel="//init">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_Init" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetHighRisk" chance="100" />
+		</do_if>
+	</add>
+<!--
+	             ,,            ,,  ,,        ,,
+	             db            db *MM      `7MM
+	                               MM        MM
+	`7M'   `MF'`7MM  ,pP"Ybd `7MM  MM,dMMb.  MM  .gP"Ya
+	  VA   ,V    MM  8I   `"   MM  MM    `Mb MM ,M'   Yb
+	   VA ,V     MM  `YMMMa.   MM  MM     M8 MM 8M""""""
+	    VVV      MM  L.   I8   MM  MM.   ,M9 MM YM.    ,
+	     W     .JMML.M9mmmP' .JMML.P^YbmdP'.JMML.`Mbmmd'
+ -->
+<!--
+	add prepend. purpose: break off attack if near a big target
+	<do_while value="$target.isoperational">
+-->
+	<add pos="prepend" sel="//do_while[@value=&quot;$target.isoperational&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' ' + this.assignedcontrolled.knownname + ' ' + this.assignedcontrolled.idcode + ' size: ' + this.assignedcontrolled.size" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_defensibleTarget: ' + $kAAIT_defensibleTarget.knownname + ' ' + @$kAAIT_defensibleTarget.idcode + ' size: ' + $kAAIT_defensibleTarget.size + ' turrets: ' + @$kAAIT_defensibleTarget.turrets.operational.count + ' weapons: ' + @$kAAIT_defensibleTarget.weapons.operational.count" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<set_value name="$kAAIT_isFlee" exact="false" />
+			<set_value name="$kAAIT_isBreakOff" exact="false" />
+			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+			<do_if value="@$kAAIT_shipIsNearBigEnemy">
+				<set_value name="$kAAIT_isFlee" exact="true" />
+			</do_if>
+			<do_if value="@$kAAIT_targetIsNearBigEnemy">
+				<do_if value="$allowothertargets">
+					<do_if value="this.assignedcontrolled.sector == $kAAIT_defensibleTarget.sector">
+						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+					</do_if>
+				</do_if>
+				<do_if value="not @$kAAITParam_data.$orders.$attackOther.exists">
+					<set_value name="$kAAIT_isBreakOff" exact="true" />
+				</do_if>
+			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' (1) $kAAIT_isFlee: ' + $kAAIT_isFlee + ' $kAAIT_isBreakOff: ' + $kAAIT_isBreakOff" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+<!-- replace value if instance 1. purpose: prevent move to if ship or target is near big enemy.
+	e.g.: <replace sel="root/bar/foo[@a='1']/@a">3</replace>
+	<do_if value="$target.isoperational">
+-->
+	<replace sel="(//do_if[@value=&quot;$target.isoperational&quot;]/@value)[1]">$target.isoperational and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)</replace>
+<!-- add before. purpose: set MaxGainDistance to prevent move to target if near big enemy.
+	<do_if value="$target.isoperational and this.assignedcontrolled.bboxdistanceto.{$target} gt $MaxGainDistance">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;$target.isoperational and this.assignedcontrolled.bboxdistanceto.{$target} gt $MaxGainDistance&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
+			<do_if value="@$kAAIT_isFlee or @$kAAIT_isBreakOff">
+				<set_value name="$MaxGainDistance" exact="0" />
+			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+	<add pos="after" sel="//do_if[@value=&quot;$target.isoperational and this.assignedcontrolled.bboxdistanceto.{$target} gt $MaxGainDistance&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
+		</do_if>
+	</add>
+<!-- add before. purpose: flee or break-off.
+	<do_if value="$doevade and $target.isoperational">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;$doevade and $target.isoperational&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' (2) $kAAIT_isFlee: ' + @$kAAIT_isFlee + ' $kAAIT_isBreakOff: ' + @$kAAIT_isBreakOff" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<do_if value="@$kAAIT_isFlee">
+				<set_value name="$doevade" exact="false" />
+				<set_value name="$kAAIT_isFlee" exact="false" />
+				<include_interrupt_actions ref="kAAIT_Order_Flee" />
+			</do_if>
+			<do_if value="@$kAAIT_isBreakOff">
+				<set_value name="$doevade" exact="false" />
+				<set_value name="$kAAIT_isBreakOff" exact="false" />
+				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+			</do_if>
+		</do_if>
+	</add>
+<!--
+	                        `7MM
+	                          MM
+	`7MM  `7MM  `7MMpMMMb.    MM  ,MP'`7MMpMMMb.  ,pW"Wq.`7M'    ,A    `MF'`7MMpMMMb.
+	  MM    MM    MM    MM    MM ;Y     MM    MM 6W'   `Wb VA   ,VAA   ,V    MM    MM
+	  MM    MM    MM    MM    MM;Mm     MM    MM 8M     M8  VA ,V  VA ,V     MM    MM
+	  MM    MM    MM    MM    MM `Mb.   MM    MM YA.   ,A9   VVV    VVV      MM    MM
+	  `Mbod"YML..JMML  JMML..JMML. YA..JMML  JMML.`Ybmd9'     W      W     .JMML  JMML.
+ -->
+<!--
+	add prepend. purpose: break off attack if near a big target
+	<do_while value="$target.isoperational and not $isdead" >
+-->
+	<add pos="prepend" sel="//do_while[@value=&quot;$target.isoperational and not $isdead&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' ' + this.assignedcontrolled.knownname + ' ' + this.assignedcontrolled.idcode + ' size: ' + this.assignedcontrolled.size" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<set_value name="$kAAIT_isFlee" exact="false" />
+			<set_value name="$kAAIT_isBreakOff" exact="false" />
+			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+			<do_if value="@$kAAIT_shipIsNearBigEnemy">
+				<set_value name="$kAAIT_isFlee" exact="true" />
+			</do_if>
+			<do_if value="@$kAAIT_targetIsNearBigEnemy">
+				<do_if value="$allowothertargets">
+					<do_if value="this.assignedcontrolled.sector == $kAAIT_defensibleTarget.sector">
+						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+					</do_if>
+				</do_if>
+				<do_if value="not @$kAAITParam_data.$orders.$attackOther.exists">
+					<set_value name="$kAAIT_isBreakOff" exact="true" />
+				</do_if>
+			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' (1) $kAAIT_isFlee: ' + $kAAIT_isFlee + ' $kAAIT_isBreakOff: ' + $kAAIT_isBreakOff" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+<!-- replace value of instance 2. purpose: skip if flee or break-off.
+	<do_if value="$target.isoperational">
+-->
+	<replace sel="(//do_if[@value=&quot;$target.isoperational&quot;])[2]/@value">$target.isoperational and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)</replace>
+<!-- replace value. purpose: skip if flee or break-off.
+	<do_if value="$target.isoperational and not this.ship.defencenpc">
+-->
+	<replace sel="//do_if[@value=&quot;$target.isoperational and not this.ship.defencenpc&quot;]/@value">$target.isoperational and (not @this.ship.defencenpc) and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)</replace>
+<!-- add before. purpose: set MaxGainDistance to skip if flee or break-off.
+	<do_if value="$target.isoperational and (this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance)">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;$target.isoperational and (this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance)&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
+			<do_if value="@$kAAIT_isFlee or @$kAAIT_isBreakOff">
+				<set_value name="$MaxGainDistance" exact="0" />
+			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+	<add pos="after" sel="//do_if[@value=&quot;$target.isoperational and (this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance)&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
+		</do_if>
+	</add>
+<!-- add before: purpose: do flee or break-off behaviours
+	<do_if value="player.age" min="$attacktime">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;player.age&quot;][@min=&quot;$attacktime&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<debug_text text="this.assignedcontrolled.idcode + ' (2) $kAAIT_isFlee: ' + @$kAAIT_isFlee + ' $kAAIT_isBreakOff: ' + @$kAAIT_isBreakOff" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<do_if value="@$kAAIT_isFlee">
+				<set_value name="$kAAIT_isFlee" exact="false" />
+				<include_interrupt_actions ref="kAAIT_Order_Flee" />
+				<!-- Avoid an infite loop-->
+				<break />
+			</do_if>
+			<do_if value="@$kAAIT_isBreakOff">
+				<set_value name="$kAAIT_isBreakOff" exact="false" />
+				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+				<!-- Avoid an infite loop-->
+				<break />
+			</do_if>
+		</do_if>
+	</add>
+</diff>
