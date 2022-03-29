@@ -1,339 +1,396 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version='1.0' encoding='utf-8'?>
 <diff>
+<!--
+
+         ,,                         ,,             ,,
+       `7MM                       `7MM             db
+         MM                         MM
+    ,M""bMM  .gP"Ya   ,6"Yb.   ,M""bMM   ,6"Yb.  `7MM  `7Mb,od8
+  ,AP    MM ,M'   Yb 8)   MM ,AP    MM  8)   MM    MM    MM' "'
+  8MI    MM 8M""""""  ,pm9MM 8MI    MM   ,pm9MM    MM    MM
+  `Mb    MM YM.    , 8M   MM `Mb    MM  8M   MM    MM    MM
+   `Wbmd"MML.`Mbmmd' `Moo9^Yo.`Wbmd"MML.`Moo9^Yo..JMML..JMML.
+ -->
+  <remove sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_if[@value='$intersector? and not @this.zone.isclass.highway and (@$waitforsubordinates or $waitforatgate or this.assignedcontrolled.iscapitalship)']/do_if[@value='not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway']"/>
+  <remove sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/wait[@max='(not $bigship) * (5.1 - (this.ship.pilot.skill.piloting / 3))s']/@max"/>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/wait" type="@exact">0.5s</add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/do_if[@value='$position']/move_to" pos="before">
+    <do_if value="this.assignedcontrolled.dock and this.assignedcontrolled.pilot">
+      <do_if value="@this.assignedcontrolled.order.id != 'Undock' or @this.assignedcontrolled.order.id != 'DockAt' or @this.assignedcontrolled.order.id != 'DockAndWait'">
+        <run_script name="'move.undock'">
+          <param name="uselaunchtubes" value="true"/>
+        </run_script>
+        <debug_text text="'MOD: DeadAirAITweaks -- %1 -- Undocking ship with move order: %2'.[player.age,this.assignedcontrolled.idcode]" context="false" filter="scripts" chance="100"/>
+      </do_if>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/do_else/move_to" pos="before">
+    <do_if value="this.assignedcontrolled.dock and this.assignedcontrolled.pilot">
+      <do_if value="@this.assignedcontrolled.order.id != 'Undock' or @this.assignedcontrolled.order.id != 'DockAt' or @this.assignedcontrolled.order.id != 'DockAndWait'">
+        <run_script name="'move.undock'">
+          <param name="uselaunchtubes" value="true"/>
+        </run_script>
+        <debug_text text="'MOD: DeadAirAITweaks -- %1 -- Undocking ship with move order: %2'.[player.age,this.assignedcontrolled.idcode]" context="false" filter="scripts" chance="100"/>
+      </do_if>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$rotation']" pos="before">
+    <do_if value="this.assignedcontrolled.dock and this.assignedcontrolled.pilot">
+      <do_if value="@this.assignedcontrolled.order.id != 'Undock' or @this.assignedcontrolled.order.id != 'DockAt' or @this.assignedcontrolled.order.id != 'DockAndWait'">
+        <run_script name="'move.undock'">
+          <param name="uselaunchtubes" value="true"/>
+        </run_script>
+        <debug_text text="'MOD: DeadAirAITweaks -- %1 -- Undocking ship with move order: %2'.[player.age,this.assignedcontrolled.idcode]" context="false" filter="scripts" chance="100"/>
+      </do_if>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$rotation']/do_if[@value='this.ship.distanceto.[$positionspace, $safepos] gt this.ship.size']/move_to" type="@travel">(not $noboost) and (this.assignedcontrolled.distanceto.[$positionspace, $safepos] gt 15km)</add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_else[4]/move_to" type="@travel">(not $noboost) and (this.assignedcontrolled.distanceto.[$positionspace, $safepos] gt 15km)</add>
+<!--
+
+
+  `7MM                                    mm
+    MM                                    MM
+    MM  ,MP'`7MM  `7MM  .gP"Ya `7Mb,od8 mmMMmm .gP"Ya   .gP"Ya
+    MM ;Y     MM    MM ,M'   Yb  MM' "'   MM  ,M'   Yb ,M'   Yb
+    MM;Mm     MM    MM 8M""""""  MM       MM  8M"""""" 8M""""""
+    MM `Mb.   MM    MM YM.    ,  MM       MM  YM.    , YM.    ,
+  .JMML. YA.  `Mbod"YML.`Mbmmd'.JMML.     `Mbmo`Mbmmd'  `Mbmmd'
+ -->
 <!-- add. purpose: data store
-	<params>
+  <params>
 -->
-	<add sel="//params">
-		<param name="kAAIT_isActive" required="false" default="false" type="internal" />
-		<param name="kAAITParam_data" required="false" default="null" type="internal" />
-		<param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal" />
-		<param name="kAAITParam_aroundDir" required="false" default="0" type="internal" />
-		<param name="kAAITParam_isSkipAvoidance" required="false" default="null" type="internal" />
-	</add>
+  <add sel="//params">
+    <param name="kAAIT_isActive" required="false" default="false" type="internal" />
+    <param name="kAAITParam_data" required="false" default="null" type="internal" />
+    <param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal" />
+    <param name="kAAITParam_aroundDir" required="false" default="0" type="internal" />
+    <param name="kAAITParam_isSkipAvoidance" required="false" default="null" type="internal" />
+  </add>
 <!-- add before at 5 instances. purpose: debug.
-	<move_to>
+  <move_to>
 -->
-	<add pos="before" sel="(//move_to)[1]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (1) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		</do_if>
-	</add>
-	<add pos="before" sel="(//move_to)[2]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (2) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		</do_if>
-	</add>
-	<add pos="before" sel="(//move_to)[3]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (3) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		</do_if>
-	</add>
-	<add pos="before" sel="(//move_to)[4]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (4) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		</do_if>
-	</add>
-	<add pos="before" sel="(//move_to)[5]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (5) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		</do_if>
-	</add>
+  <add pos="before" sel="(//move_to)[1]">
+    <do_if value="
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <debug_text text="this.assignedcontrolled.idcode + ' move_to (1) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    </do_if>
+  </add>
+  <add pos="before" sel="(//move_to)[2]">
+    <do_if value="
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <debug_text text="this.assignedcontrolled.idcode + ' move_to (2) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    </do_if>
+  </add>
+  <add pos="before" sel="(//move_to)[3]">
+    <do_if value="
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <debug_text text="this.assignedcontrolled.idcode + ' move_to (3) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    </do_if>
+  </add>
+  <add pos="before" sel="(//move_to)[4]">
+    <do_if value="
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <debug_text text="this.assignedcontrolled.idcode + ' move_to (4) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    </do_if>
+  </add>
+  <add pos="before" sel="(//move_to)[5]">
+    <do_if value="
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <debug_text text="this.assignedcontrolled.idcode + ' move_to (5) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    </do_if>
+  </add>
 <!-- add before. purpose: show precise destination if set.
-	<location object="$destination" position="$position" condition="$destination and $position"/>
+  <location object="$destination" position="$position" condition="$destination and $position"/>
 -->
-	<add pos="before" sel="//location[@object=&quot;$destination&quot;][@position=&quot;$position&quot;][@condition=&quot;$destination and $position&quot;]">
-		<location object="$kAAIT_preciseDestination" position="$kAAIT_precisePosition" condition="@$kAAIT_preciseDestination.exists and @$kAAIT_precisePosition"/>
-	</add>
+  <add pos="before" sel="//location[@object=&quot;$destination&quot;][@position=&quot;$position&quot;][@condition=&quot;$destination and $position&quot;]">
+    <location object="$kAAIT_preciseDestination" position="$kAAIT_precisePosition" condition="@$kAAIT_preciseDestination.exists and @$kAAIT_precisePosition"/>
+  </add>
 <!-- add. purpose: save destination. i.e. code changes $position.
-	<label name="check" />
+  <label name="check" />
 -->
-	<add pos="after" sel="//label[@name=&quot;check&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(@global.$kAAIT_Config.$lxl_isAvoidHighRisk or @global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or @global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
-				)
-			)
-		">
-			<do_if value="not @$kAAIT_preciseDestination">
-				<set_value name="$kAAIT_preciseDestination" exact="$destination" />
-				<do_if value="not @$position">
-					<create_position name="$position" x="0" y="0" z="0" />
-				</do_if>
-				<set_value name="$kAAIT_precisePosition" exact="$position" />
-				<do_if value="not @$kAAIT_preciseDestination.isclass.sector">
-					<do_if value="@$kAAIT_preciseDestination.sector">
-						<create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.sector" object="$kAAIT_preciseDestination" value="$position" />
-						<set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.sector" />
-					</do_if>
-					<do_elseif value="@$kAAIT_preciseDestination.zone and @$kAAIT_preciseDestination.zone.sector">
-						<create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.zone.sector" object="$kAAIT_preciseDestination.zone" value="$position" />
-						<set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.zone.sector" />
-					</do_elseif>
-					<do_else>
-						<set_value name="$kAAIT_preciseDestination" exact="this.assignedcontrolled.sector" />
-						<set_value name="$kAAIT_precisePosition" exact="this.assignedcontrolled.position" />
-					</do_else>
-				</do_if>
-			</do_if>
-		</do_if>
-	</add>
+  <add pos="after" sel="//label[@name=&quot;check&quot;]">
+    <do_if value="
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+        ) or
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          (@global.$kAAIT_Config.$lxl_isAvoidHighRisk or @global.$kAAIT_Config.$lxl_isStepForward or @global.$kAAIT_Config.$lxl_isMoveOutOfRange)
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          (@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or @global.$kAAIT_Config.$lxl_isStepForward_allFactions or @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions)
+        )
+      )
+    ">
+      <do_if value="not @$kAAIT_preciseDestination">
+        <set_value name="$kAAIT_preciseDestination" exact="$destination" />
+        <do_if value="not @$position">
+          <create_position name="$position" x="0" y="0" z="0" />
+        </do_if>
+        <set_value name="$kAAIT_precisePosition" exact="$position" />
+        <do_if value="not @$kAAIT_preciseDestination.isclass.sector">
+          <do_if value="@$kAAIT_preciseDestination.sector">
+            <create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.sector" object="$kAAIT_preciseDestination" value="$position" />
+            <set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.sector" />
+          </do_if>
+          <do_elseif value="@$kAAIT_preciseDestination.zone and @$kAAIT_preciseDestination.zone.sector">
+            <create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.zone.sector" object="$kAAIT_preciseDestination.zone" value="$position" />
+            <set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.zone.sector" />
+          </do_elseif>
+          <do_else>
+            <set_value name="$kAAIT_preciseDestination" exact="this.assignedcontrolled.sector" />
+            <set_value name="$kAAIT_precisePosition" exact="this.assignedcontrolled.position" />
+          </do_else>
+        </do_if>
+      </do_if>
+    </do_if>
+  </add>
 <!-- add after. purpose: do not find more enemies if an order already exists
-	<interrupts>
-		<handler>
-			<conditions>
-				<event_gravidar_has_scanned object="if ($activepatrol or $stopondetect.exists) then this.assignedcontrolled else null" check="false"/>
+  <interrupts>
+    <handler>
+      <conditions>
+        <event_gravidar_has_scanned object="if ($activepatrol or $stopondetect.exists) then this.assignedcontrolled else null" check="false"/>
 -->
-	<!-- <add pos="after" sel="//event_gravidar_has_scanned">
-		<check_value value="not @$kAAITParam_data.$orders.$attackOther.exists" />
-	</add> -->
+  <!-- <add pos="after" sel="//event_gravidar_has_scanned">
+    <check_value value="not @$kAAITParam_data.$orders.$attackOther.exists" />
+  </add> -->
 <!-- add before. purpose: if enemy stations on the way, move elsewhere first.
-	<do_if value="not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway">
-	<do_if value="$position"> (2nd instance)
-	<do_if value="not @$rotation">
+  <do_if value="not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway">
+  <do_if value="$position"> (2nd instance)
+  <do_if value="not @$rotation">
 -->
-	<add pos="before" sel="//do_if[@value=&quot;not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway&quot;]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (1): ' + @$kAAITParam_isSkipAvoidance" />
-		</do_if>
-		<do_if value="
-			(not @$kAAITParam_isSkipAvoidance) and
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
-		</do_if>
-	</add>
-	<add pos="before" sel="(//do_if[@value=&quot;$position&quot;])[2]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (2): ' + @$kAAITParam_isSkipAvoidance" />
-		</do_if>
-		<do_if value="
-			(not @$kAAITParam_isSkipAvoidance) and
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
-		</do_if>
-	</add>
-	<add pos="before" sel="//do_if[@value=&quot;not @$rotation&quot;]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (3): ' + @$kAAITParam_isSkipAvoidance" />
-		</do_if>
-		<do_if value="
-			(not @$kAAITParam_isSkipAvoidance) and
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
-		</do_if>
-	</add>
+  <add pos="before" sel="//do_if[@value=&quot;not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway&quot;]">
+    <do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+      <debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (1): ' + @$kAAITParam_isSkipAvoidance" />
+    </do_if>
+    <do_if value="
+      (not @$kAAITParam_isSkipAvoidance) and
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+        ) or
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
+    </do_if>
+  </add>
+  <add pos="before" sel="(//do_if[@value=&quot;$position&quot;])[2]">
+    <do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+      <debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (2): ' + @$kAAITParam_isSkipAvoidance" />
+    </do_if>
+    <do_if value="
+      (not @$kAAITParam_isSkipAvoidance) and
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+        ) or
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
+    </do_if>
+  </add>
+  <add pos="before" sel="//do_if[@value=&quot;not @$rotation&quot;]">
+    <do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+      <debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (3): ' + @$kAAITParam_isSkipAvoidance" />
+    </do_if>
+    <do_if value="
+      (not @$kAAITParam_isSkipAvoidance) and
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+        ) or
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+        )
+      )
+    ">
+      <include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
+    </do_if>
+  </add>
 <!-- add after. purpose: clean-up.
-	<label name="finish"/>
+  <label name="finish"/>
 -->
-	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
-						@global.$kAAIT_Config.$lxl_isStepForward or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
-					)
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
-						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
-					)
-				)
-			)
-		">
-			<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-				<debug_text text="this.assignedcontrolled.idcode + ' finish'" />
-			</do_if>
-			<do_if value="@$kAAITParam_data">
-				<do_if value="@$kAAITParam_data.$beacon_from.exists">
-					<destroy_object object="$kAAITParam_data.$beacon_from" />
-				</do_if>
-				<do_if value="@$kAAITParam_data.$beacon_to.exists">
-					<destroy_object object="$kAAITParam_data.$beacon_to" />
-				</do_if>
-				<do_if value="@$kAAITParam_data.$beacon_avoid1.exists">
-					<destroy_object object="$kAAITParam_data.$beacon_avoid1" />
-				</do_if>
-				<do_if value="@$kAAITParam_data.$beacon_avoid2.exists">
-					<destroy_object object="$kAAITParam_data.$beacon_avoid2" />
-				</do_if>
-				<remove_value name="$kAAITParam_data.$beacon_from" />
-				<remove_value name="$kAAITParam_data.$beacon_to" />
-				<remove_value name="$kAAITParam_data.$beacon_avoid1" />
-				<remove_value name="$kAAITParam_data.$beacon_avoid2" />
-				<!--
-					set to remember.
-					if this order was cancelled, then this will never be set,
-					and any attack order that made this move will initialise when it runs again.
-					this is ok, because this move order was cancelled.
-				-->
-				<set_value name="this.$kAAITParam_dataRemember" exact="$kAAITParam_data" />
-			</do_if>
-		</do_if>
-	</add>
+  <add pos="after" sel="//label[@name=&quot;finish&quot;]">
+    <do_if value="
+      this.race != race.drone and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+        ) or
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          (
+            @global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+            @global.$kAAIT_Config.$lxl_isStepForward or
+            @global.$kAAIT_Config.$lxl_isMoveOutOfRange
+          )
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          (
+            @global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
+            @global.$kAAIT_Config.$lxl_isStepForward_allFactions or
+            @global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
+          )
+        )
+      )
+    ">
+      <do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+        <debug_text text="this.assignedcontrolled.idcode + ' finish'" />
+      </do_if>
+      <do_if value="@$kAAITParam_data">
+        <do_if value="@$kAAITParam_data.$beacon_from.exists">
+          <destroy_object object="$kAAITParam_data.$beacon_from" />
+        </do_if>
+        <do_if value="@$kAAITParam_data.$beacon_to.exists">
+          <destroy_object object="$kAAITParam_data.$beacon_to" />
+        </do_if>
+        <do_if value="@$kAAITParam_data.$beacon_avoid1.exists">
+          <destroy_object object="$kAAITParam_data.$beacon_avoid1" />
+        </do_if>
+        <do_if value="@$kAAITParam_data.$beacon_avoid2.exists">
+          <destroy_object object="$kAAITParam_data.$beacon_avoid2" />
+        </do_if>
+        <remove_value name="$kAAITParam_data.$beacon_from" />
+        <remove_value name="$kAAITParam_data.$beacon_to" />
+        <remove_value name="$kAAITParam_data.$beacon_avoid1" />
+        <remove_value name="$kAAITParam_data.$beacon_avoid2" />
+        <!--
+          set to remember.
+          if this order was cancelled, then this will never be set,
+          and any attack order that made this move will initialise when it runs again.
+          this is ok, because this move order was cancelled.
+        -->
+        <set_value name="this.$kAAITParam_dataRemember" exact="$kAAITParam_data" />
+      </do_if>
+    </do_if>
+  </add>
 </diff>
