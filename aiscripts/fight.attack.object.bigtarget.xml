@@ -1,272 +1,243 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version="1.0" encoding="utf-8" ?>
 <diff>
-<!--
-  notes:
-
-  MaxGainDistance:
-    kuertee:
-      sets MaxGainDistance to 0 to skip the movement following the test: (lt MaxGainDistance).
-      then it resotres MaxGainDistance to its previous value after.
--->
-<!--
-
-         ,,                         ,,             ,,
-       `7MM                       `7MM             db
-         MM                         MM
-    ,M""bMM  .gP"Ya   ,6"Yb.   ,M""bMM   ,6"Yb.  `7MM  `7Mb,od8
-  ,AP    MM ,M'   Yb 8)   MM ,AP    MM  8)   MM    MM    MM' "'
-  8MI    MM 8M""""""  ,pm9MM 8MI    MM   ,pm9MM    MM    MM
-  `Mb    MM YM.    , 8M   MM `Mb    MM  8M   MM    MM    MM
-   `Wbmd"MML.`Mbmmd' `Moo9^Yo.`Wbmd"MML.`Moo9^Yo..JMML..JMML.
- -->
-  <replace sel="/aiscript/init/set_value[@name='$MaxGainDistance'][@exact='this.assignedcontrolled.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
-  <replace sel="/aiscript/patch[@sinceversion='10']/set_value[@name='$MaxGainDistance'][@exact='this.ship.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='$iscapship']/set_value[@name='$ToleranceWeapon1'][@exact='8.0deg']/@exact">4.0deg</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='$iscapship']/set_value[@name='$ToleranceWeapon2'][@exact='4.0deg']/@exact">6.0deg</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='$iscapship']/set_value[@name='$MinGainDistance'][@exact='this.ship.maxcombatrange.all * 0.75']/@exact">[this.assignedcontrolled.maxcombatrange.all * 0.75, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_else/set_value[@name='$ToleranceWeapon1'][@exact='18.0deg']/@exact">4.0deg</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_else/set_value[@name='$ToleranceWeapon2'][@exact='8.0deg']/@exact">6.0deg</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_else/set_value[@name='$MinGainDistance'][@exact='this.ship.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/do_if[@value='$isinview']/@chance">100</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/move_to/@travel">($duration_movement gt 40s) and (((this.assignedcontrolled.bboxdistanceto.{$bigtarget} + this.assignedcontrolled.size) gt this.assignedcontrolled.maxcombatrange.all) or ((this.assignedcontrolled.bboxdistanceto.{$bigtarget} + this.assignedcontrolled.size) gt (this.assignedcontrolled.maxradarrange)))</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/do_while[@value='$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)']/set_value[@name='$time_gaindistance'][@min='[10s * this.assignedcontrolled.combinedskill / 100, 1s].max'][@max='[30s * this.assignedcontrolled.combinedskill / 100, 3s].max']/@min">10s</replace>
-  <replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/do_while[@value='$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)']/set_value[@name='$time_gaindistance'][@min='10s'][@max='[30s * this.assignedcontrolled.combinedskill / 100, 3s].max']/@max">30s</replace>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$MaxGainDistance'][@exact='this.ship.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
-<!--
-
-
-  `7MM                                    mm
-    MM                                    MM
-    MM  ,MP'`7MM  `7MM  .gP"Ya `7Mb,od8 mmMMmm .gP"Ya   .gP"Ya
-    MM ;Y     MM    MM ,M'   Yb  MM' "'   MM  ,M'   Yb ,M'   Yb
-    MM;Mm     MM    MM 8M""""""  MM       MM  8M"""""" 8M""""""
-    MM `Mb.   MM    MM YM.    ,  MM       MM  YM.    , YM.    ,
-  .JMML. YA.  `Mbod"YML.`Mbmmd'.JMML.     `Mbmo`Mbmmd'  `Mbmmd'
- -->
 <!-- add. purpose: data store
-  <params>
+	<params>
 -->
-  <add sel="//params">
-    <param name="kAAITParam_data" required="false" default="null" type="internal" />
-  </add>
+	<add sel="//params">
+		<param name="kAAITParam_data" required="false" default="null" type="internal" />
+	</add>
 <!-- add prepend. purpose: init var.
-  <init>
+	<init>
 -->
-  <add pos="prepend" sel="//init">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <include_interrupt_actions ref="kAAIT_Init" />
-      <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetHighRisk" chance="100" />
-    </do_if>
-  </add>
+	<add pos="prepend" sel="//init">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_Init" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetHighRisk" chance="100" />
+		</do_if>
+	</add>
 <!--
-               ,,            ,,  ,,        ,,
-               db            db *MM      `7MM
-                                 MM        MM
-  `7M'   `MF'`7MM  ,pP"Ybd `7MM  MM,dMMb.  MM  .gP"Ya
-    VA   ,V    MM  8I   `"   MM  MM    `Mb MM ,M'   Yb
-     VA ,V     MM  `YMMMa.   MM  MM     M8 MM 8M""""""
-      VVV      MM  L.   I8   MM  MM.   ,M9 MM YM.    ,
-       W     .JMML.M9mmmP' .JMML.P^YbmdP'.JMML.`Mbmmd'
+	             ,,            ,,  ,,        ,,
+	             db            db *MM      `7MM
+	                               MM        MM
+	`7M'   `MF'`7MM  ,pP"Ybd `7MM  MM,dMMb.  MM  .gP"Ya
+	  VA   ,V    MM  8I   `"   MM  MM    `Mb MM ,M'   Yb
+	   VA ,V     MM  `YMMMa.   MM  MM     M8 MM 8M""""""
+	    VVV      MM  L.   I8   MM  MM.   ,M9 MM YM.    ,
+	     W     .JMML.M9mmmP' .JMML.P^YbmdP'.JMML.`Mbmmd'
  -->
 <!--
-  add prepend. purpose: find new target if big target.
-  <do_while value="$target.canbeattacked">
+	add prepend. purpose: find new target if big target.
+	<do_while value="$target.canbeattacked">
 -->
-  <add pos="prepend" sel="//do_while[@value=&quot;$target.canbeattacked&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
-    </do_if>
-  </add>
+	<add pos="prepend" sel="//do_while[@value=&quot;$target.canbeattacked&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
+		</do_if>
+	</add>
 <!-- add before. purpose: suppress chatter
-  <include_interrupt_actions ref="NPCUseCase_AttackRun_Small" />
+	<include_interrupt_actions ref="NPCUseCase_AttackRun_Small" />
 -->
-  <add pos="before" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
-      <do_if value="$kAAIT_isTargetHighRisk">
-        <set_value name="global.$SuppressCommChatter" exact="true" />
-      </do_if>
-    </do_if>
-  </add>
-  <add pos="after" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
-    </do_if>
-  </add>
+	<add pos="before" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
+			<do_if value="$kAAIT_isTargetHighRisk">
+				<set_value name="global.$SuppressCommChatter" exact="true" />
+			</do_if>
+		</do_if>
+	</add>
+	<add pos="after" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
+		</do_if>
+	</add>
 <!-- add chance. purpose: prevent move_to big target.
-  <move_to object="this.ship" destination="$target" flightbehaviour="flightbehaviour.bigfight" forcesteering="true" travel="$duration_movement gt 40s">
+	<move_to object="this.ship" destination="$target" flightbehaviour="flightbehaviour.bigfight" forcesteering="true" travel="$duration_movement gt 40s">
 -->
-  <add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target&quot;][@flightbehaviour=&quot;flightbehaviour.bigfight&quot;][@forcesteering=&quot;true&quot;][@travel=&quot;$duration_movement gt 40s&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <do_if value="$kAAIT_isTargetHighRisk">
-        <set_value name="$duration_movement" exact="0" />
-      </do_if>
-      <debug_text text="this.assignedcontrolled.idcode + ' player.age: ' + player.age + ' $duration_movement: ' + $duration_movement" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-    </do_if>
-  </add>
+	<add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target&quot;][@flightbehaviour=&quot;flightbehaviour.bigfight&quot;][@forcesteering=&quot;true&quot;][@travel=&quot;$duration_movement gt 40s&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<do_if value="$kAAIT_isTargetHighRisk">
+				<set_value name="$duration_movement" exact="0" />
+			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' player.age: ' + player.age + ' $duration_movement: ' + $duration_movement" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
 <!--
-  add before. purpose: break off attack if a big target
-  <do_while value="$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)">
+	add before. purpose: break off attack if a big target
+	<do_while value="$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)">
 -->
-  <add pos="before" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
-      <do_if value="$kAAIT_isTargetHighRisk">
-        <set_value name="$MaxGainDistance" exact="0" />
-      </do_if>
-      <debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-    </do_if>
-  </add>
-  <add pos="after" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
-      <!-- <debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-    </do_if>
-  </add>
+	<add pos="before" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
+			<do_if value="$kAAIT_isTargetHighRisk">
+				<set_value name="$MaxGainDistance" exact="0" />
+			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
+	<add pos="after" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
+			<!-- <debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+		</do_if>
+	</add>
 <!--
-                          `7MM
-                            MM
-  `7MM  `7MM  `7MMpMMMb.    MM  ,MP'`7MMpMMMb.  ,pW"Wq.`7M'    ,A    `MF'`7MMpMMMb.
-    MM    MM    MM    MM    MM ;Y     MM    MM 6W'   `Wb VA   ,VAA   ,V    MM    MM
-    MM    MM    MM    MM    MM;Mm     MM    MM 8M     M8  VA ,V  VA ,V     MM    MM
-    MM    MM    MM    MM    MM `Mb.   MM    MM YA.   ,A9   VVV    VVV      MM    MM
-    `Mbod"YML..JMML  JMML..JMML. YA..JMML  JMML.`Ybmd9'     W      W     .JMML  JMML.
+	                        `7MM
+	                          MM
+	`7MM  `7MM  `7MMpMMMb.    MM  ,MP'`7MMpMMMb.  ,pW"Wq.`7M'    ,A    `MF'`7MMpMMMb.
+	  MM    MM    MM    MM    MM ;Y     MM    MM 6W'   `Wb VA   ,VAA   ,V    MM    MM
+	  MM    MM    MM    MM    MM;Mm     MM    MM 8M     M8  VA ,V  VA ,V     MM    MM
+	  MM    MM    MM    MM    MM `Mb.   MM    MM YA.   ,A9   VVV    VVV      MM    MM
+	  `Mbod"YML..JMML  JMML..JMML. YA..JMML  JMML.`Ybmd9'     W      W     .JMML  JMML.
  -->
 <!--
-  add prepend: purpose: move elsewhere instead if big target
-  <do_while value="$bigtarget.canbeattacked and not $isdead">
+	add prepend: purpose: move elsewhere instead if big target
+	<do_while value="$bigtarget.canbeattacked and not $isdead">
 -->
-  <add pos="prepend" sel="//do_while[@value=&quot;$bigtarget.canbeattacked and not $isdead&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
-    </do_if>
-  </add>
+	<add pos="prepend" sel="//do_while[@value=&quot;$bigtarget.canbeattacked and not $isdead&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
+		</do_if>
+	</add>
 <!-- replace value. purpose: ignore if big target.
-  e.g.: <replace sel="root/bar/foo[@a='1']/@a">3</replace>
-  <do_if value="$bigtarget.canbeattacked">
-  <do_if value="$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc">
-  <do_if value="$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)">
+	e.g.: <replace sel="root/bar/foo[@a='1']/@a">3</replace>
+	<do_if value="$bigtarget.canbeattacked">
+	<do_if value="$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc">
+	<do_if value="$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)">
 -->
-  <replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked&quot;]/@value">$bigtarget.canbeattacked and (not @$kAAIT_isTargetHighRisk)</replace>
-  <replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc&quot;]/@value">$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc and (not @$kAAIT_isTargetHighRisk)</replace>
-  <replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]/@value">$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance) and (not @$kAAIT_isTargetHighRisk)</replace>
+	<replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked&quot;]/@value">$bigtarget.canbeattacked and (not @$kAAIT_isTargetHighRisk)</replace>
+	<replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc&quot;]/@value">$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc and (not @$kAAIT_isTargetHighRisk)</replace>
+	<replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]/@value">$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance) and (not @$kAAIT_isTargetHighRisk)</replace>
 <!-- add before: purpose: break if target too big.
-  <do_if value="player.age" min="$attacktime">
+	<do_if value="player.age" min="$attacktime">
 -->
-  <add pos="before" sel="//do_if[@value=&quot;player.age&quot;][@min=&quot;$attacktime&quot;]">
-    <do_if value="
-      this.race != race.drone and
-      (
-        (
-          this.assignedcontrolled.isplayerowned and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk
-        ) or
-        (
-          (not this.assignedcontrolled.isplayerowned) and
-          @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-        )
-      )
-    ">
-      <do_if value="@$kAAIT_isTargetHighRisk">
-        <!-- Avoid an infite loop-->
-        <resume label="finish" />
-      </do_if>
-    </do_if>
-  </add>
+	<add pos="before" sel="//do_if[@value=&quot;player.age&quot;][@min=&quot;$attacktime&quot;]">
+		<do_if value="
+			this.race != race.drone and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			)
+		">
+			<do_if value="@$kAAIT_isTargetHighRisk">
+				<!-- Avoid an infite loop-->
+				<resume label="finish" />
+			</do_if>
+		</do_if>
+	</add>
+	<!-- DeadAir Diffs -->
+	<replace sel="/aiscript/init/set_value[@name='$MaxGainDistance'][@exact='this.assignedcontrolled.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
+	<replace sel="/aiscript/patch[@sinceversion='10']/set_value[@name='$MaxGainDistance'][@exact='this.ship.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='$iscapship']/set_value[@name='$ToleranceWeapon1'][@exact='8.0deg']/@exact">4.0deg</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='$iscapship']/set_value[@name='$ToleranceWeapon2'][@exact='4.0deg']/@exact">6.0deg</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='$iscapship']/set_value[@name='$MinGainDistance'][@exact='this.ship.maxcombatrange.all * 0.75']/@exact">[this.assignedcontrolled.maxcombatrange.all * 0.75, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_else/set_value[@name='$ToleranceWeapon1'][@exact='18.0deg']/@exact">4.0deg</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_else/set_value[@name='$ToleranceWeapon2'][@exact='8.0deg']/@exact">6.0deg</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_else/set_value[@name='$MinGainDistance'][@exact='this.ship.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/do_if[@value='$isinview']/@chance">100</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/move_to/@travel">($duration_movement gt 40s) and (((this.assignedcontrolled.bboxdistanceto.{$bigtarget} + this.assignedcontrolled.size) gt this.assignedcontrolled.maxcombatrange.all) or ((this.assignedcontrolled.bboxdistanceto.{$bigtarget} + this.assignedcontrolled.size) gt (this.assignedcontrolled.maxradarrange)))</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/do_while[@value='$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)']/set_value[@name='$time_gaindistance'][@min='[10s * this.assignedcontrolled.combinedskill / 100, 1s].max'][@max='[30s * this.assignedcontrolled.combinedskill / 100, 3s].max']/@min">10s</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.canbeattacked']/do_while[@value='$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)']/set_value[@name='$time_gaindistance'][@min='10s'][@max='[30s * this.assignedcontrolled.combinedskill / 100, 3s].max']/@max">30s</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$MaxGainDistance'][@exact='this.ship.maxcombatrange.all']/@exact">[this.assignedcontrolled.maxcombatrange.all, this.assignedcontrolled.maxradarrange * 0.9].min</replace>
 </diff>
