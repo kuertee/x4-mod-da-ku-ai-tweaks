@@ -5,7 +5,29 @@
 -->
 	<add sel="//params">
 		<param name="kAAIT_isActive" required="false" default="false" type="internal" />
+		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
 		<param name="kAAITParam_data" required="false" default="null" type="internal" />
+		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
+			if (not this.assignedcontrolled.isunit) and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
+				)
+			) then true else false
+		" />
 	</add>
 <!-- add before. purpose: show movement.
 	<location condition="$primarytarget.canbeattacked" object="$primarytarget" additionalobjects="$secondarytargets"/>
@@ -25,13 +47,13 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@$kAAITParam_isAvoidHighRisk or
 						@global.$kAAIT_Config.$lxl_isStepForward or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
 					)
@@ -53,7 +75,7 @@
 			)
 		">
 			<include_interrupt_actions ref="kAAIT_Init" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetHighRisk + ' $kAAIT_isTargetPotentialHighRisk: ' + @$kAAIT_isTargetPotentialHighRisk" chance="100" />
+			<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetHighRisk + ' $kAAIT_isTargetPotentialHighRisk: ' + @$kAAIT_isTargetPotentialHighRisk" chance="100" /> -->
 		</do_if>
 		<do_if value="
 			this.race != race.drone and
@@ -61,7 +83,7 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -84,12 +106,12 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -110,7 +132,9 @@
 	<run_script name="$DefensibleScript">
 -->
 	<add sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
+		<param name="kAAITParam_isAutoAdded" value="true" />
 		<param name="kAAITParam_data" value="@$kAAITParam_data" />
+		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 	</add>
 <!-- add after. purpose: if new attack order, flee or move away, finish this order.
 	and create a replacement order with the same params.
@@ -131,12 +155,12 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -188,7 +212,9 @@
 					<param name="allowboost" value="$allowboost" />
 					<param name="forceprimarytarget" value="$forceprimarytarget" />
 					<param name="internalorder" value="$internalorder" />
+					<param name="kAAITParam_isAutoAdded" value="$kAAITParam_isAutoAdded" />
 					<param name="kAAITParam_data" value="$kAAITParam_data" />
+					<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 					<param name="debugchance" value="$debugchance" />
 				</create_order>
 				<resume label="finish"/>
@@ -214,7 +240,7 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+					$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -231,13 +257,13 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+					$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						$kAAITParam_isAvoidHighRisk or
 						@global.$kAAIT_Config.$lxl_isStepForward or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
 					)

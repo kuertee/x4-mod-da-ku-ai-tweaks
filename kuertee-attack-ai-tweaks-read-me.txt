@@ -1,17 +1,17 @@
 Attack AI tweaks
-https://www.nexusmods.com/x4foundations/mods/839
+Release version: https://www.nexusmods.com/x4foundations/mods/839
+Development version: https://github.com/kuertee/x4-mod-da-ku-ai-tweaks
 by kuertee
 
 Updates
 =======
-v5.0.0012, 25 Mar 2022:
--Note: This version will invalidate the mod's attack behaviours from the previous version, causing the ships to act unexpectedly UNTIL their next AI cycle. Or you can simply cancel then reissue any attack orders.
--New feature: L, and XL ships will now start their attack at their max combat range. Prevously, they started their attack at their optimal combat range - which made it look like they ignored their long-range weapons. As in previous versions, they'll inch towards their optimal combat range.
--New feature: L, and XL ships will approach their target at a vertical angle. Previously, they approached their target at their target's vertical position.
--New feature: XS (except for drones), S, and M ships will circle high-risk targets at a vertical angle.
--Bug-fix: L, and XL ships were still trying to get to the other side of their targets - exposing themselves to their target's weapons as they passed them. This happened when the ship acquired an attack order against the same target and the target is outside combat range. I.e. the ship only acquired the "stop kamikaze" behaviour once per target in previous version. In this version, this doesn't happen. (I had to rewrite how the mod's internal data for an attack order was stored for this fix.)
--New feature: L, and XL ships will move away a short distance after destroying a station module for a better attack vector against their next module target. They'll use the mod's behaviour for avoiding high-risk enemies so that they don't get within range of the station's turrets.
--New feature: High-risk enemies are no longer determined on object class. Potentially high-risk enemies are 1.5x larger physically than the ship. For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers. For L, and XL ships, high-risk enemies have more DPS than the ship.
+v5.0.00151, 3 Apr 2022:
+-Bug-fix: Avoid behaviour for fighter craft v fighter craft were getting skipped on low-attention ships. Thanks DeadAir!
+
+v5.0.0015, 3 Apr 2022:
+-New behaviour: XS (except for drones), S, and M ships attack high-risk ship targets when they outnumber 50% of their weapons and turrets. It's still 75% against high-risk stations. These two values can be set in the Extension Options.
+-New behaviour: L, and XL ships do not withdraw against high-risk ship targets unless there's another L or XL ship attacker.
+-New feature: Enable/Disable 'Avoid high-risk enemies' on the ship's order panel or from the right-click Interact Menu. Disabling this will allow the ships to ignore their determination of high-risk enemies and forcing them to attack.
 
 Mod effects
 ===========
@@ -29,7 +29,7 @@ Avoid high-risk enemies
 =======================
 All ships move around high-risk enemies that are in their flight path. (https://youtu.be/mWBef0_mrmE)
 
-XS (except for drones), S, and M class ships will circle high-risk targets until they outnumber 75% of their targets' turrets. Ships with missile and torpedo loadouts do not acquire this behaviour until their missiles and torpedoes are depleted. (https://youtu.be/DFVtwZxSKes)
+XS (except for drones), S, and M class ships will circle high-risk station targets until they outnumber 75% of their targets' turrets, and 50% for high-risk ship targets. Ships with missile and torpedo loadouts do not acquire this behaviour until their missiles and torpedoes are depleted. (https://youtu.be/DFVtwZxSKes)
 
 L, and XL class ships, enroute to their targets, will stop short of their targets to prevent accidental kamikaze attacks.
 
@@ -41,15 +41,21 @@ Previous versions start at their optimal range based on their DPS, their target 
 
 The current version makes use of long-range weapons earlier and for a longer time - softening up their target. The previous version used all weapons sooner (because they get closer sooner) but put the ship in danger sooner - causing some ships to withdraw sooner and more often.
 
-Withdraw out of range: When shields drop below 90%, L and XL ships will withdraw out of range at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge.
-
-Player-owned ships only
-=======================
-By default, these AI behaviours are applied to player-owned ships only. But you can enable them for ALL ships. Note that I've not tested them on all ships.
+Withdraw out of range: When shields drop below 90%, L and XL ships will withdraw out of range of high-risk stations at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge. Against high-risk ships, L, and XL attackers will not withdraw unless there are other L, and XL attackers.
 
 High-risk enemies
 =================
 Potentially high-risk enemies are 1.5x larger physically than the ship. For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers. For L, and XL ships, high-risk enemies have more DPS than the ship.
+
+Interact Menu
+=============
+There are two right-click commands that sets or unsets two options in the attack order UI.
+1. "Enable/Disable 'Attack all enemies'": This sets or unsets the attack order 'Attack all enemies' option. This option allows or disallows the ship from acquiring other targets other than their primary target.
+2. "Enable/Disable 'Avoid high-risk enemies'": This sets or unsets this mod's "avoid" behaviour. When set, the ships acquire this mod's determination of high-risk targets and avoid them according to the behaviours described above. When unset, the ships ignore this mod's AI. Functionally, these are an "attack now" and "hold off attack and stay at a distance" commands.
+
+Player-owned ships only
+=======================
+By default, these AI behaviours are applied to player-owned ships only. But you can enable them for ALL ships. Note that I've not tested them on all ships.
 
 What this mod doesn't do
 ========================
@@ -59,21 +65,52 @@ What this mod doesn't do
 4. Find and move to the best attack vector. (Nor did the base attack AI.) Ships that are in "ideal" attack vectors are incidental. (Same with the base attack AI.)
 5. Increase the efficiency of attacks in low attention. Damages received and dealt in attacks in low attention are determined by the base game. I.e. ships could be in good attack ranges (and out of reach of their target's weapons) but still not deal the optimal damage per second.
 
-Install:
-========
+Install
+=======
 -Unzip to 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/'.
 -Make sure the sub-folders, and files are in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/', and not in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/kuertee_attack_ai_tweaks/'.
 
-Uninstall:
-==========
+Uninstall
+=========
+-Delete the mod folder.
+
+Debugging
+=========
+(1) Allow the game to log events to a text file by adding "-debug all -logfile debug.log" to its launch parameters.
+(2) Enable the mod-specific Debug Log in the mod's the Extension Options.
+(3) Play for long enough for the mod to log its events.
+(4) Send me (at kuertee@gmail.com) the log found in My Documents\Egosoft\X4\(your player-specific number)\debug.log.
+
+Uninstall
+=========
 -Delete the mod folder.
 
 Credits
 =======
 By kuertee.
+Chinese localisation by Tiomer.
 
-History:
-========
+History
+=======
+v5.0.0014, 31 Mar 2022:
+-New behaviour: The attack runs of XS (except for drones), S, and M class ships will start when they outnumber 50% of their ship's turrets.
+-New behaviour: L, and XL ships will not withdraw against other high-risk enemy ships unless there are other L, and XL attackers.
+-Bug-fix: In low-attention fighter to fighter attacks, attackers were not stoping their attack runs on small targets that get near high-risk enemies.
+
+v5.0.0013, 30 Mar 2022:
+-Bug-fix: L and XL ships was acquiring the "stop kamikaze" behaviour (stop short of the target) against ship targets.
+-Bug-fix: The "stop kamikaze" behaviour was getting applied on L and XL ships that are already in attack range.
+-Bug-fix: One of the flee AI types was acquiring the avoid behaviour instead of just fleeing.
+
+v5.0.0012, 25 Mar 2022:
+-Note: This version will invalidate the mod's attack behaviours from the previous version, causing the ships to act unexpectedly UNTIL their next AI cycle. Or you can simply cancel then reissue any attack orders.
+-New feature: L, and XL ships will now start their attack at their max combat range. Prevously, they started their attack at their optimal combat range - which made it look like they ignored their long-range weapons. As in previous versions, they'll inch towards their optimal combat range.
+-New feature: L, and XL ships will approach their target at a vertical angle. Previously, they approached their target at their target's vertical position.
+-New feature: XS (except for drones), S, and M ships will circle high-risk targets at a vertical angle.
+-Bug-fix: L, and XL ships were still trying to get to the other side of their targets - exposing themselves to their target's weapons as they passed them. This happened when the ship acquired an attack order against the same target and the target is outside combat range. I.e. the ship only acquired the "stop kamikaze" behaviour once per target in previous version. In this version, this doesn't happen. (I had to rewrite how the mod's internal data for an attack order was stored for this fix.)
+-New feature: L, and XL ships will move away a short distance after destroying a station module for a better attack vector against their next module target. They'll use the mod's behaviour for avoiding high-risk enemies so that they don't get within range of the station's turrets.
+-New feature: High-risk enemies are no longer determined on object class. Potentially high-risk enemies are 1.5x larger physically than the ship. For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers. For L, and XL ships, high-risk enemies have more DPS than the ship.
+
 v5.0.0011, 19 Mar 2022:
 -Bug-fix: Capital ships were still trying to find better attack vectors at the other side of their target stations.
 -Tweak: Better optimal range values.
