@@ -23,7 +23,7 @@
 						<reset_cue cue="kAAIT2_OnLuaLoaderReady" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="2">
+				<cue name="kAAIT2_Config" namespace="this" version="4">
 					<actions>
 						<set_value name="global.$kAAIT_Config" exact="this" />
 						<set_value name="global.$kAAIT_Config.$debugChance" exact="0" />
@@ -40,10 +40,18 @@
 						<set_value name="global.$kAAIT_Config.$lxl_isStepForward_allFactions" exact="false" />
 						<set_value name="global.$kAAIT_Config.$lxl_isMoveOutOfRange" exact="true" />
 						<set_value name="global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions" exact="false" />
+						<!-- xs, s, and m -->
+						<set_value name="global.$kAAIT_Config.$xssm_outnumberVShips" exact="50" />
+						<set_value name="global.$kAAIT_Config.$xssm_outnumberVStations" exact="75" />
 					</actions>
 					<patch sinceversion="2">
 						<debug_text text="'sinceversion 2, state: ' + this.state" />
 						<set_value name="global.$kAAIT_Config.$optimalRangeIsMax" exact="true" />
+					</patch>
+					<patch sinceversion="4">
+						<debug_text text="'sinceversion 4, state: ' + this.state" />
+						<set_value name="global.$kAAIT_Config.$xssm_outnumberVShips" exact="50" />
+						<set_value name="global.$kAAIT_Config.$xssm_outnumberVStations" exact="75" />
 					</patch>
 				</cue>
 			</cues>
@@ -104,6 +112,42 @@
 						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
 						$onClick = kAAIT_ExtOpts_OnCheckboxChange
 					]"/>
+
+				<!-- <t id="11">Attack when more than this turret count</t>
+				<t id="12">Against high-risk ships</t>
+				<t id="13">Against high-risk stations</t> -->
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='']" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 11}]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 12}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_Slider"
+					param = "table[
+						$id = 'xssm_outnumberVShips',
+						$start = global.$kAAIT_Config.$xssm_outnumberVShips,
+						$col = 2,
+						$text = table[$text=''],
+						$min = 0, $max = 200, $step = 1, $suffix='%',
+						$default = 50,
+						$mouseOverText = {1001,2661} + ': 50',
+						$onSliderCellChanged = kAAIT_ExtOpts_OnSliderChange
+					]" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 13}, $halign='right', $color='Helper.color.blue']" />
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_Slider"
+					param = "table[
+						$id = 'xssm_outnumberVStations',
+						$start = global.$kAAIT_Config.$xssm_outnumberVStations,
+						$col = 2,
+						$text = table[$text=''],
+						$min = 0, $max = 200, $step = 1, $suffix='%',
+						$default = 75,
+						$mouseOverText = {1001,2661} + ': 75',
+						$onSliderCellChanged = kAAIT_ExtOpts_OnSliderChange
+					]" />
 
 				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
 				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 9}]" />
@@ -458,8 +502,10 @@
 						]" />
 					</do_if>
 				</do_if>
-				<!-- <t id="101">Attack all enemies</t>
-				<t id="102">Attack only the targeted enemy</t> -->
+				<!-- <t id="101">Enable 'Attack all enemies'</t>
+				<t id="102">Disable 'Attack all enemies'</t>
+				<t id="103">Enable 'Avoid high-risk enemies'</t>
+				<t id="104">Disable 'Avoid high-risk enemies'</t> -->
 				<debug_text text="'$interact_ships.count: ' + $interact_ships.count" chance="global.$kAAIT_Config.$debugChance" />
 				<set_value name="$sections" exact="[]" />
 				<do_if value="$interact_ships.count == 1 and $interact_ships.{1} == $interact_target">
@@ -475,6 +521,8 @@
 				</do_elseif>
 				<set_value name="$isAllow" exact="false" />
 				<set_value name="$isDisallow" exact="false" />
+				<set_value name="$isAllow_Avoid" exact="false" />
+				<set_value name="$isDisallow_Avoid" exact="false" />
 				<do_for_each name="$ship" in="$interact_ships">
 					<do_if value="$ship.isclass.ship and @$ship.orders.count">
 						<do_for_each name="$order" in="$ship.orders">
@@ -486,7 +534,15 @@
 									<set_value name="$isAllow" exact="true" />
 								</do_if>
 							</do_if>
-							<do_if value="$isAllow and $isDisallow">
+							<do_if value="$order.$kAAITParam_isAvoidHighRisk? and (not @$order.kAAITParam_isAutoAdded)">
+								<do_if value="$order.$kAAITParam_isAvoidHighRisk">
+									<set_value name="$isDisallow_Avoid" exact="true" />
+								</do_if>
+								<do_if value="not $order.$kAAITParam_isAvoidHighRisk">
+									<set_value name="$isAllow_Avoid" exact="true" />
+								</do_if>
+							</do_if>
+							<do_if value="$isAllow and $isDisallow and $isAllow_Avoid and $isDisallow_Avoid">
 								<break />
 							</do_if>
 						</do_for_each>
@@ -509,6 +565,24 @@
 							$text = {1111920, 102},
 							$icon = 'widget_cross_01',
 							$callback = kAAIT_Attack_one_only
+						]" />
+					</do_if>
+					<do_if value="$isAllow_Avoid">
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_allow_avoid_' + $section,
+							$section = $section,
+							$text = {1111920, 103},
+							$icon = 'widget_tick_01',
+							$callback = kAAIT_Avoid_high_risk
+						]" />
+					</do_if>
+					<do_if value="$isDisallow_Avoid">
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_disallow_avoid_' + $section,
+							$section = $section,
+							$text = {1111920, 104},
+							$icon = 'widget_cross_01',
+							$callback = kAAIT_Attack_high_risk
 						]" />
 					</do_if>
 				</do_for_each>
@@ -563,6 +637,61 @@
 								<!-- <set_value name="$order.$allowothertargets" exact="false" /> -->
 								<edit_order_param order="$order" param="'allowothertargets'" value="false" />
 							</do_if>
+						</do_for_each>
+					</do_for_each>
+				</do_if>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Avoid_high_risk" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_ships" exact="@event.param.$selectedplayerships" />
+				<do_if value="typeof ($interact_ships) != datatype.list">
+					<set_value name="$interact_ships" exact="[]" />
+				</do_if>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<do_if value="$interact_target.isplayerowned">
+					<append_to_list name="$interact_ships" exact="$interact_target" />
+				</do_if>
+				<do_if value="$interact_ships.count">
+					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Config.$debugChance" />
+					<do_for_each name="$ship" in="$interact_ships">
+						<do_for_each name="$order" in="$ship.orders">
+							<do_if value="$order.$kAAITParam_isAvoidHighRisk? and (not @$order.kAAITParam_isAutoAdded)">
+								<edit_order_param order="$order" param="'kAAITParam_isAvoidHighRisk'" value="true" />
+							</do_if>
+						</do_for_each>
+					</do_for_each>
+				</do_if>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="kAAIT_Attack_high_risk" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_ships" exact="@event.param.$selectedplayerships" />
+				<do_if value="typeof ($interact_ships) != datatype.list">
+					<set_value name="$interact_ships" exact="[]" />
+				</do_if>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<do_if value="$interact_target.isplayerowned">
+					<append_to_list name="$interact_ships" exact="$interact_target" />
+				</do_if>
+				<do_if value="$interact_ships.count">
+					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Config.$debugChance" />
+					<do_for_each name="$ship" in="$interact_ships">
+						<do_for_each name="$order" in="$ship.orders" reverse="true">
+							<do_if value="$order.$kAAITParam_isAvoidHighRisk? and (not @$order.$kAAITParam_isAutoAdded)">
+								<edit_order_param order="$order" param="'kAAITParam_isAvoidHighRisk'" value="false" />
+							</do_if>
+							<do_elseif value="@$order.$kAAITParam_isAutoAdded">
+								<cancel_order order="$order" />
+							</do_elseif>
 						</do_for_each>
 					</do_for_each>
 				</do_if>

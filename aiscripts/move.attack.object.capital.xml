@@ -4,7 +4,21 @@
 	<params>
 -->
 	<add sel="//params">
+		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
 		<param name="kAAITParam_data" required="false" default="null" type="internal" />
+		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
+			if (not this.assignedcontrolled.isunit) and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+				)
+			) then true else false
+		" />
 	</add>
 <!-- add before at 4 instances. purpose: debug and show move in map.
 	the order location properties are in order.fight.attack.object as $kAAITParam_data.$orderLocation_space and $kAAITParam_data.$orderLocation_pos.
@@ -17,7 +31,7 @@
 			(
 				(
 					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -34,7 +48,7 @@
 			(
 				(
 					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -51,7 +65,7 @@
 			(
 				(
 					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -69,7 +83,7 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@$kAAITParam_isAvoidHighRisk or
 						@global.$kAAIT_Config.$lxl_isStepForward or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
 					)
@@ -111,7 +125,7 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@$kAAITParam_isAvoidHighRisk or
 						@global.$kAAIT_Config.$lxl_isStepForward or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
 					)
@@ -127,7 +141,7 @@
 			)
 		">
 			<include_interrupt_actions ref="kAAIT_Init" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetPotentialHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetPotentialHighRisk + ' $kAAIT_isTargetHighRisk: ' + @$kAAIT_isTargetHighRisk" chance="100" />
+			<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetPotentialHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetPotentialHighRisk + ' $kAAIT_isTargetHighRisk: ' + @$kAAIT_isTargetHighRisk" chance="100" /> -->
 		</do_if>
 	</add>
 <!-- add prepend in first instance. purpose: init. disallow boosts.
@@ -139,7 +153,7 @@
 			(
 				(
 					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -162,7 +176,7 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@$kAAITParam_isAvoidHighRisk or
 						@global.$kAAIT_Config.$lxl_isStepForward or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
 					)
@@ -191,7 +205,7 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@$kAAITParam_isAvoidHighRisk or
 						@global.$kAAIT_Config.$lxl_isStepForward or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
 					)
@@ -221,7 +235,7 @@
 			(
 				(
 					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk
+					@$kAAITParam_isAvoidHighRisk
 				) or
 				(
 					(not this.assignedcontrolled.isplayerowned) and
@@ -243,7 +257,7 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk or
+						@$kAAITParam_isAvoidHighRisk or
 						@global.$kAAIT_Config.$lxl_isStepForward or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
 					)
@@ -529,6 +543,12 @@
 				<resume label="finish" />
 			</do_if>
 		</do_if>
+	</add>
+<!-- add after finish. purpose: clean-up.
+	<label name="finish" />
+-->
+	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
+		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
 	</add>
 	<!-- DeadAir Diffs -->
 	<replace sel="/aiscript/params/param[@name='minrange']/@default">this.assignedcontrolled.maxcombatrange.all * 0.7</replace>
