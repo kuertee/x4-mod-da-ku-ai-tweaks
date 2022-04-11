@@ -6,37 +6,14 @@
 	<add sel="//params">
 		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
 		<param name="kAAITParam_data" required="false" default="null" type="internal" />
-		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
-			if (not this.assignedcontrolled.isunit) and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			) then true else false
-		" />
+		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="false" />
+		<param name="kAAITParam_isStepForwardWithdraw" required="false" type="internal" text="{1111920, 109}" default="false" />
 	</add>
 <!-- add prepend. purpose: init var.
 	<init>
 -->
 	<add pos="prepend" sel="//init">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
 	</add>
@@ -55,19 +32,7 @@
 	<do_while value="$target.canbeattacked">
 -->
 	<add pos="prepend" sel="//do_while[@value=&quot;$target.canbeattacked&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
 		</do_if>
 	</add>
@@ -75,19 +40,7 @@
 	<include_interrupt_actions ref="NPCUseCase_AttackRun_Small" />
 -->
 	<add pos="before" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
 			<do_if value="$kAAIT_isTargetHighRisk">
 				<set_value name="global.$SuppressCommChatter" exact="true" />
@@ -95,19 +48,7 @@
 		</do_if>
 	</add>
 	<add pos="after" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
 		</do_if>
 	</add>
@@ -115,19 +56,7 @@
 	<move_to object="this.ship" destination="$target" flightbehaviour="flightbehaviour.bigfight" forcesteering="true" travel="$duration_movement gt 40s">
 -->
 	<add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target&quot;][@flightbehaviour=&quot;flightbehaviour.bigfight&quot;][@forcesteering=&quot;true&quot;][@travel=&quot;$duration_movement gt 40s&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<do_if value="$kAAIT_isTargetHighRisk">
 				<set_value name="$duration_movement" exact="0" />
 			</do_if>
@@ -139,19 +68,7 @@
 	<do_while value="$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)">
 -->
 	<add pos="before" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
 			<do_if value="$kAAIT_isTargetHighRisk">
 				<set_value name="$MaxGainDistance" exact="0" />
@@ -160,19 +77,7 @@
 		</do_if>
 	</add>
 	<add pos="after" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
 			<!-- <debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 		</do_if>
@@ -191,19 +96,7 @@
 	<do_while value="$bigtarget.canbeattacked and not $isdead">
 -->
 	<add pos="prepend" sel="//do_while[@value=&quot;$bigtarget.canbeattacked and not $isdead&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
 		</do_if>
 	</add>
@@ -220,19 +113,7 @@
 	<do_if value="player.age" min="$attacktime">
 -->
 	<add pos="before" sel="//do_if[@value=&quot;player.age&quot;][@min=&quot;$attacktime&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<do_if value="@$kAAIT_isTargetHighRisk">
 				<!-- Avoid an infite loop-->
 				<resume label="finish" />

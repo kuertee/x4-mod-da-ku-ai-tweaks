@@ -7,6 +7,8 @@
 		<param name="kAAIT_isActive" required="false" default="false" type="internal" />
 		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
 		<param name="kAAITParam_data" required="false" default="null" type="internal" />
+		<param name="kAAITParam_isAvoidOrderGiven" required="false" type="internal" default="false" />
+		<param name="kAAITParam_isStepForwardWithdrawGiven" required="false" type="internal" default="false" />
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
 			if (not this.assignedcontrolled.isunit) and
 			(
@@ -28,6 +30,27 @@
 				)
 			) then true else false
 		" />
+		<param name="kAAITParam_isStepForwardWithdraw" required="false" type="bool" text="{1111920, 109}" default="
+			if (not this.assignedcontrolled.isunit) and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+					(
+						@global.$kAAIT_Config.$lxl_isStepForward or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+					(
+						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
+						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
+					)
+				)
+			) then true else false
+		" />
 	</add>
 <!-- add before. purpose: show movement.
 	<location condition="$primarytarget.canbeattacked" object="$primarytarget" additionalobjects="$secondarytargets"/>
@@ -42,89 +65,31 @@
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<do_if value="
 			(not @$kAAIT_isActive or not @$kAAITParam_data) and
-			this.race != race.drone and
 			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						@$kAAITParam_isAvoidHighRisk or
-						@global.$kAAIT_Config.$lxl_isStepForward or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
-					)
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
-						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
-					)
-				)
+				@$kAAITParam_isAvoidHighRisk or
+				@$kAAITParam_isStepForwardWithdraw
 			)
 		">
 			<include_interrupt_actions ref="kAAIT_Init" />
-			<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetHighRisk (kAAIT_Init): ' + @$kAAIT_isTargetHighRisk + ' $kAAIT_isTargetPotentialHighRisk: ' + @$kAAIT_isTargetPotentialHighRisk" chance="100" /> -->
 		</do_if>
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
 		</do_if>
 	</add>
 <!-- add. purpose: first move to target
 	<do_if value="@$_newtarget.canbeattacked">
 -->
-	<add pos="prepend" sel="//do_if[@value=&quot;@$target.canbeattacked&quot;]">
-		<do_if value="
-			this.race != race.drone
-			and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+	<!-- <add pos="prepend" sel="//do_if[@value=&quot;@$target.canbeattacked&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
+			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
+		</do_if>
+	</add> -->
+<!-- add before. purpose: first move to target
+	<do_if value="not this.assignedcontrolled.cansee.{$target}">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;not this.assignedcontrolled.cansee.{$target}&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
+			<!-- this initiates the move.kuertee.engage.position (the stop kamikaze) order, if required -->
 			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
 		</do_if>
 	</add>
@@ -135,6 +100,7 @@
 		<param name="kAAITParam_isAutoAdded" value="true" />
 		<param name="kAAITParam_data" value="@$kAAITParam_data" />
 		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
+		<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
 	</add>
 <!-- add after. purpose: if new attack order, flee or move away, finish this order.
 	and create a replacement order with the same params.
@@ -149,31 +115,7 @@
 		</do_if>
 	</add> -->
 	<add pos="after" sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<do_if value="
 				this.assignedcontrolled.attention lt attention.visible and
 				(
@@ -215,6 +157,7 @@
 					<param name="kAAITParam_isAutoAdded" value="$kAAITParam_isAutoAdded" />
 					<param name="kAAITParam_data" value="$kAAITParam_data" />
 					<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
+					<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
 					<param name="debugchance" value="$debugchance" />
 				</create_order>
 				<resume label="finish"/>
@@ -234,70 +177,11 @@
 	<label name="finish" />
 -->
 	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
-		<do_if value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				)
-			)
-		">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
 		</do_if>
-		<do_elseif value="
-			this.race != race.drone and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					$kAAITParam_isAvoidHighRisk
-				) or
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						$kAAITParam_isAvoidHighRisk or
-						@global.$kAAIT_Config.$lxl_isStepForward or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange
-					)
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-					@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						@global.$kAAIT_Config.$lxl_isAvoidHighRisk_allFactions or
-						@global.$kAAIT_Config.$lxl_isStepForward_allFactions or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions
-					)
-				)
-			)
-		">
+		<do_elseif value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="this.assignedcontrolled.idcode + ' finish'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<!-- <do_if value="@$kAAITParam_data">
-				<remove_value name="$kAAITParam_data.$defensibleTarget_stopKamikaze" />
-				<remove_value name="$kAAITParam_data.$target" />
-				<remove_value name="$kAAITParam_data.$orders" />
-				<remove_value name="$kAAITParam_data.$aroundDir" />
-				<remove_value name="$kAAITParam_data.$lastAttack_enemy" />
-				<remove_value name="$kAAITParam_data.$lastAttack_time" />
-				<remove_value name="$kAAITParam_data.$lastAttack_timeLastSafe" />
-				<remove_value name="$kAAITParam_data.$inchForwardCount" />
-				<remove_value name="$kAAITParam_data.$movedOutOfRangeCount" />
-				<remove_value name="$kAAITParam_data.$orderLocation_space" />
-				<remove_value name="$kAAITParam_data.$orderLocation_pos" />
-			</do_if> -->
 		</do_elseif>
 	</add>
 	<!-- DeadAir Diffs -->
