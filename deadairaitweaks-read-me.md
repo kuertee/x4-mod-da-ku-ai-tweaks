@@ -26,7 +26,9 @@ L prefer M/L/XL 2x, half-interested in XS/S
 M prefer S/M/L 2x, half-interested in XS/XL/Stations
 S prefer XS/S/M 2x, Half-interested in L/XL/Stations
 S/M with Torp prefer L/XL/Stations 2x, half-interested in XS/S
-Targets not covered by notes above stay at vanilla preference
+Targets not covered by notes above stay at vanilla preference  
+- Player ships can now drop deployables when fleeing
+- Factions will attempt to place defense stations closer to gates
 
 
 ##### Save game compatible.
