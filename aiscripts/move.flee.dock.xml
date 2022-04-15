@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+  <replace sel="/aiscript/params/param[@name='urgent']/@default">this.isplayerowned</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.assignedcontrolled.subordinates.count and not @$attacker.isclass.celestialbody']/@value">this.assignedcontrolled.subordinates.count</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.assignedcontrolled.subordinates.count']/return[@value='false']">
+    <do_if value="true">
+      <do_if value="@$attacker.isclass.celestialbody">
+        <set_value name="$daignoresubordinates" exact="true"/>
+      </do_if>
+      <do_else>
+        <set_value name="$daignoresubordinates" exact="true"/>
+        <do_for_each name="$dasubordinate" in="this.assignedcontrolled.subordinates">
+          <do_if value="(not $dasubordinate.isunit) and (not (($dasubordinate.assignment == assignment.assist) or ($dasubordinate.defaultorder.id == 'Assist')))">
+            <remove_value name="$daignoresubordinates"/>
+            <return value="false"/>
+          </do_if>
+        </do_for_each>
+      </do_else>
+    </do_if>
+  </replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$attacker.isoperational and not $attacker.isclass.celestialbody and $attacker.maxradarrange']/find_station[@name='$stations']">
+    <do_if value="true">
+      <find_station groupname="$stations" functional="true" space="this.zone" sortbydistanceto="this.assignedcontrolled" multiple="true">
+        <match_relation_to object="this" relation="dock" comparison="ge"/>
+        <match_relation_to object="$attacker" relation="enemy" comparison="le"/>
+      </find_station>
+      <find_station groupname="$stations" functional="true" space="this.sector" sortbydistanceto="this.assignedcontrolled" multiple="true" append="if $stations.count then true else false">
+        <match_relation_to object="this" relation="dock" comparison="ge"/>
+        <match_relation_to object="$attacker" relation="enemy" comparison="le"/>
+        <match_distance object="this.assignedcontrolled" max="this.assignedcontrolled.maxradarrange"/>
+      </find_station>
+      <do_if value="not @$stations.count">
+        <find_station groupname="$stations" functional="true" space="this.sector" sortbydistanceto="this.assignedcontrolled" multiple="true">
+          <match_relation_to object="this" relation="dock" comparison="ge"/>
+          <match_distance object="$attacker" min="$attacker.maxradarrange"/>
+        </find_station>
+      </do_if>
+      <do_else>
+        <sort_group group="$stations" sortbydistanceto="this.assignedcontrolled"/>
+      </do_else>
+    </do_if>
+  </replace>
+  <add sel="/aiscript/attention[@min='unknown']/actions/run_script[1]" type="@chance">if $daignoresubordinates? then (100 - $daignoresubordinates * 100) else 100</add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$station']" pos="before">
+    <do_if value="$daignoresubordinates?">
+      <remove_value name="$daignoresubordinates"/>
+    </do_if>
+  </add>
+</diff>
