@@ -178,6 +178,7 @@
 				<!-- this handler ONLY allows the withdraw AI to be added to other orders. -->
 				<conditions>
 					<check_any>
+						<!-- Event for the specified object being attacked (object = attacked object, param = attacker, param2 = kill method, param3 = attacked component) -->
 						<event_object_attacked object="this.assignedcontrolled" />
 						<event_object_signalled object="this.assignedcontrolled" param="'debug aait withdraw'"/>
 					</check_any>
@@ -187,15 +188,45 @@
 						<check_all>
 							<check_value value="this.assignedcontrolled.isplayerowned" />
 							<check_any>
-								<check_value value="@global.$kAAIT_Config.$lxl_isStepForward" />
-								<check_value value="@global.$kAAIT_Config.$lxl_isMoveOutOfRange" />
+								<check_value value="event.param.isclass.ship" />
+								<check_value value="event.name != 'event_object_attacked'" />
+							</check_any>
+							<check_any>
+								<check_value value="@global.$kAAIT_Config.$lxl_isStepForward_vShip" />
+								<check_value value="@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip" />
+							</check_any>
+						</check_all>
+						<check_all>
+							<check_value value="this.assignedcontrolled.isplayerowned" />
+							<check_any>
+								<check_value value="event.param.isclass.station" />
+								<check_value value="event.name != 'event_object_attacked'" />
+							</check_any>
+							<check_any>
+								<check_value value="@global.$kAAIT_Config.$lxl_isStepForward_vStation" />
+								<check_value value="@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation" />
 							</check_any>
 						</check_all>
 						<check_all>
 							<check_value value="not this.assignedcontrolled.isplayerowned" />
 							<check_any>
-								<check_value value="@global.$kAAIT_Config.$lxl_isStepForward_allFactions" />
-								<check_value value="@global.$kAAIT_Config.$lxl_isMoveOutOfRange_allFactions" />
+								<check_value value="event.param.isclass.ship" />
+								<check_value value="event.name != 'event_object_attacked'" />
+							</check_any>
+							<check_any>
+								<check_value value="@global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions" />
+								<check_value value="@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions" />
+							</check_any>
+						</check_all>
+						<check_all>
+							<check_value value="not this.assignedcontrolled.isplayerowned" />
+							<check_any>
+								<check_value value="event.param.isclass.station" />
+								<check_value value="event.name != 'event_object_attacked'" />
+							</check_any>
+							<check_any>
+								<check_value value="@global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions" />
+								<check_value value="@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions" />
 							</check_any>
 						</check_all>
 					</check_any>
@@ -557,7 +588,11 @@
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_enemy: ' + @$kAAITParam_data.$lastAttack_enemy.idcode" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_time: ' + @$kAAITParam_data.$lastAttack_time" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<do_if value="@$kAAITParam_data.$lastAttack_enemy != $kAAIT_defensibleTarget or player.age - @$kAAITParam_data.$lastAttack_time gt 1min">
-						<do_if value="this.assignedcontrolled.shieldpercentage ge 90">
+						<include_interrupt_actions ref="kAAIT_LXL_GetIsStepForwardAllowed" />
+						<do_if value="
+							$kAAIT_isStepForwardAllowed and
+							this.assignedcontrolled.shieldpercentage ge 90
+						">
 							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_time: ' + @$kAAITParam_data.$lastAttack_timeLastSafe" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<do_if value="player.age - @$kAAITParam_data.$lastAttack_timeLastSafe gt 1min">
 								<set_value name="$kAAITParam_data.$lastAttack_timeLastSafe" exact="player.age" />
@@ -590,7 +625,9 @@
 						lastAttack_enemy and lastAttack_time are only set when the event_object_attacked interrupts are triggered
 						no need to clean up those vars because lastAttack_time caps this at no older than 1 min.
 						-->
+						<include_interrupt_actions ref="kAAIT_LXL_GetIsMoveOutOfRangeAllowed" />
 						<do_if value="
+							$kAAIT_isMoveOutOfRangeAllowed and
 							this.assignedcontrolled.shieldpercentage lt 90 and
 							(
 								@$kAAITParam_data.$lastAttack_enemy.isclass.station or
@@ -619,6 +656,63 @@
 					</do_elseif>
 				</do_if>
 			</actions>
+
+			<actions name="kAAIT_LXL_GetIsStepForwardAllowed">
+				<set_value name="$kAAIT_isStepForwardAllowed" exact="
+					(
+						this.assignedcontrolled.isplayerowned and
+						(
+							$kAAIT_defensibleTarget.isclass.ship and
+							global.$kAAIT_Config.$lxl_isStepForward_vShip
+						) or
+						(
+							$kAAIT_defensibleTarget.isclass.station and
+							global.$kAAIT_Config.$lxl_isStepForward_vStation
+						)
+					) or
+					(
+						(not this.assignedcontrolled.isplayerowned )and
+						(
+							$kAAIT_defensibleTarget.isclass.ship and
+							global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions
+						) or
+						(
+							$kAAIT_defensibleTarget.isclass.station and
+							global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions
+						)
+					)
+				" />
+			</actions>
+
+			<actions name="kAAIT_LXL_GetIsMoveOutOfRangeAllowed">
+				<set_value name="$kAAIT_isMoveOutOfRangeAllowed" exact="
+					(
+						(
+							this.assignedcontrolled.isplayerowned and
+							(
+								$kAAIT_defensibleTarget.isclass.ship and
+								global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip
+							) or
+							(
+								$kAAIT_defensibleTarget.isclass.station and
+								global.$kAAIT_Config.$lxl_isStepForward_vStation
+							)
+						) or
+						(
+							(not this.assignedcontrolled.isplayerowned )and
+							(
+								$kAAIT_defensibleTarget.isclass.ship and
+								global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions
+							) or
+							(
+								$kAAIT_defensibleTarget.isclass.station and
+								global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions
+							)
+						)
+					)
+				" />
+			</actions>
+
 			<!--
 				
 				
