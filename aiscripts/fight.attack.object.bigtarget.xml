@@ -36,28 +36,16 @@
 			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
 		</do_if>
 	</add>
-<!-- add before. purpose: suppress chatter
+<!-- add chance. purpose: suppress chatter
 	<include_interrupt_actions ref="NPCUseCase_AttackRun_Small" />
 -->
-	<add pos="before" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
-			<do_if value="$kAAIT_isTargetHighRisk">
-				<set_value name="global.$SuppressCommChatter" exact="true" />
-			</do_if>
-		</do_if>
-	</add>
-	<add pos="after" sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$kAAIT_isSuppressCommChatter" exact="global.$SuppressCommChatter" />
-		</do_if>
-	</add>
+	<add sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]" type="@chance">if @$kAAITParam_isAvoidHighRisk and @kAAIT_isTargetHighRisk then 0 else 100</add>
 <!-- add chance. purpose: prevent move_to big target.
 	<move_to object="this.ship" destination="$target" flightbehaviour="flightbehaviour.bigfight" forcesteering="true" travel="$duration_movement gt 40s">
 -->
 	<add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target&quot;][@flightbehaviour=&quot;flightbehaviour.bigfight&quot;][@forcesteering=&quot;true&quot;][@travel=&quot;$duration_movement gt 40s&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<do_if value="$kAAIT_isTargetHighRisk">
+			<do_if value="@$kAAIT_isTargetHighRisk">
 				<set_value name="$duration_movement" exact="0" />
 			</do_if>
 			<!-- <debug_text text="this.assignedcontrolled.idcode + ' player.age: ' + player.age + ' $duration_movement: ' + $duration_movement" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
@@ -70,7 +58,7 @@
 	<add pos="before" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
-			<do_if value="$kAAIT_isTargetHighRisk">
+			<do_if value="@$kAAIT_isTargetHighRisk">
 				<set_value name="$MaxGainDistance" exact="0" />
 			</do_if>
 			<!-- <debug_text text="this.assignedcontrolled.idcode + ' $MaxGainDistance: ' + $MaxGainDistance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
