@@ -310,7 +310,12 @@
 				<set_value name="$direction" exact="$direction * [-1, 1, 1, 1].random" />
 				<set_value name="$kAAITParam_data.$aroundDir" exact="$direction" />
 				<do_if value="@$kAAIT_isStopKamikaze">
-					<set_value name="$kAAIT_avoidDist" exact="[this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget}, this.assignedcontrolled.maxradarrange * 0.5].min" />
+					<do_if value="$kAAIT_defensibleTarget.isclass.ship">
+						<set_value name="$kAAIT_avoidDist" exact="[this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget}, this.assignedcontrolled.maxradarrange * 0.25].min" />
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_avoidDist" exact="[this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget}, this.assignedcontrolled.maxradarrange * 0.5].min" />
+					</do_else>
 				</do_if>
 				<do_else>
 					<set_value name="$kAAIT_avoidDist" exact="this.assignedcontrolled.maxradarrange * 0.5" />
@@ -772,11 +777,8 @@
 								<include_interrupt_actions ref="kAAIT_Order_Flee" />
 							</do_if>
 							<do_elseif value="
-								@$kAAIT_defensibleTarget.isclass.station and
-								(
-									this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget} gt this.assignedcontrolled.maxradarrange or
-									@$kAAIT_isLXLNewModuleTarget
-								)
+								this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget} gt this.assignedcontrolled.maxradarrange or
+								@$kAAIT_isLXLNewModuleTarget
 							">
 								<do_if value="@$kAAITParam_data.$defensibleTarget_stopKamikaze != @$kAAIT_defensibleTarget">
 									<set_value name="$kAAITParam_data.$defensibleTarget_stopKamikaze" exact="$kAAIT_defensibleTarget" />
@@ -810,13 +812,27 @@
 							$kAAIT_isTargetPotentialHighRisk and
 							(
 								(
+									this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s] and
 									@$kAAIT_defensibleTarget.isclass.ship and
-									@$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$xssm_outnumberVShips / 100.0
+									@$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
 								)
 								or
 								(
+									this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s] and
 									@$kAAIT_defensibleTarget.isclass.station and
-									@$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$xssm_outnumberVStations / 100.0
+									@$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
+								)
+								or
+								(
+									this.assignedcontrolled.isclass.ship_m and
+									@$kAAIT_defensibleTarget.isclass.ship and
+									@$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$m_outnumberVShips / 100.0
+								)
+								or
+								(
+									this.assignedcontrolled.isclass.ship_m and
+									@$kAAIT_defensibleTarget.isclass.station and
+									@$kAAIT_defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$m_outnumberVStations / 100.0
 								)
 								or
 								$kAAIT_defensibleTarget.hullpercentage lt 2
