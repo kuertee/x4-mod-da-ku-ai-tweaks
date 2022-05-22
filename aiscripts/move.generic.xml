@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <diff>
 	<!-- add. purpose: data store
-	<params>
--->
+		<params>
+	-->
 	<add sel="//params">
 		<param name="kAAIT_isActive" required="false" default="false" type="internal"/>
 		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal"/>
@@ -58,8 +58,8 @@
 		"/>
 	</add>
 	<!-- add before at 5 instances. purpose: debug.
-	<move_to>
--->
+		<move_to>
+	-->
 	<add pos="before" sel="(//move_to)[1]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to (1) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
@@ -85,11 +85,90 @@
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to (5) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
+	<!--
+		add after. purpose: debug.
+		<label name="start"/>
+		<label name="check" />
+		<label name="move" />
+		<label name="finish"/>
+		<label name="cleanup"/>
+	-->
+	<add pos="after" sel="//label[@name=&quot;start&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
+			<debug_text text="this.assignedcontrolled.idcode + ' label start'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		</do_if>
+	</add>
+	<add pos="after" sel="//label[@name=&quot;check&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
+			<debug_text text="this.assignedcontrolled.idcode + ' label check'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		</do_if>
+	</add>
+	<add pos="after" sel="//label[@name=&quot;move&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
+			<debug_text text="this.assignedcontrolled.idcode + ' label move'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		</do_if>
+	</add>
+	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
+			<debug_text text="this.assignedcontrolled.idcode + ' label finish'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		</do_if>
+	</add>
+	<add pos="after" sel="//label[@name=&quot;cleanup&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk">
+			<debug_text text="this.assignedcontrolled.idcode + ' label cleanup'" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		</do_if>
+	</add>
+	<!-- add. purpose init.
+		<init>
+	-->
+	<add sel="//init">
+		<do_if value="not @$kAAITParam_data">
+			<set_value name="$kAAITParam_data" exact="table[]" />
+		</do_if>
+		<debug_text text="this.assignedcontrolled.idcode + ' $destination.knownname: ' + @$destination.knownname" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$isMovingToEngagePosition: ' + @$kAAITParam_data.$isMovingToEngagePosition" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+	</add>
+	<!-- add after. purpose: ship has entered a new sector.
+		<handler ref="TideHandler"/>
+	-->
+	<add pos="after" sel="//handler[@ref=&quot;TideHandler&quot;]">
+		<handler>
+			<conditions>
+				<event_object_changed_zone object="this.assignedcontrolled"/>
+				<check_all>
+					<check_value value="not @$kAAITParam_isSkipAvoidance" />
+					<check_value value="@$kAAITParam_isAvoidHighRisk" />
+				</check_all>
+			</conditions>
+			<actions>
+				<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+				<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+				<do_if value="$kAAIT_bigEnemies.count">
+					<abort_called_scripts resume="check"/>
+				</do_if>
+			</actions>
+		</handler>
+	</add>
+	<!-- add after. purpose: update engage position if required by cancelling this order. the attack order will re-order the move to engage position, if it requires it.
+		<label name="check" />
+	-->
+	<add pos="after" sel="//label[@name=&quot;check&quot;]">
+		<do_if value="@$kAAITParam_hasMoved and @$kAAITParam_data.$isMovingToEngagePosition">
+			<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' $kAAITParam_data.$isMovingToEngagePosition: ' + $kAAITParam_data.$isMovingToEngagePosition" chance="if @this.assignedcontrolled.sector == @player.entity.sector or this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<resume label="cleanup" />
+		</do_if>
+	</add>
+	<!-- add after. purpose: update engae position if required.
+		<label name="move" />
+	-->
+	<add pos="after" sel="//label[@name=&quot;move&quot;]">
+		<set_value name="$kAAITParam_hasMoved" exact="true" />
+	</add>
 	<!-- add before. purpose: if enemy stations on the way, move elsewhere first.
-	<do_if value="not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway">
-	<do_if value="$position"> (2nd instance)
-	<do_if value="not @$rotation">
--->
+		<do_if value="not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway">
+		<do_if value="$position"> (2nd instance)
+		<do_if value="not @$rotation">
+	-->
 	<add pos="before" sel="//do_if[@value=&quot;not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway&quot;]">
 		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
 			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (1): ' + @$kAAITParam_isSkipAvoidance"/>
@@ -98,7 +177,7 @@
 			(not @$kAAITParam_isSkipAvoidance) and
 			@$kAAITParam_isAvoidHighRisk
 		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot"/>
+			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="(//do_if[@value=&quot;$position&quot;])[2]">
@@ -109,7 +188,7 @@
 			(not @$kAAITParam_isSkipAvoidance) and
 			@$kAAITParam_isAvoidHighRisk
 		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot"/>
+			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="//do_if[@value=&quot;not @$rotation&quot;]">
@@ -120,12 +199,20 @@
 			(not @$kAAITParam_isSkipAvoidance) and
 			@$kAAITParam_isAvoidHighRisk
 		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot"/>
+			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
+		</do_if>
+	</add>
+	<!-- add before. purpose: debug.
+		<remove_value name="$locblacklistgroup"/>
+	-->
+	<add pos="before" sel="//remove_value[@name=&quot;$locblacklistgroup&quot;]">
+		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
+			<debug_text text="this.assignedcontrolled.idcode + ' event_object_changed_zone'"/>
 		</do_if>
 	</add>
 	<!-- add after. purpose: clean-up.
-	<label name="finish"/>
--->
+		<label name="finish"/>
+	-->
 	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
