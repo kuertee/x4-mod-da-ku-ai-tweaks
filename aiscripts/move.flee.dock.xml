@@ -17,28 +17,47 @@
       </do_else>
     </do_if>
   </replace>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$attacker.isoperational and not $attacker.isclass.celestialbody and $attacker.maxradarrange']/find_station[@name='$stations']">
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$attacker.isoperational and not $attacker.isclass.celestialbody and $attacker.maxradarrange']/@value">@$attacker.isoperational and not $attacker.isclass.celestialbody</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$attacker.isoperational and not $attacker.isclass.celestialbody']/find_station[@name='$stations']">
     <do_if value="true">
-      <find_station groupname="$stations" functional="true" space="this.zone" sortbydistanceto="this.assignedcontrolled" multiple="true">
+      <set_value name="$stations" exact="[]"/>
+      <set_value name="$possiblestations" exact="[]"/>
+      <find_station name="$possiblestations" functional="true" space="this.sector" sortbydistanceto="this.assignedcontrolled" multiple="true">
         <match_relation_to object="this" relation="dock" comparison="ge"/>
         <match_relation_to object="$attacker" relation="enemy" comparison="le"/>
       </find_station>
-      <find_station groupname="$stations" functional="true" space="this.sector" sortbydistanceto="this.assignedcontrolled" multiple="true" append="if $stations.count then true else false">
-        <match_relation_to object="this" relation="dock" comparison="ge"/>
-        <match_relation_to object="$attacker" relation="enemy" comparison="le"/>
-        <match_distance object="this.assignedcontrolled" max="this.assignedcontrolled.maxradarrange"/>
-      </find_station>
-      <do_if value="not @$stations.count">
-        <find_station groupname="$stations" functional="true" space="this.sector" sortbydistanceto="this.assignedcontrolled" multiple="true">
-          <match_relation_to object="this" relation="dock" comparison="ge"/>
-          <match_distance object="$attacker" min="$attacker.maxradarrange"/>
-        </find_station>
+      <do_if value="@$possiblestations.count">
+        <do_all exact="$possiblestations.count" counter="$a">
+          <do_if value="(this.assignedcontrolled.distanceto.{$possiblestations.{$a}} le $attacker.distanceto.{$possiblestations.{$a}}) or (this.assignedcontrolled.distanceto.{$possiblestations.{$a}} lt this.assignedcontrolled.maxradarrange)">
+            <append_to_list name="$stations" exact="$possiblestations.{$a}"/>
+            <break/>
+          </do_if>
+          <do_elseif value="$a == $possiblestations.count">
+            <clear_list list="$possiblestations"/>
+          </do_elseif>
+        </do_all>
+        <remove_value name="$a"/>
       </do_if>
-      <do_else>
-        <sort_group group="$stations" sortbydistanceto="this.assignedcontrolled"/>
-      </do_else>
+      <do_if value="not @$stations.count">
+        <find_station name="$possiblestations" functional="true" space="this.sector" sortbydistanceto="this.assignedcontrolled" multiple="true">
+          <match_relation_to object="this" relation="dock" comparison="ge"/>
+        </find_station>
+        <do_if value="@$possiblestations.count">
+          <do_all exact="$possiblestations.count" counter="$a">
+            <do_if value="(this.assignedcontrolled.distanceto.{$possiblestations.{$a}} le $attacker.distanceto.{$possiblestations.{$a}}) or (this.assignedcontrolled.distanceto.{$possiblestations.{$a}} lt this.assignedcontrolled.maxradarrange)">
+              <append_to_list name="$stations" exact="$possiblestations.{$a}"/>
+              <break/>
+            </do_if>
+            <do_elseif value="$a == $possiblestations.count">
+              <remove_value name="$possiblestations"/>
+            </do_elseif>
+          </do_all>
+          <remove_value name="$a"/>
+        </do_if>
+      </do_if>
     </do_if>
   </replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_else[1]/find_station[@name='$stations']/match_relation_to/@relation">dock</replace>
   <add sel="/aiscript/attention[@min='unknown']/actions/run_script[1]" type="@chance">if $daignoresubordinates? then (100 - $daignoresubordinates * 100) else 100</add>
   <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$station']" pos="before">
     <do_if value="$daignoresubordinates?">
