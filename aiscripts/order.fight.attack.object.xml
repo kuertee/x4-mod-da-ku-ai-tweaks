@@ -105,7 +105,7 @@
 		<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isActive (1): ' + @$kAAIT_isActive + ', $kAAITParam_data: ' + @$kAAITParam_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk (1): ' + @$kAAITParam_isAvoidHighRisk + ', $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="
-			(not @$kAAIT_isActive or not @$kAAITParam_data) and
+			((not @$kAAIT_isActive) or (not @$kAAITParam_data)) and
 			(
 				@$kAAITParam_isAvoidHighRisk or
 				@$kAAITParam_isStepForwardWithdraw
@@ -118,20 +118,14 @@
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
 		</do_if>
 	</add>
-<!-- add. purpose: first move to target
-	<do_if value="@$_newtarget.canbeattacked">
--->
-	<!-- <add pos="prepend" sel="//do_if[@value=&quot;@$target.canbeattacked&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
-		</do_if>
-	</add> -->
 <!-- add before. purpose: first move to target
-	<do_if value="not this.assignedcontrolled.cansee.{$target}">
+	this initiates the move.kuertee.engage.position (the stop kamikaze) order, if required
+	<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance">
 -->
-	<add pos="before" sel="//do_if[@value=&quot;not this.assignedcontrolled.cansee.{$target}&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<!-- this initiates the move.kuertee.engage.position (the stop kamikaze) order, if required -->
+	<add pos="before" sel="//do_if[@value=&quot;this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk (2): ' + @$kAAITParam_isAvoidHighRisk + ', $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' bboxdistanceto ' + @this.assignedcontrolled.bboxdistanceto.{$target} + ' $pursuedistance: ' + $pursuedistance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
 		</do_if>
 	</add>

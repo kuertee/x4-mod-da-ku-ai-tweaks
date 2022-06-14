@@ -4,6 +4,7 @@
 	<params>
 -->
 	<add sel="//params">
+		<param name="kAAITParam_isMoveAttackObjectCapital" required="false" default="true" type="internal" />
 		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
 		<param name="kAAITParam_data" required="false" default="null" type="internal" />
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="false" />
@@ -94,6 +95,7 @@
 				<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
 				<do_if value="@$kAAITParam_isAvoidOrderGiven">
 					<do_if value="@$kAAIT_isLXLNewModuleTarget">
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isLXLNewModuleTarget: ' + $kAAIT_isLXLNewModuleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<set_value name="$kAAIT_isLXLNewModuleTarget" exact="false" />
 						<!-- this is an embedded move, so a move_to is required here. -->
 						<!-- and a getsafepos also, because move order is not used. -->
@@ -103,13 +105,13 @@
 								<set_value name="$kAAITParam_data.$orderLocation_space" exact="$kAAIT_avoidSpace" />
 								<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$kAAIT_avoidPos" />
 							</do_if>
-							<move_to
-							object="this.ship"
-							destination="$kAAIT_avoidSpace"
-							uselocalhighways="false"
-							useknownpath="this.isplayerowned"
-							forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
-							commandaction="false">
+							<debug_text text="this.assignedcontrolled.idcode + ' move_to ' + $kAAIT_avoidSpace: ' + $kAAIT_avoidSpace + ' $kAAIT_avoidPos: ' + $kAAIT_avoidPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<move_to object="this.ship"
+								destination="$kAAIT_avoidSpace"
+								uselocalhighways="false"
+								useknownpath="this.isplayerowned"
+								forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
+								commandaction="false">
 								<position value="$kAAIT_avoidPos"/>
 							</move_to>
 							<do_if value="@$kAAITParam_data">
@@ -166,7 +168,7 @@
 	</add>
 	<add pos="after" sel="//wait[@exact=&quot;$updatetime&quot;]">
 		<do_if value="@$kAAITParam_isStepForwardWithdraw">
-			<debug_text text="this.assignedcontrolled.idcode + ' player.age (after wait): ' + player.age + ' $time_waitend: ' + $time_waitend" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw (inch forward or backwards after wait $updatetime): ' + @$kAAITParam_isStepForwardWithdraw + ' player.age (after wait): ' + player.age + ' $time_waitend: ' + $time_waitend" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_LXL_StepForwardOrMoveOutOfRange" />
 			<!-- when there's already a step forward/withdraw order, $kAAIT_pos will be empty -->
 			<do_if value="@$kAAIT_isInching and $kAAIT_pos">
@@ -175,13 +177,13 @@
 					<set_value name="$kAAITParam_data.$orderLocation_space" exact="this.assignedcontrolled.zone" />
 					<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$kAAIT_pos" />
 				</do_if>
-				<move_to
-				object="this.ship"
-				destination="this.assignedcontrolled.zone"
-				uselocalhighways="false"
-				useknownpath="this.isplayerowned"
-				forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
-				commandaction="false">
+				<debug_text text="this.assignedcontrolled.idcode + ' move_to ' + $kAAIT_isInching: ' + $kAAIT_isInching" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<move_to object="this.ship"
+					destination="this.assignedcontrolled.zone"
+					uselocalhighways="false"
+					useknownpath="this.isplayerowned"
+					forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
+					commandaction="false">
 					<position value="$kAAIT_pos"/>
 				</move_to>
 				<do_if value="@$kAAITParam_data">
@@ -297,6 +299,7 @@
 -->
 	<add pos="after" sel="//do_if[@value=&quot;this.ship.sector == $target.sector&quot;]/do_if[@value=&quot;@$boost&quot;]">
 		<do_if value="@$kAAITParam_isStepForwardWithdraw">
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw (inch forward if no recent damage): ' + @$kAAITParam_isStepForwardWithdraw + ' player.age (after wait): ' + player.age + ' $time_waitend: ' + $time_waitend" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_LXL_StepForwardOrMoveOutOfRange" />
 			<!-- when there's already a step forward/withdraw order, $kAAIT_pos will be empty -->
 			<do_if value="@$kAAIT_isInching and $kAAIT_pos">
@@ -305,13 +308,13 @@
 					<set_value name="$kAAITParam_data.$orderLocation_space" exact="this.assignedcontrolled.zone" />
 					<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$kAAIT_pos" />
 				</do_if>
-				<move_to
-				object="this.ship"
-				destination="this.assignedcontrolled.zone"
-				uselocalhighways="false"
-				useknownpath="this.isplayerowned"
-				forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
-				commandaction="false">
+				<debug_text text="this.assignedcontrolled.idcode + ' move_to ' + $kAAIT_isInching: ' + $kAAIT_isInching" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<move_to object="this.ship"
+					destination="this.assignedcontrolled.zone"
+					uselocalhighways="false"
+					useknownpath="this.isplayerowned"
+					forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
+					commandaction="false">
 					<position value="$kAAIT_pos"/>
 				</move_to>
 				<do_if value="@$kAAITParam_data">

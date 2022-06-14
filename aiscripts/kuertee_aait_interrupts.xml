@@ -384,7 +384,7 @@
 					<set_flight_behaviour object="this.assignedcontrolled" flightbehaviour="flightbehaviour.default" />
 					<set_value name="$kAAITParam_isAvoidOrderGiven" exact="true" />
 					<do_if value="@$kAAIT_isLXLNewModuleTarget">
-						<!-- embedded move are not allowed in interrupt actions, so ensure that a move_to is set in the calling ai script -->
+						<!-- embedded moves are not allowed in interrupt actions, so ensure that a move_to is set in the calling ai script -->
 						<!-- in this case, this only occurs in move.attack.object.capital -->
 						<!-- so the embedded move_to is in that file. search for "kAAIT_isLXLNewModuleTarget". -->
 					</do_if>
@@ -419,18 +419,6 @@
 				<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			</actions>
 
-			<!-- <actions name="kAAIT_Order_Avoid_UpdatePosition">
-				<do_if value="@$kAAITParam_data.$orders.$avoid.exists">
-					<set_value name="$order_avoid_toCancel" exact="$kAAITParam_data.$orders.$avoid" />
-					<remove_value name="$kAAITParam_data.$orders.$avoid" />
-				</do_if>
-				<remove_value name="$kAAITParam_data.$defensibleTarget_stopKamikaze" />
-				<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
-				<do_if value="@$order_avoid_toCancel.exists">
-					<cancel_order order="$order_avoid_toCancel" />
-				</do_if>
-			</actions> -->
-
 			<actions name="kAAIT_Order_Flee">
 				<include_interrupt_actions ref="kAAIT_InitOrders" />
 				<do_if value="not @$kAAITParam_data.$orders.$flee.exists">
@@ -455,6 +443,7 @@
 			</actions>
 
 			<actions name="kAAIT_LXL_Order_StepForward">
+				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_LXL_Order_StepForward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<include_interrupt_actions ref="kAAIT_InitOrders" />
 				<do_if value="not @$kAAITParam_data.$orders.$avoid.exists">
 					<do_if value="this.assignedcontrolled.attention ge attention.visible">
@@ -481,6 +470,7 @@
 			</actions>
 
 			<actions name="kAAIT_LXL_Order_MoveOutOfRange">
+				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_LXL_Order_MoveOutOfRange'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<include_interrupt_actions ref="kAAIT_InitOrders" />
 				<do_if value="not @$kAAITParam_data.$orders.$avoid.exists">
 					<set_value name="$kAAIT_inchDistance" exact="-1 * (5km + 5km * ((100 - this.assignedcontrolled.shieldpercentage) / 100))" />
@@ -516,7 +506,7 @@
 						z="this.assignedcontrolled.position.z + $kAAIT_inchDistance * cos ($yaw_new) * cos (0)"
 					/>
 				</do_else>
-				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.pos (inching): ' + this.assignedcontrolled.distanceto.{$kAAIT_pos}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.pos: ' + this.assignedcontrolled.distanceto.{$kAAIT_pos}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.target: ' + this.assignedcontrolled.distanceto.{$target}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.defensible: ' + this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<debug_text text="this.assignedcontrolled.idcode + ' pos.distanceto.defensible: ' + $kAAIT_defensibleTarget.distanceto.{$kAAIT_pos} + ' pos.bboxdistanceto.$kAAIT_defensibleTarget: ' + $kAAIT_defensibleTarget.bboxdistanceto.{$kAAIT_pos}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -537,26 +527,29 @@
 						<position value="$kAAIT_pos" />
 					</create_object>
 				</do_if>
-				<!-- <set_value name="$kAAIT_order_move" exact="'kAAIT_MoveStepForward'" />
-				<do_if value="$kAAIT_inchDistance lt 0">
-					<set_value name="$kAAIT_order_move" exact="'kAAIT_MoveWithdraw'" />
+				<do_if value="not @$kAAITParam_isMoveAttackObjectCapital">
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isMoveAttackObjectCapital: ' + @$kAAITParam_isMoveAttackObjectCapital" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<set_value name="$kAAIT_order_move" exact="'kAAIT_MoveStepForward'" />
+					<do_if value="$kAAIT_inchDistance lt 0">
+						<set_value name="$kAAIT_order_move" exact="'kAAIT_MoveWithdraw'" />
+					</do_if>
+					<set_value name="$kAAITParam_isStepForwardWithdrawGiven" exact="true" />
+					<debug_text text="this.assignedcontrolled.idcode + ' create_order ' + $kAAIT_order_move + ', $kAAIT_inchDistance: ' + $kAAIT_inchDistance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<create_order name="$kAAITParam_data.$orders.$avoid" object="this.assignedcontrolled" id="$kAAIT_order_move" immediate="true">
+						<param name="destination" value="this.assignedcontrolled.zone" />
+						<param name="position" value="$kAAIT_pos" />
+						<param name="noboost" value="true" />
+						<param name="precise" value="$kAAIT_inchDistance gt 0 and $kAAIT_inchDistance lt this.assignedcontrolled.size * 2" />
+						<param name="kAAITParam_isAutoAdded" value="true" />
+						<param name="kAAITParam_data" value="$kAAITParam_data" />
+						<param name="kAAITParam_enemyAvoid" value="$kAAIT_defensibleTarget" />
+						<param name="kAAITParam_isSkipAvoidance" value="true" />
+						<param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk" />
+						<param name="kAAITParam_isStepForwardWithdraw" value="$kAAITParam_isStepForwardWithdraw" />
+						<param name="debugchance" value="$debugchance"/>
+					</create_order>
+					<debug_text text="this.assignedcontrolled.idcode + ' post create_order ' + $kAAIT_order_move" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				</do_if>
-				<set_value name="$kAAITParam_isStepForwardWithdrawGiven" exact="true" />
-				<debug_text text="this.assignedcontrolled.idcode + ' create_order kAAIT_order_move (' + $kAAIT_order_move + ', inch: ' + $kAAIT_inchDistance + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<create_order name="$kAAITParam_data.$orders.$avoid" object="this.assignedcontrolled" id="$kAAIT_order_move" immediate="true">
-					<param name="destination" value="this.assignedcontrolled.zone" />
-					<param name="position" value="$kAAIT_pos" />
-					<param name="noboost" value="true" />
-					<param name="precise" value="$kAAIT_inchDistance gt 0 and $kAAIT_inchDistance lt this.assignedcontrolled.size * 2" />
-					<param name="kAAITParam_isAutoAdded" value="true" />
-					<param name="kAAITParam_data" value="$kAAITParam_data" />
-					<param name="kAAITParam_enemyAvoid" value="$kAAIT_defensibleTarget" />
-					<param name="kAAITParam_isSkipAvoidance" value="true" />
-					<param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk" />
-					<param name="kAAITParam_isStepForwardWithdraw" value="$kAAITParam_isStepForwardWithdraw" />
-					<param name="debugchance" value="$debugchance"/>
-				</create_order>
-				<debug_text text="this.assignedcontrolled.idcode + ' post create_order kAAIT_order_move (' + $kAAIT_order_move + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 			</actions>
 			<!--
 				
@@ -590,7 +583,6 @@
 					if this.assignedcontrolled.maxcombatrange.turrets then this.assignedcontrolled.maxcombatrange.turrets else 1000000,
 				].min * 0.9" />
 				<do_if value="@$kAAIT_defensibleTarget.isoperational">
-					<debug_text text="this.assignedcontrolled.idcode + ' $optimalRangeIsMax: ' + @global.$kAAIT_Config.$optimalRangeIsMax" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<do_if value="not @global.$kAAIT_Config.$optimalRangeIsMax">
 						<set_value name="$kAAIT_combatRange" exact="
 							[
@@ -608,7 +600,7 @@
 							this.assignedcontrolled.maxradarrange * 0.5
 						].min" />
 					</do_else>
-					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$movedOutOfRangeCount: ' + @$kAAITParam_data.$movedOutOfRangeCount + ' $kAAITParam_data.$inchForwardCount: ' + @$kAAITParam_data.$inchForwardCount" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$movedOutOfRangeCount: ' + @$kAAITParam_data.$movedOutOfRangeCount + ' $kAAITParam_data.$inchForwardCount: ' + @$kAAITParam_data.$inchForwardCount" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_combatRange: ' + @$kAAIT_combatRange + ' $kAAIT_minCombatRange: ' + @$kAAIT_minCombatRange + ' $kAAIT_maxCombatRange: ' + @$kAAIT_maxCombatRange + ' $kAAIT_movedOutOfRangeCount: ' + @$kAAIT_movedOutOfRangeCount" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				</do_if>
 				<do_else>
