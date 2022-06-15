@@ -1,7 +1,92 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
   <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier']/@value">$iscarrier or this.assignedcontrolled.subordinates.count</replace>
-  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and (not @$engagedcarriertargets.indexof.{$loctarget} or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_if[@value='@$primarytarget.canbeattacked and (($loctarget == $primarytarget) or ($loctarget.hascontext.{$primarytarget}))']/set_value[@name='$numsend'][@exact='$numsend * [this.assignedcontrolled.combinedskill / 20, 1].max']/@exact">$numsend * 5</replace>
+  <add sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_if[@value='@$closestthreat.exists and (not $closestthreat.canbeattacked or not this.assignedcontrolled.mayattack.{$closestthreat})']" pos="before">
+    <do_if value="if global.$DATweaks.$DACarrierFix? then global.$DATweaks.$DACarrierFix else true">
+      <set_value name="$DADockedShipCount" exact="0"/>
+      <set_value name="$DAFixedEscortCount" exact="0"/>
+      <set_value name="$DAOldEscortCount" exact="if this.ship.pilot.$escortgroup? then this.ship.pilot.$escortgroup.count else null"/>
+      <find_dockingbay name="$DADockingBays" object="this.assignedcontrolled" multiple="true"/>
+      <do_for_each name="$DADockingBay" in="$DADockingBays">
+        <set_value name="$DADockedShipCount" exact="$DADockingBay.docked.count" operation="add"/>
+        <do_for_each name="$DADockedShip" in="$DADockingBay.docked">
+          <do_if value="($DADockedShip.commander == this.assignedcontrolled) and ($DADockedShip.pilot.exists) and (this.assignedcontrolled.subordinates.indexof.{$DADockedShip}) and ($DADockedShip.hullpercentage lt 100) and (@this.assignedcontrolled.shiptrader)">
+            <create_order object="$DADockedShip" id="'Repair'" immediate="true">
+              <param name="destination" value="this.assignedcontrolled"/>
+              <param name="hullpercent" value="100"/>
+              <param name="repairall" value="true"/>
+              <param name="internalorder" value="true"/>
+              <param name="debugchance" value="$debugchance"/>
+            </create_order>
+          </do_if>
+          <do_if value="($DADockedShip.commander == this.assignedcontrolled) and ($DADockedShip.dps.all) and ($DADockedShip.pilot.exists) and ($DADockedShip.primarypurpose == purpose.fight) and (this.assignedcontrolled.subordinates.indexof.{$DADockedShip}) and ($DADockedShip.hullpercentage ge 66) and (not @this.ship.pilot.$escortgroup.indexof.{$DADockedShip})">
+            <add_to_group groupname="this.ship.pilot.$escortgroup" object="$DADockedShip" chance="if this.ship.pilot.$escortgroup? then 100 else 0"/>
+            <set_value name="$DAFixedEscortCount" exact="1" operation="add"/>
+          </do_if>
+        </do_for_each>
+      </do_for_each>
+      <debug_text text="'MOD: DeadAirAITweaks -- %1 -- Ship: %2 ; Macro: %3 ; Location: %4 ; subordinates.count: %5 ; $escortgroup.count: %6 ; old$escortgroup.count: %7 ; dockedships: %8 ; $DAFixedEscortCount: %9'.[player.age,@this.assignedcontrolled.idcode,@this.assignedcontrolled.macro,@this.assignedcontrolled.sector.knownname,@this.assignedcontrolled.subordinates.count,@this.ship.pilot.$escortgroup.count,@$DAOldEscortCount,@$DADockedShipCount,@$DAFixedEscortCount]" context="false" filter="scripts" chance="if (@this.ship.pilot.$escortgroup.count != @$DAOldEscortCount) then 0 else 0"/>
+      <remove_value name="$DADockedShipCount"/>
+      <remove_value name="$DAFixedEscortCount"/>
+      <remove_value name="$DAOldEscortCount"/>
+      <remove_value name="$DADockingBays"/>
+      <remove_value name="$DADockingBay"/>
+      <remove_value name="$DADockedShip"/>
+    </do_if>
+  </add>
+  <add sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']" pos="before">
+    <do_if value="@$availableships.count and (if global.$DATweaks.$DACarrierFix? then global.$DATweaks.$DACarrierFix else true)">
+      <set_value name="$DACarrierCapitals" exact="0"/>
+      <set_value name="$DACarrierOther" exact="0"/>
+      <set_value name="$DACarrierDocked" exact="0"/>
+      <do_for_each name="$DACarrierLocSub" in="$availableships">
+        <do_if value="(not @$DACarrierLocSub.subordinategroupdockoverride) and (@$DACarrierLocSub.assignment != assignment.interception) and (@$DACarrierLocSub.isclass.ship) and (not @$DACarrierLocSub.isunit) and (not ['Attack','Undock','DockAt','Flee','Board','Repair','Resupply','TradePerform','SupplyFleet','Equip','Recycle'].indexof.{@$DACarrierLocSub.order.id}) and (not (@$DACarrierLocSub.order.state == orderstate.critical)) and (@DACarrierLocSub.dps.all)">
+          <set_value name="$DACarrierCapitals" exact="1" operation="add" chance="if @$DACarrierLocSub.iscapitalship then 100 else 0"/>
+          <set_value name="$DACarrierOther" exact="1" operation="add" chance="if @$DACarrierLocSub.isclass.[class.ship_s,class.ship_m] then 100 else 0"/>
+          <set_value name="$DACarrierDocked" exact="1" operation="add" chance="if (@$DACarrierLocSub.container == this.assignedcontrolled) then 100 else 0"/>
+        </do_if>
+      </do_for_each>
+      <debug_text text="'MOD: DeadAirAITweaks -- %1 -- Ship: %2 ; Macro: %3 ; Location: %4 ; DACarrierCapitals: %5 ; DACarrierOther: %6 ; DACarrierDocked: %7'.[player.age,@this.assignedcontrolled.idcode,@this.assignedcontrolled.macro,@this.assignedcontrolled.sector.knownname,@$DACarrierCapitals,@$DACarrierOther,@$DACarrierDocked]" context="false" filter="scripts" chance="0"/>
+      <remove_value name="$DACarrierLocSub"/>
+    </do_if>
+  </add>
+  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and (not @$engagedcarriertargets.indexof.{$loctarget} or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/@value">$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))</replace>
+  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_if[@value='@$loctarget.iscapitalship or $loctarget.isrealclass.station']/@value">@$loctarget.isrealclass.station and ($interruptcounter != $loctargetlist.count)</replace>
+  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_if[@value='@$loctarget.isrealclass.station and ($interruptcounter != $loctargetlist.count)']/set_value[@name='$interceptorclass'][@exact='[class.ship_m, class.ship_l, class.ship_xl]']/@exact">[class.ship_l, class.ship_xl]</replace>
+  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_if[@value='@$loctarget.isrealclass.station and ($interruptcounter != $loctargetlist.count)']/set_value[@name='$numsend'][@exact='1']/@exact">if @$DACarrierCapitals then $DACarrierCapitals else 1</replace>
+  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_else/set_value[@name='$interceptorclass'][@exact='[class.ship_s, class.ship_m]']/@exact">[class.ship_s, class.ship_m, class.ship_l, class.ship_xl]</replace>
+  <remove sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_else/set_value[@name='$numsend'][@min='1'][@max='[this.ship.pilot.$escortgroup.count * 0.2, 1].max']/@min"/>
+  <remove sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_else/set_value[@name='$numsend'][@max='[this.ship.pilot.$escortgroup.count * 0.2, 1].max']/@max"/>
+  <add sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_else/set_value[@name='$numsend']" type="@exact">if (@$DACarrierCapitals or @$DACarrierOther) then ($DACarrierCapitals + $DACarrierOther) else [this.ship.pilot.$escortgroup.count * 0.2, 1].max</add>
+  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_if[@value='@$primarytarget.canbeattacked and (($loctarget == $primarytarget) or ($loctarget.hascontext.{$primarytarget}))']/@value">@$primarytarget.canbeattacked and (($loctarget == $primarytarget) or ($loctarget.hascontext.{$primarytarget})) and (not (@$DACarrierCapitals or @$DACarrierOther))</replace>
+  <replace sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_all[@exact='$availableships.count']/do_if[@value='$numsend gt 0']/do_if[@value='not $locsub.subordinategroupdockoverride and $locsub.isclass.{$interceptorclass} and ($locsub.assignment != assignment.interception or ($loctarget.isclass.ship and not $loctarget.iscapitalship))']/@value">(not $locsub.subordinategroupdockoverride) and ($locsub.isclass.{$interceptorclass}) and ($locsub.assignment != assignment.interception or ($loctarget.isclass.ship and not $loctarget.iscapitalship)) and (not ['Attack','Undock','DockAt','Flee','Board','Repair','Resupply','TradePerform','SupplyFleet','Equip','Recycle'].indexof.{@$locsub.order.id}) and (@$locsub.dps.all)</replace>
+  <add sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']/do_all[@exact='$loctargetlist.count']/do_if[@value='$availableships.count']/do_if[@value='$loctarget.canbeattacked and ((not @$engagedcarriertargets.indexof.{$loctarget}) or ($loctarget == @$primarytarget) or (@$primarytarget.canbeattacked and @$loctarget.hascontext.{$primarytarget}))']/do_all[@exact='$availableships.count']/do_if[@value='$numsend gt 0']/do_if/remove_value[@name='$locsub']" pos="before">
+    <do_if value="($locsub.container == this.assignedcontrolled) and ($locsub.isclass.ship) and (not $locsub.isunit) and (if global.$DATweaks.$DACarrierFix? then global.$DATweaks.$DACarrierFix else true)">
+      <debug_text text="'MOD: DeadAirAITweaks -- %1 -- Ship: %2 ; Macro: %3 ; Location: %4 ; Locsub: %5 ; Locsubmacro: %6 ; Locsuborder: %7; Locsubordercount %8'.[player.age,@this.assignedcontrolled.idcode,@this.assignedcontrolled.macro,@this.assignedcontrolled.sector.knownname,@$locsub.idcode,@$locsub.macro,@$locsub.order.id,@$locsub.orders.count]" context="false" filter="scripts" chance="if (not ['Attack','Undock','DockAt','Flee','Board','Repair','Resupply','TradePerform','SupplyFleet','Equip','Recycle'].indexof.{@$locsub.order.id}) then 0 else 0"/>
+      <create_order id="'Attack'" object="$locsub" immediate="true">
+        <param name="primarytarget" value="$loctarget"/>
+        <param name="escort" value="this.assignedcontrolled"/>
+        <param name="pursuedistance" value="this.assignedcontrolled.maxradarrange"/>
+        <param name="pursuetargets" value="false"/>
+        <param name="allowothertargets" value="true"/>
+        <param name="checkrelation" value="$checkrelation"/>
+        <param name="disable" value="@$disabletargets.indexof.{$loctarget} or ($loctarget.container and $disabletargets.indexof.{$loctarget.container})"/>
+        <param name="disablehullpercentagethreshold" value="@$disablehullpercentagethreshold"/>
+        <param name="behaviortargetclasses" value="if @$behaviortargetclasses.count then $behaviortargetclasses else []"/>
+        <param name="internalorder" value="true"/>
+        <param name="debugchance" value="$debugchance"/>
+      </create_order>
+    </do_if>
+  </add>
+  <add sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']">
+    <remove_value name="$DACarrierCapitals"/>
+  </add>
+  <add sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']">
+    <remove_value name="$DACarrierOther"/>
+  </add>
+  <add sel="/aiscript/interrupts/library/actions[@name='CapitalLaunchFighters']/do_if[@value='$iscarrier or this.assignedcontrolled.subordinates.count']/do_elseif[@value='@this.ship.pilot.$escortgroup.count']/do_else/do_if[@value='@this.ship.pilot.$escortgroup.count']">
+    <remove_value name="$DACarrierDocked"/>
+  </add>
   <replace sel="/aiscript/init/set_value[@name='$scantime'][@exact='500ms + ((1.0 - (@this.assignedcontrolled.combinedskill / 100.0)) * 60s)']/@exact">500ms + ((1.0 - ([@this.assignedcontrolled.combinedskill,50.0].max / 100.0)) * 4.5s)</replace>
   <replace sel="/aiscript/attention[@min='visible']/actions/set_value[@name='$scantime'][@exact='500ms + ((1.0 - (@this.assignedcontrolled.combinedskill / 100.0)) * 60s)']/@exact">500ms + ((1.0 - ([@this.assignedcontrolled.combinedskill,50.0].max / 100.0)) * 4.5s)</replace>
   <remove sel="/aiscript/attention[@min='visible']/actions/do_if[@value='this.ship.pilot and (@$targets.count or $dronetargets.count or ($miningtargets.count and this.ship == player.occupiedship))']/do_if[@value='@$disabletargets.count']/set_value[@name='$scantime'][@exact='[$scantime, 5s].max']/@exact"/>
