@@ -4,7 +4,7 @@
 		<library>
 			<actions name="kAAIT_Init">
 				<debug_text text="this.assignedcontrolled.idcode + ' (kAAIT_Init) ' + this.assignedcontrolled.knownname + ' ' + this.assignedcontrolled.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<debug_text text="this.assignedcontrolled.idcode + ' (kAAIT_Init) $kAAITParam_dataRemember: ' + @$kAAITParam_dataRemember" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' (kAAIT_Init) $this.kAAITParam_dataRemember: ' + @this.$kAAITParam_dataRemember" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<do_if value="@this.$beacon_from or @this.$kAAIT_target or @this.$kAAIT_orders">
 					<include_interrupt_actions ref="kAAIT_CleanUpOldVersionData" />
 				</do_if>
@@ -198,6 +198,7 @@
 							<check_value value="this.assignedcontrolled.isplayerowned" />
 							<check_any>
 								<check_value value="event.param.isclass.ship" />
+								<check_value value="@event.param.defensible.isclass.ship" />
 								<check_value value="event.name != 'event_object_attacked'" />
 							</check_any>
 							<check_any>
@@ -209,6 +210,7 @@
 							<check_value value="this.assignedcontrolled.isplayerowned" />
 							<check_any>
 								<check_value value="event.param.isclass.station" />
+								<check_value value="@event.param.defensible.isclass.station" />
 								<check_value value="event.name != 'event_object_attacked'" />
 							</check_any>
 							<check_any>
@@ -220,6 +222,7 @@
 							<check_value value="not this.assignedcontrolled.isplayerowned" />
 							<check_any>
 								<check_value value="event.param.isclass.ship" />
+								<check_value value="@event.param.defensible.isclass.ship" />
 								<check_value value="event.name != 'event_object_attacked'" />
 							</check_any>
 							<check_any>
@@ -231,6 +234,7 @@
 							<check_value value="not this.assignedcontrolled.isplayerowned" />
 							<check_any>
 								<check_value value="event.param.isclass.station" />
+								<check_value value="@event.param.defensible.isclass.station" />
 								<check_value value="event.name != 'event_object_attacked'" />
 							</check_any>
 							<check_any>
@@ -299,7 +303,7 @@
 							<param name="pursuetargets" value="true" />
 							<param name="kAAITParam_isAutoAdded" value="true" />
 							<param name="kAAITParam_data" value="$kAAITParam_data" />
-							<param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk" />
+							<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
 							<param name="debugchance" value="$debugchance"/>
 						</create_order>
 						<debug_text text="this.assignedcontrolled.idcode + ' post create_order Attack'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -407,7 +411,7 @@
 							<param name="kAAITParam_aroundDir" value="$direction" />
 							<param name="kAAITParam_enemyAvoid" value="if $kAAIT_enemyAvoid.sector == this.assignedcontrolled.sector then $kAAIT_enemyAvoid else null" />
 							<param name="kAAITParam_isSkipAvoidance" value="if $kAAIT_enemyAvoid.sector == this.assignedcontrolled.sector then @$kAAIT_isStopKamikaze else false" />
-							<param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk" />
+							<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
 							<param name="kAAITParam_isStepForwardWithdraw" value="$kAAITParam_isStepForwardWithdraw" />
 							<param name="debugchance" value="$debugchance"/>
 						</create_order>
@@ -549,7 +553,7 @@
 						<param name="kAAITParam_data" value="$kAAITParam_data" />
 						<param name="kAAITParam_enemyAvoid" value="$kAAIT_defensibleTarget" />
 						<param name="kAAITParam_isSkipAvoidance" value="true" />
-						<param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk" />
+						<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
 						<param name="kAAITParam_isStepForwardWithdraw" value="$kAAITParam_isStepForwardWithdraw" />
 						<param name="debugchance" value="$debugchance"/>
 					</create_order>
@@ -770,6 +774,9 @@
 						<do_if value="this.assignedcontrolled.ammostorage.missile.count">
 							<!-- nothing here -->
 						</do_if>
+						<do_elseif value="$kAAITParam_isAvoidHighRisk? and (not $kAAITParam_isAvoidHighRisk)">
+							<!-- nothing here -->
+						</do_elseif>
 						<do_elseif value="$kAAIT_isTargetHighRisk_explosion">
 							<include_interrupt_actions ref="kAAIT_Order_Flee" />
 						</do_elseif>
@@ -1148,7 +1155,7 @@
 										<param name="kAAITParam_data" value="$kAAITParam_data" />
 										<param name="kAAITParam_enemyAvoid" value="$kAAIT_bigEnemy" />
 										<param name="kAAITParam_aroundDir" value="$kAAIT_aroundDir" />
-										<param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk" />
+										<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
 										<param name="kAAITParam_isStepForwardWithdraw" value="$kAAITParam_isStepForwardWithdraw" />
 										<param name="debugchance" value="$debugchance" />
 									</create_order>
