@@ -262,6 +262,37 @@
 					<include_interrupt_actions ref="kAAIT_LXL_StepForwardOrMoveOutOfRange" />
 				</actions>
 			</handler>
+
+			<handler name="kAAIT_UpdateAvoidPosition">
+				<conditions>
+					<check_any>
+						<event_object_changed_zone object="$kAAITParam_enemyAvoid" />
+						<check_all>
+							<event_object_changed_zone object="this.assignedcontrolled" />
+							<check_any>
+								<check_value value="this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid} gt this.assignedcontrolled.maxradarrange * 0.5" />
+								<check_value value="this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid} le this.assignedcontrolled.maxradarrange * 0.25" />
+							</check_any>
+						</check_all>
+						<event_object_attacked object="$kAAITParam_enemyAvoid" />
+						<event_object_attacked_object object="$kAAITParam_enemyAvoid" />
+					</check_any>
+				</conditions>
+				<actions>
+					<debug_text text="this.assignedcontrolled.idcode + ' event_object_changed_zone event.object: ' + @event.object.knownname + ', ' + @event.object.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<set_value name="$kAAIT_enemyAvoid" exact="$kAAITParam_enemyAvoid" />
+					<set_value name="$kAAIT_isStopKamikaze" exact="true" />
+					<include_interrupt_actions ref="kAAIT_GetAvoidPos" />
+					<set_value name="$kAAIT_isStopKamikaze" exact="false" />
+					<set_value name="$destination" exact="$kAAIT_avoidSpace" />
+					<set_value name="$position" exact="$kAAIT_avoidPos" />
+					<set_value name="$kAAIT_preciseDestination" exact="$destination" />
+					<do_if value="$kAAIT_preciseDestination.isclass.component">
+						<create_position name="$kAAIT_precisePosition" space="this.assignedcontrolled.zone" zone="$kAAIT_preciseDestination.zone" value="$position" />
+					</do_if>
+					<abort_called_scripts resume="start"/>
+				</actions>
+			</handler>
 			<!--
 				
 				                       ,,
@@ -378,11 +409,11 @@
 					<do_if value="@$kAAIT_isLXLNewModuleTarget">
 						<!-- use withdraw position but with a y adjustment when attacking new module targets -->
 						<set_value name="$kAAIT_inchDistance" exact="-10" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isLXLNewModuleTarget!'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="this.assignedcontrolled.idcode + ' ============================'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<include_interrupt_actions ref="kAAIT_LXL_Order_AttackMove" />
 						<set_value name="$kAAIT_avoidSpace" exact="this.assignedcontrolled.zone" />
 						<set_value name="$kAAIT_avoidPos" exact="$kAAIT_pos" />
-						<!-- <set_value name="$kAAIT_avoidPos.y" exact="$kAAIT_avoidPos.y + [5, -5].random" /> -->
-						<create_position name="$kAAIT_avoidPos" space="$kAAIT_avoidSpace" x="$kAAIT_avoidPos.x" y="$kAAIT_avoidPos.y + [5, -5].random" z="$kAAIT_avoidPos.z" />
 					</do_if>
 					<do_else>
 						<include_interrupt_actions ref="kAAIT_GetAvoidPos" />
@@ -409,7 +440,7 @@
 							<param name="kAAITParam_isAutoAdded" value="true" />
 							<param name="kAAITParam_data" value="$kAAITParam_data" />
 							<param name="kAAITParam_aroundDir" value="$direction" />
-							<param name="kAAITParam_enemyAvoid" value="if $kAAIT_enemyAvoid.sector == this.assignedcontrolled.sector then $kAAIT_enemyAvoid else null" />
+							<param name="kAAITParam_enemyAvoid" value="$kAAIT_enemyAvoid" />
 							<param name="kAAITParam_isSkipAvoidance" value="if $kAAIT_enemyAvoid.sector == this.assignedcontrolled.sector then @$kAAIT_isStopKamikaze else false" />
 							<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
 							<param name="kAAITParam_isStepForwardWithdraw" value="$kAAITParam_isStepForwardWithdraw" />
@@ -500,8 +531,9 @@
 				</create_orientation>
 				<set_value name="$yaw_adj" min="-1.625" max="1.625" />
 				<set_value name="$yaw_deg" exact="$kAAIT_rotShipToTarget.yaw * 180 / pi + $yaw_adj" />
-				<set_value name="$yaw_new" exact="$yaw_deg * pi / 180" />
 				<do_if value="$kAAIT_inchDistance gt 0">
+					<!-- if $kAAIT_isLXLNewModuleTarget, $kAAIT_inchDistance is always negative -->
+					<set_value name="$yaw_new" exact="$yaw_deg * pi / 180" />
 					<create_position name="$kAAIT_pos" space="this.assignedcontrolled.zone"
 						x="this.assignedcontrolled.position.x + $kAAIT_inchDistance * sin ($yaw_new) * cos ($kAAIT_rotShipToTarget.pitch)"
 						y="this.assignedcontrolled.position.y + $kAAIT_inchDistance * sin ($kAAIT_rotShipToTarget.pitch)"
@@ -509,11 +541,32 @@
 					/>
 				</do_if>
 				<do_else>
+					<do_if value="@$kAAIT_isLXLNewModuleTarget">
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isLXLNewModuleTarget: adding 30deg adj to withdraw angle'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="$yaw_new" exact="($yaw_deg + [-45, 45].random) * pi / 180" />
+					</do_if>
+					<do_elseif value="$kAAIT_defensibleTarget.isclass.ship">
+						<!-- if ship, withdraw at an angle, to allow the friendly ships to catch up to the enemy -->
+						<!-- 1/4 chance = no angle, 3/4 chance = 45 deg -->
+						<set_value name="$yaw_new" exact="($yaw_deg + [-45, -45, -45, 0, 0, 45, 45, 45].random) * pi / 180" />
+					</do_elseif>
+					<do_else>
+						<set_value name="$yaw_new" exact="$yaw_deg * pi / 180" />
+					</do_else>
 					<create_position name="$kAAIT_pos" space="this.assignedcontrolled.zone"
 						x="this.assignedcontrolled.position.x + $kAAIT_inchDistance * sin ($yaw_new) * cos (0)"
 						y="this.assignedcontrolled.position.y + $kAAIT_inchDistance * sin (0)"
 						z="this.assignedcontrolled.position.z + $kAAIT_inchDistance * cos ($yaw_new) * cos (0)"
 					/>
+					<do_if value="@$kAAIT_isLXLNewModuleTarget">
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isLXLNewModuleTarget: adding 5m adj to withdraw y pos'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<!-- <set_value name="$kAAIT_pos.y" exact="$kAAIT_pos.y + [-5, 5].random" /> -->
+						<create_position name="$kAAIT_pos" space="this.assignedcontrolled.zone"
+							x="$kAAIT_pos.x"
+							y="$kAAIT_pos.y + [-5, 5].random"
+							z="$kAAIT_pos.z"
+						/>
+					</do_if>
 				</do_else>
 				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.pos: ' + this.assignedcontrolled.distanceto.{$kAAIT_pos}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<debug_text text="this.assignedcontrolled.idcode + ' ship.distanceto.target: ' + this.assignedcontrolled.distanceto.{$target}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />

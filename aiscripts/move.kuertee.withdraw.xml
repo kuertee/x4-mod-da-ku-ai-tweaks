@@ -117,31 +117,21 @@
 	</order>
 	<attention min="unknown">
 		<actions>
+			<label name="start"/>
 			<do_if value="not @$kAAIT_preciseDestination">
 				<set_value name="$kAAIT_preciseDestination" exact="$destination" />
 				<do_if value="not @$position">
 					<create_position name="$position" x="0" y="0" z="0" />
 				</do_if>
 				<set_value name="$kAAIT_precisePosition" exact="$position" />
-				<do_if value="not @$kAAIT_preciseDestination.isclass.sector">
-					<do_if value="@$kAAIT_preciseDestination.sector">
-						<create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.sector" object="$kAAIT_preciseDestination" value="$position" />
-						<set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.sector" />
-					</do_if>
-					<do_elseif value="@$kAAIT_preciseDestination.zone and @$kAAIT_preciseDestination.zone.sector">
-						<create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.zone.sector" object="$kAAIT_preciseDestination.zone" value="$position" />
-						<set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.zone.sector" />
-					</do_elseif>
-					<do_else>
-						<set_value name="$kAAIT_preciseDestination" exact="this.assignedcontrolled.sector" />
-						<set_value name="$kAAIT_precisePosition" exact="this.assignedcontrolled.position" />
-					</do_else>
+				<do_if value="$kAAIT_preciseDestination.isclass.component">
+					<create_position name="$kAAIT_precisePosition" space="this.assignedcontrolled.zone" zone="$kAAIT_preciseDestination.zone" value="$position" />
 				</do_if>
 			</do_if>
-			<!-- <run_script name="'move.generic'">
+			<run_script name="'move.generic'">
 				<param name="destination" value="$destination" />
 				<param name="position" value="$position" />
-				<param name="noboost" value="true" />
+				<param name="noboost" value="if @$kAAITParam_enemyAvoid.exists and @this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid} lt [@this.assignedcontrolled.maxradarrange,[@this.assignedcontrolled.maxcombatrange.all,@$kAAITParam_enemyAvoid.maxcombatrange.all].max].min then true else false" />
 				<param name="disablecollisionavoidance" value="$disablecollisionavoidance" />
 				<param name="abortpath" value="$abortpath" />
 				<param name="forcesteering" value="true" />
@@ -163,31 +153,12 @@
 				<param name="allowwreck" value="$allowwreck" />
 				<param name="kAAITParam_isAutoAdded" value="true" />
 				<param name="kAAITParam_data" value="$kAAITParam_data" />
-				<param name="kAAITParam_enemyAvoid" value="@$kAAIT_bigEnemy" />
+				<param name="kAAITParam_enemyAvoid" value="@$kAAITParam_enemyAvoid" />
 				<param name="kAAITParam_aroundDir" value="@$kAAIT_aroundDir" />
 				<param name="kAAITParam_isSkipAvoidance" value="@$kAAITParam_isSkipAvoidance" />
-				<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
+				<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
 				<param name="debugchance" value="$debugchance" />
-			</run_script> -->
-			<move_to
-			endzone="$endzone"
-			object="this.ship"
-			destination="$destination"
-			uselocalhighways="false"
-			useknownpath="this.isplayerowned"
-			forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
-			commandaction="false">
-				<position value="$position"/>
-				<!-- <interrupt>
-					<conditions>
-						<event_object_changed_zone object="this.ship" zone="$endzone"/>
-						<check_value value="not this.ship.iszonechangepending"/>
-					</conditions>
-					<actions>
-						<debug_text text="'interrupting move_to of %1(%2) because we just arrived in endzone %3(%4) in sector %6, $targetzone = %5, previous sector %7'.[this.ship.knownname, this.ship, $endzone.knownname, $endzone, $targetzone, @event.param.sector.macro.id, @event.param2.sector.macro.id]" chance="$debugchance"/>
-					</actions>
-				</interrupt> -->
-			</move_to>
+			</run_script>
 		</actions>
 	</attention>
 </aiscript>

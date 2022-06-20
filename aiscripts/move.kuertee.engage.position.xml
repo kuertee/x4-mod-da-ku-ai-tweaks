@@ -115,33 +115,26 @@
 		<location object="$destination" position="$position" condition="$destination and $position"/>
 		<location object="$destination" condition="$destination"/>
 	</order>
+	<interrupts>
+		<handler ref="kAAIT_UpdateAvoidPosition"/>
+	</interrupts>
 	<attention min="unknown">
 		<actions>
+			<label name="start"/>
 			<do_if value="not @$kAAIT_preciseDestination">
 				<set_value name="$kAAIT_preciseDestination" exact="$destination" />
 				<do_if value="not @$position">
 					<create_position name="$position" x="0" y="0" z="0" />
 				</do_if>
 				<set_value name="$kAAIT_precisePosition" exact="$position" />
-				<do_if value="not @$kAAIT_preciseDestination.isclass.sector">
-					<do_if value="@$kAAIT_preciseDestination.sector">
-						<create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.sector" object="$kAAIT_preciseDestination" value="$position" />
-						<set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.sector" />
-					</do_if>
-					<do_elseif value="@$kAAIT_preciseDestination.zone and @$kAAIT_preciseDestination.zone.sector">
-						<create_position name="$kAAIT_precisePosition" space="$kAAIT_preciseDestination.zone.sector" object="$kAAIT_preciseDestination.zone" value="$position" />
-						<set_value name="$kAAIT_preciseDestination" exact="@$kAAIT_preciseDestination.zone.sector" />
-					</do_elseif>
-					<do_else>
-						<set_value name="$kAAIT_preciseDestination" exact="this.assignedcontrolled.sector" />
-						<set_value name="$kAAIT_precisePosition" exact="this.assignedcontrolled.position" />
-					</do_else>
+				<do_if value="$kAAIT_preciseDestination.isclass.component">
+					<create_position name="$kAAIT_precisePosition" space="this.assignedcontrolled.zone" zone="$kAAIT_preciseDestination.zone" value="$position" />
 				</do_if>
 			</do_if>
 			<run_script name="'move.generic'">
 				<param name="destination" value="$destination" />
 				<param name="position" value="$position" />
-				<param name="noboost" value="if @$kAAIT_enemyAvoid.exists and @this.assignedcontrolled.distanceto.{$kAAIT_enemyAvoid} lt [@this.assignedcontrolled.maxradarrange,[@this.assignedcontrolled.maxcombatrange.all,@$kAAIT_enemyAvoid.maxcombatrange.all].max].min then true else false" />
+				<param name="noboost" value="if @$kAAITParam_enemyAvoid.exists and @this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid} lt [@this.assignedcontrolled.maxradarrange,[@this.assignedcontrolled.maxcombatrange.all,@$kAAITParam_enemyAvoid.maxcombatrange.all].max].min then true else false" />
 				<param name="disablecollisionavoidance" value="$disablecollisionavoidance" />
 				<param name="abortpath" value="$abortpath" />
 				<param name="forcesteering" value="true" />
@@ -163,7 +156,7 @@
 				<param name="allowwreck" value="$allowwreck" />
 				<param name="kAAITParam_isAutoAdded" value="true" />
 				<param name="kAAITParam_data" value="$kAAITParam_data" />
-				<param name="kAAITParam_enemyAvoid" value="@$kAAIT_bigEnemy" />
+				<param name="kAAITParam_enemyAvoid" value="@$kAAITParam_enemyAvoid" />
 				<param name="kAAITParam_aroundDir" value="@$kAAIT_aroundDir" />
 				<param name="kAAITParam_isSkipAvoidance" value="@$kAAITParam_isSkipAvoidance" />
 				<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
