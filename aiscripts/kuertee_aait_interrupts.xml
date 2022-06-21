@@ -286,9 +286,9 @@
 						<event_object_attacked object="$kAAITParam_enemyAvoid" />
 						<event_object_attacked_object object="$kAAITParam_enemyAvoid" attacked="this.assignedcontrolled" />
 					</check_any>
+					<check_value value="@$kAAITParam_isAvoidHighRisk" />
 					<check_value value="this.assignedcontrolled.sector" />
 					<check_value value="this.assignedcontrolled.sector == @$kAAITParam_enemyAvoid.sector" />
-					<check_value value="@$kAAITParam_isAvoidHighRisk" />
 					<check_value value="this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid} lt this.assignedcontrolled.maxradarrange * 1.25" />
 				</conditions>
 				<actions>
@@ -297,15 +297,13 @@
 						<set_value name="$kAAIT_isStopKamikaze" exact="true" />
 					</do_if>
 					<include_interrupt_actions ref="kAAIT_GetAvoidPos" />
-					<do_if value="@$kAAIT_moveToSpace">
-						<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
-							<set_value name="$kAAIT_isStopKamikaze" exact="false" />
-						</do_if>
-						<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
-						<set_value name="$destination" exact="$kAAIT_moveToSpace" />
-						<set_value name="$position" exact="$kAAIT_moveToPos" />
-						<abort_called_scripts resume="start"/>
+					<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+						<set_value name="$kAAIT_isStopKamikaze" exact="false" />
 					</do_if>
+					<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
+					<set_value name="$destination" exact="$kAAIT_moveToSpace" />
+					<set_value name="$position" exact="$kAAIT_moveToPos" />
+					<abort_called_scripts resume="start"/>
 				</actions>
 			</handler>
 
@@ -399,8 +397,9 @@
 				<do_else>
 					<set_value name="$kAAIT_avoidDist" exact="this.assignedcontrolled.maxradarrange * 0.5" />
 				</do_else>
-				<remove_value name="$kAAIT_moveToSpace" />
-				<remove_value name="$kAAIT_moveToPos" />
+				<set_value name="$kAAIT_moveToSpace" exact="$kAAIT_defensibleTarget" />
+				<create_position name="$kAAIT_moveToPos" x="0" y="0" z="0" />
+				<!-- if in different sectors, kAAIT_MoveToEngagePosition_ShipOrTargetChangedZone will update engage position -->
 				<do_if value="this.assignedcontrolled.sector == @$kAAIT_defensibleTarget.sector">
 					<set_value name="$kAAIT_moveToSpace" exact="this.assignedcontrolled.zone" />
 					<create_position name="$kAAIT_posTarget" space="$kAAIT_moveToSpace" object="$kAAIT_defensibleTarget" />
@@ -421,9 +420,6 @@
 						z="$kAAIT_posTarget.z + $kAAIT_avoidDist * cos ($yaw_targetToShip_next_rad) * cos ($pitch_targetToShip_next_rad)"
 					/>
 				</do_if>
-				<do_else>
-					<!-- only set space and pos when in the same sector -->
-				</do_else>
 			</actions>
 
 			<actions name="kAAIT_Order_Avoid">
@@ -978,14 +974,16 @@
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_moveToSpace: ' + @$kAAIT_moveToSpace.knownname + ', class: ' + @$kAAIT_moveToSpace.class + ', iscomponent: ' + @$kAAIT_moveToSpace.isclass.component" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_moveToPos: ' + @$kAAIT_moveToPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<do_if value="@$kAAIT_moveToSpace.isclass.component">
-					<do_if value="not @$kAAIT_moveToPos">
-						<create_position name="$kAAIT_moveToPos" x="0" y="0" z="0" />
-						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_moveToPos (default): ' + @$kAAIT_moveToPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<do_if value="$kAAIT_moveToSpace == this.assignedcontrolled.sector or @$kAAIT_moveToSpace.sector == this.assignedcontrolled.sector">
+						<do_if value="not @$kAAIT_moveToPos">
+							<create_position name="$kAAIT_moveToPos" x="0" y="0" z="0" />
+							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_moveToPos (default): ' + @$kAAIT_moveToPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						</do_if>
+						<set_value name="$kAAITParam_data.$orderLocation_space" exact="this.assignedcontrolled.sector" />
+						<create_position name="$kAAITParam_data.$orderLocation_pos" space="$kAAITParam_data.$orderLocation_space" object="$kAAIT_moveToSpace" value="$kAAIT_moveToPos" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$orderLocation_space (for ui pointer): ' + @$kAAITParam_data.$orderLocation_space.knownname + ', class: ' + @$kAAITParam_data.$orderLocation_space.class + ', iscomponent: ' + @$kAAITParam_data.$orderLocation_space.isclass.component" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$orderLocation_pos (for ui pointer): ' + @$orderLocation_pos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					</do_if>
-					<set_value name="$kAAITParam_data.$orderLocation_space" exact="this.assignedcontrolled.sector" />
-					<create_position name="$kAAITParam_data.$orderLocation_pos" space="$kAAITParam_data.$orderLocation_space" object="$kAAIT_moveToSpace" value="$kAAIT_moveToPos" />
-					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$orderLocation_space (for ui pointer): ' + @$kAAITParam_data.$orderLocation_space.knownname + ', class: ' + @$kAAITParam_data.$orderLocation_space.class + ', iscomponent: ' + @$kAAITParam_data.$orderLocation_space.isclass.component" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$orderLocation_pos (for ui pointer): ' + @$orderLocation_pos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				</do_if>
 			</actions>
 
