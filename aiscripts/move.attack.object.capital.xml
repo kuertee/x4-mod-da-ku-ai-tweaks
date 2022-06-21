@@ -33,10 +33,9 @@
 	<add pos="before" sel="(//move_to)[3]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to (3) short attack move'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<do_if value="@$kAAITParam_data">
-				<set_value name="$kAAITParam_data.$orderLocation_space" exact="$target" />
-				<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$pos" />
-			</do_if>
+			<set_value name="$kAAIT_moveToSpace" exact="$target" />
+			<set_value name="$kAAIT_moveToPos" exact="$pos" />
+			<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
 		</do_if>
 	</add>
 	<add pos="after" sel="(//move_to)[3]">
@@ -89,30 +88,25 @@
 			@$kAAIT_isTargetPotentialHighRisk and
 			(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw)
 		">
-			<set_value name="$kAAIT_findPosOnOtherSide" exact="false" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_findPosOnOtherSide (1): ' + $kAAIT_findPosOnOtherSide" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<set_value name="$kAAIT_isFindPosOnOtherSide" exact="false" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isFindPosOnOtherSide (1): ' + $kAAIT_isFindPosOnOtherSide" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<do_if value="$target.distanceto.[$target.sector, $pos] gt $movethreshold_max or $kAAIT_isLXLNewModuleTarget">
 				<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
-				<do_if value="@$kAAITParam_isAvoidOrderGiven">
+				<do_if value="@$kAAIT_isAvoidOrderGiven">
 					<do_if value="@$kAAIT_isLXLNewModuleTarget">
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isLXLNewModuleTarget: ' + $kAAIT_isLXLNewModuleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<set_value name="$kAAIT_isLXLNewModuleTarget" exact="false" />
 						<!-- this is an embedded move, so a move_to is required here. -->
-						<!-- and a getsafepos also, because move order is not used. -->
-						<!-- avoidSpace is always either a sector or a zone -->
-						<do_if value="@$kAAIT_avoidSpace and $kAAIT_avoidSpace.isclass.space and $kAAIT_avoidPos?">
-							<do_if value="@$kAAITParam_data">
-								<set_value name="$kAAITParam_data.$orderLocation_space" exact="$kAAIT_avoidSpace" />
-								<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$kAAIT_avoidPos" />
-							</do_if>
-							<debug_text text="this.assignedcontrolled.idcode + ' move_to $kAAIT_avoidSpace: ' + @$kAAIT_avoidSpace + ', $kAAIT_avoidPos: ' + @$kAAIT_avoidPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<do_if value="@$kAAIT_moveToSpace and $kAAIT_moveToPos?">
+							<debug_text text="this.assignedcontrolled.idcode + ' move_to $kAAIT_moveToSpace: ' + @$kAAIT_moveToSpace + ', $kAAIT_moveToPos: ' + @$kAAIT_moveToPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
 							<move_to object="this.ship"
-								destination="$kAAIT_avoidSpace"
+								destination="$kAAIT_moveToSpace"
 								uselocalhighways="false"
 								useknownpath="this.isplayerowned"
 								forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
 								commandaction="false">
-								<position value="$kAAIT_avoidPos"/>
+								<position value="$kAAIT_moveToPos"/>
 							</move_to>
 							<do_if value="@$kAAITParam_data">
 								<remove_value name="$kAAITParam_data.$orderLocation_space" />
@@ -129,11 +123,11 @@
 			</do_if>
 		</do_if>
 		<do_else>
-			<set_value name="$kAAIT_findPosOnOtherSide" exact="$target.distanceto.[$target.sector, $pos] lt $movethreshold_min" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_findPosOnOtherSide (2): ' + $kAAIT_findPosOnOtherSide" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<set_value name="$kAAIT_isFindPosOnOtherSide" exact="$target.distanceto.[$target.sector, $pos] lt $movethreshold_min" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isFindPosOnOtherSide (2): ' + $kAAIT_isFindPosOnOtherSide" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		</do_else>
 	</add>
-	<replace sel="//do_if[@value=&quot;$target.distanceto.[$target.sector, $pos] gt $movethreshold_max or $target.distanceto.[$target.sector, $pos] lt $movethreshold_min&quot;]/@value">$kAAIT_findPosOnOtherSide</replace>
+	<replace sel="//do_if[@value=&quot;$target.distanceto.[$target.sector, $pos] gt $movethreshold_max or $target.distanceto.[$target.sector, $pos] lt $movethreshold_min&quot;]/@value">$kAAIT_isFindPosOnOtherSide</replace>
 <!-- replace check value. purpose: consider shield for reaction.
 	<wait exact="$updatetime">
 		<interrupt>
@@ -170,28 +164,25 @@
 		<do_if value="@$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw (inch forward or backwards after wait): ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_LXL_StepForwardOrMoveOutOfRange" />
-			<!-- when there's already a step forward/withdraw order, $kAAIT_pos will be empty -->
-			<do_if value="@$kAAIT_isInching and $kAAIT_pos">
+			<do_if value="@$kAAIT_isStepForwardWithdrawGiven">
 				<!-- these are precise movements, so always assume no get_safe_pos is req. -->
-				<do_if value="@$kAAITParam_data">
-					<set_value name="$kAAITParam_data.$orderLocation_space" exact="this.assignedcontrolled.zone" />
-					<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$kAAIT_pos" />
-				</do_if>
-				<debug_text text="this.assignedcontrolled.idcode + ' move_to $kAAIT_avoidSpace: ' + @$kAAIT_avoidSpace + ', $kAAIT_avoidPos: ' + @$kAAIT_avoidPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<set_value name="$kAAIT_moveToSpace" exact="this.assignedcontrolled.zone" />
+				<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
+				<debug_text text="this.assignedcontrolled.idcode + ' move_to $kAAIT_moveToSpace: ' + @$kAAIT_moveToSpace + ', $kAAIT_moveToPos: ' + @$kAAIT_moveToPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<move_to object="this.ship"
-					destination="this.assignedcontrolled.zone"
+					destination="$kAAIT_moveToSpace"
 					uselocalhighways="false"
 					useknownpath="this.isplayerowned"
 					forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
 					commandaction="false">
-					<position value="$kAAIT_pos"/>
+					<position value="$kAAIT_moveToPos"/>
 					<interrupt>
 						<conditions>
 							<check_any>
 								<event_object_destroyed object="$kAAIT_defensibleTarget"/>
 								<check_all>
 									<event_object_attacked object="this.assignedcontrolled"/>
-									<check_value value="not this.assignedcontrolled.hullpercentage lt 50"/>
+									<check_value value="this.assignedcontrolled.hullpercentage lt 50"/>
 								</check_all>
 							</check_any>
 						</conditions>
@@ -205,8 +196,6 @@
 					<remove_value name="$kAAITParam_data.$orderLocation_space" />
 					<remove_value name="$kAAITParam_data.$orderLocation_pos" />
 				</do_if>
-				<remove_value name="$kAAIT_isInching" />
-				<remove_value name="$kAAIT_pos" />
 				<resume label="finish" />
 			</do_if>
 		</do_if>
@@ -215,10 +204,10 @@
 	<set_value name="$distfactor" exact="($maxeffectivecombatrange - $distance) / $distance " />
 -->
 	<add pos="before" sel="//set_value[@name=&quot;$distfactor&quot;][@exact=&quot;($maxeffectivecombatrange - $distance) / $distance &quot;]">
-		<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isActive: ' + @$kAAIT_isActive + ' $kAAITParam_data: ' + @$kAAITParam_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isActive: ' + @$kAAITParam_isActive + ' $kAAITParam_data: ' + @$kAAITParam_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<debug_text text="this.assignedcontrolled.idcode + ' $maxeffectivecombatrange: ' + $maxeffectivecombatrange + ' $distance: ' + $distance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="(not @$maxeffectivecombatrange) or (not @$distance)">
-			<debug_text text="this.assignedcontrolled.idcode + ' resume label fight. mod updated: $maxeffectivecombatrange ' + @$maxeffectivecombatrange + ' $distance: ' + @$distance + ' $kAAIT_isActive: ' + @$kAAIT_isActive + ' $kAAITParam_data: ' + @$kAAITParam_data" />
+			<debug_text text="this.assignedcontrolled.idcode + ' resume label fight. mod updated: $maxeffectivecombatrange ' + @$maxeffectivecombatrange + ' $distance: ' + @$distance + ' $kAAITParam_isActive: ' + @$kAAITParam_isActive + ' $kAAITParam_data: ' + @$kAAITParam_data" />
 			<resume label="fight" />
 		</do_if>
 	</add>
@@ -228,31 +217,14 @@
 	<add pos="after" sel="(//get_safe_pos[@result=&quot;$pos&quot;][@object=&quot;$target&quot;][@min=&quot;$minoperationalrange&quot;][@max=&quot;$maxoperationalrange&quot;][@sector=&quot;$target.sector&quot;][@direction=&quot;$weakquadrant&quot;][@directionobject=&quot;$target&quot;][@radius=&quot;this.ship.size/2.0&quot;][@ignored=&quot;this.ship&quot;])[2]">
 		<do_if value="@$kAAITParam_isStepForwardWithdraw">
 			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_shipIsNearBigEnemy: ' + $kAAIT_shipIsNearBigEnemy + ' $kAAIT_targetIsNearBigEnemy: ' + $kAAIT_targetIsNearBigEnemy" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<do_if value="@$kAAIT_shipIsNearBigEnemy or @$kAAIT_targetIsNearBigEnemy">
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isShipNearBigEnemy: ' + $kAAIT_isShipNearBigEnemy + ' $kAAIT_isTargetNearBigEnemy: ' + $kAAIT_isTargetNearBigEnemy" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<do_if value="@$kAAIT_isShipNearBigEnemy or @$kAAIT_isTargetNearBigEnemy">
 				<!-- move away -->
 				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 				<do_if value="this.assignedcontrolled.attention lt attention.visible">
 					<resume label="finish" />
 				</do_if>
 			</do_if>
-		</do_if>
-	</add>
-<!-- add after. purpose: debugging
-	<create_position name="$pos" space="$target" value="$pos" object="$target.sector"/>
--->
-	<add pos="after" sel="//create_position[@name=&quot;$pos&quot;][@space=&quot;$target&quot;][@value=&quot;$pos&quot;][@object=&quot;$target.sector&quot;]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<!-- <create_position name="$pos" space="$target" value="$pos" object="$target.sector"/> -->
-			<create_position name="$kAAIT_posAttack" space="$target.sector" object="$target" value="$pos" />
-			<do_if value="@$kAAITParam_data.$beacon_to2.exists">
-				<destroy_object object="$kAAITParam_data.$beacon_to2" />
-			</do_if>
-			<create_object name="$kAAITParam_data.$beacon_to2" sector="$target.sector" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
-				<position value="$kAAIT_posAttack"/>
-			</create_object>
-			<set_object_name object="$kAAITParam_data.$beacon_to2" name="this.assignedcontrolled.idcode + ' to (move to attack pos)'" />
-			<debug_text text="this.assignedcontrolled.idcode + ' beaconto.distanceto.ship: ' + ($kAAITParam_data.$beacon_to2.distanceto.{this.assignedcontrolled})" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		</do_if>
 	</add>
 <!-- add. purpose: consider shield for reaction.
@@ -316,28 +288,25 @@
 		<do_if value="@$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw (inch forward if no recent damage): ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_LXL_StepForwardOrMoveOutOfRange" />
-			<!-- when there's already a step forward/withdraw order, $kAAIT_pos will be empty -->
-			<do_if value="@$kAAIT_isInching and $kAAIT_pos">
+			<do_if value="@$kAAIT_isStepForwardWithdrawGiven">
 				<!-- these are precise movements, so always assume no get_safe_pos is req. -->
-				<do_if value="@$kAAITParam_data">
-					<set_value name="$kAAITParam_data.$orderLocation_space" exact="this.assignedcontrolled.zone" />
-					<set_value name="$kAAITParam_data.$orderLocation_pos" exact="$kAAIT_pos" />
-				</do_if>
-				<debug_text text="this.assignedcontrolled.idcode + ' move_to $kAAIT_avoidSpace: ' + @$kAAIT_avoidSpace + ', $kAAIT_avoidPos: ' + @$kAAIT_avoidPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<set_value name="$kAAIT_moveToSpace" exact="this.assignedcontrolled.zone" />
+				<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
+				<debug_text text="this.assignedcontrolled.idcode + ' move_to $kAAIT_moveToSpace: ' + @$kAAIT_moveToSpace + ', $kAAIT_moveToPos: ' + @$kAAIT_moveToPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<move_to object="this.ship"
-					destination="this.assignedcontrolled.zone"
+					destination="$kAAIT_moveToSpace"
 					uselocalhighways="false"
 					useknownpath="this.isplayerowned"
 					forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
 					commandaction="false">
-					<position value="$kAAIT_pos"/>
+					<position value="$kAAIT_moveToPos"/>
 					<interrupt>
 						<conditions>
 							<check_any>
 								<event_object_destroyed object="$kAAIT_defensibleTarget"/>
 								<check_all>
 									<event_object_attacked object="this.assignedcontrolled"/>
-									<check_value value="not this.assignedcontrolled.hullpercentage lt 50"/>
+									<check_value value="this.assignedcontrolled.hullpercentage lt 50"/>
 								</check_all>
 							</check_any>
 						</conditions>
@@ -351,8 +320,6 @@
 					<remove_value name="$kAAITParam_data.$orderLocation_space" />
 					<remove_value name="$kAAITParam_data.$orderLocation_pos" />
 				</do_if>
-				<remove_value name="$kAAIT_isInching" />
-				<remove_value name="$kAAIT_pos" />
 				<resume label="finish" />
 			</do_if>
 		</do_if>

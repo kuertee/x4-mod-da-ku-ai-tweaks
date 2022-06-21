@@ -4,12 +4,10 @@
 	<params>
 -->
 	<add sel="//params">
-		<param name="kAAIT_isActive" required="false" default="false" type="internal" />
+		<param name="kAAITParam_isActive" required="false" default="false" type="internal" />
 		<param name="kAAITParam_isAttackOrder" required="false" default="true" type="internal" />
 		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
 		<param name="kAAITParam_data" required="false" default="null" type="internal" />
-		<param name="kAAITParam_isAvoidOrderGiven" required="false" type="internal" default="false" />
-		<param name="kAAITParam_isStepForwardWithdrawGiven" required="false" type="internal" default="false" />
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
 			if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then 
 				this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user
@@ -99,7 +97,7 @@
 	<location condition="$primarytarget.canbeattacked" object="$primarytarget" additionalobjects="$secondarytargets"/>
 -->
 	<add pos="before" sel="//location[@condition=&quot;$primarytarget.canbeattacked&quot;][@object=&quot;$primarytarget&quot;][@additionalobjects=&quot;$secondarytargets&quot;]">
-		<location object="@$kAAITParam_data.$orderLocation_space" position="@$kAAITParam_data.$orderLocation_pos" condition="@$kAAITParam_data.$orderLocation_space == this.assignedcontrolled.zone and @$kAAITParam_data.$orderLocation_pos" />
+		<location object="@$kAAITParam_data.$orderLocation_space" position="@$kAAITParam_data.$orderLocation_pos" condition="@$kAAITParam_data.$orderLocation_space and @$kAAITParam_data.$orderLocation_pos" />
 		<location object="@$target" condition="@$target.canbeattacked" />
 	</add>
 <!-- add after. purpose: keep track of attackers
@@ -107,17 +105,14 @@
 -->
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="this.assignedcontrolled.idcode + ' fight, $primarytarget: ' + @$primarytarget + ' (' + @$primarytarget.class + '), $secondarytargets: ' + @$secondarytargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isActive (1): ' + @$kAAIT_isActive + ', $kAAITParam_data: ' + @$kAAITParam_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isActive (1): ' + @$kAAITParam_isActive + ', $kAAITParam_data: ' + @$kAAITParam_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk (1): ' + @$kAAITParam_isAvoidHighRisk + ', $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="
-			((not @$kAAIT_isActive) or (not @$kAAITParam_data)) and
-			(
-				@$kAAITParam_isAvoidHighRisk or
-				@$kAAITParam_isStepForwardWithdraw
-			)
+			@$kAAITParam_isAvoidHighRisk or
+			@$kAAITParam_isStepForwardWithdraw
 		">
 			<include_interrupt_actions ref="kAAIT_Init" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isActive (2): ' + @$kAAIT_isActive + ', $kAAITParam_data: ' + @$kAAITParam_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isActive (2): ' + @$kAAITParam_isActive + ', $kAAITParam_data: ' + @$kAAITParam_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		</do_if>
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />

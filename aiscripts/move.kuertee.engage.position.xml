@@ -41,7 +41,7 @@
 			<param name="debugchance" type="bool" default="0" advanced="true" text="{1041, 10086}" comment="Print debug output">
 				<input_param name="truevalue" value="100"/>
 			</param>
-			<param name="kAAIT_isActive" required="false" default="false" type="internal" />
+			<param name="kAAITParam_isActive" required="false" default="false" type="internal" />
 			<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
 			<param name="kAAITParam_data" required="false" default="null" type="internal" />
 			<param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal" />
@@ -111,25 +111,22 @@
 		<requires>
 			<match shiptype="shiptype.lasertower" negate="true"/>
 		</requires>
-		<location object="$kAAIT_preciseDestination" position="$kAAIT_precisePosition" condition="@$kAAIT_preciseDestination.exists and @$kAAIT_precisePosition"/>
+		<location object="@$kAAITParam_data.$orderLocation_space" position="@$kAAITParam_data.$orderLocation_pos" condition="@$kAAITParam_data.$orderLocation_space and @$kAAITParam_data.$orderLocation_pos" />
 		<location object="$destination" position="$position" condition="$destination and $position"/>
 		<location object="$destination" condition="$destination"/>
 	</order>
 	<interrupts>
-		<handler ref="kAAIT_UpdateAvoidPosition"/>
+		<handler ref="kAAIT_TargetDestroyed"/>
+		<handler ref="kAAIT_MovedIntoDifferentZone"/>
 	</interrupts>
 	<attention min="unknown">
 		<actions>
 			<label name="start"/>
-			<do_if value="not @$kAAIT_preciseDestination">
-				<set_value name="$kAAIT_preciseDestination" exact="$destination" />
-				<do_if value="not @$position">
-					<create_position name="$position" x="0" y="0" z="0" />
-				</do_if>
-				<set_value name="$kAAIT_precisePosition" exact="$position" />
-				<do_if value="$kAAIT_preciseDestination.isclass.component">
-					<create_position name="$kAAIT_precisePosition" space="this.assignedcontrolled.zone" zone="$kAAIT_preciseDestination.zone" value="$position" />
-				</do_if>
+			<set_value name="$kAAIT_moveToSpace" exact="$destination" />
+			<set_value name="$kAAIT_moveToPos" exact="$position" />
+			<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
+			<do_if value="@$kAAITParam_enemyAvoid.exists">
+				<set_value name="$kAAIT_defensibleTarget" exact="$kAAITParam_enemyAvoid" />
 			</do_if>
 			<run_script name="'move.generic'">
 				<param name="destination" value="$destination" />
@@ -162,6 +159,7 @@
 				<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
 				<param name="debugchance" value="$debugchance" />
 			</run_script>
+			<label name="finish" />
 		</actions>
 	</attention>
 </aiscript>
