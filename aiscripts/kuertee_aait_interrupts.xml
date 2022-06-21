@@ -278,32 +278,56 @@
 
 			<!-- only ships that are allowed to avoid high-risk enemies/move to engage position will ever have this handler. -->
 			<!-- there's no need to assess whether they should. -->
+			<!-- when target is a ship, engage to move position order is only applied when victim is within 125% maxradarrange of attacker. -->
+			<!-- otherwise, when in the same sector -->
 			<handler name="kAAIT_MoveToEngagePosition_ShipOrTargetChangedZone">
 				<conditions>
 					<check_any>
 						<event_object_changed_zone object="this.assignedcontrolled" />
 						<event_object_changed_zone object="$kAAITParam_enemyAvoid" />
-						<event_object_attacked object="$kAAITParam_enemyAvoid" />
+						<event_object_attacked object="$kAAITParam_enemyAvoid" attacker="this.assignedcontrolled" />
 						<event_object_attacked_object object="$kAAITParam_enemyAvoid" attacked="this.assignedcontrolled" />
 					</check_any>
 					<check_value value="@$kAAITParam_isAvoidHighRisk" />
-					<check_value value="this.assignedcontrolled.sector" />
-					<check_value value="this.assignedcontrolled.sector == @$kAAITParam_enemyAvoid.sector" />
-					<check_value value="this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid} lt this.assignedcontrolled.maxradarrange * 1.25" />
+					<check_value value="$kAAITParam_enemyAvoid.isclass.ship" />
 				</conditions>
 				<actions>
 					<debug_text text="this.assignedcontrolled.idcode + ' event_object_changed_zone event.object: ' + @event.object.knownname + ', ' + @event.object.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-					<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
-						<set_value name="$kAAIT_isStopKamikaze" exact="true" />
+					<do_if value="
+						this.assignedcontrolled.sector != $kAAITParam_enemyAvoid.sector or
+						['event_object_attacked', 'event_object_attacked_object'].indexof.{event.name}
+					">
+						<abort_called_scripts resume="finish"/>
 					</do_if>
-					<include_interrupt_actions ref="kAAIT_GetAvoidPos" />
-					<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
-						<set_value name="$kAAIT_isStopKamikaze" exact="false" />
-					</do_if>
-					<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
-					<set_value name="$destination" exact="$kAAIT_moveToSpace" />
-					<set_value name="$position" exact="$kAAIT_moveToPos" />
-					<abort_called_scripts resume="start"/>
+					<do_else>
+						<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid}" />
+						<do_if value="$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange * 1.25">
+							<do_if value="@$kAAIT_isEngagePositionSet">
+								<!-- move to target -->
+								<remove_value name="$kAAIT_isEngagePositionSet" />
+								<remove_value name="$kAAIT_moveToSpace" />
+								<remove_value name="$kAAIT_moveToPos" />
+								<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
+								<set_value name="$destination" exact="$kAAITParam_enemyAvoid" />
+								<set_value name="$position" exact="null" />
+							</do_if>
+						</do_if>
+						<do_else>
+							<do_if value="(not @$kAAIT_isEngagePositionSet)">
+								<!-- move to engage position -->
+								<set_value name="$kAAIT_isEngagePositionSet" exact="true" />
+								<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+									<set_value name="$kAAIT_isStopKamikaze" exact="true" />
+								</do_if>
+								<include_interrupt_actions ref="kAAIT_GetAvoidPos" />
+								<remove_value name="$kAAIT_isStopKamikaze" />
+								<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
+								<set_value name="$destination" exact="$kAAIT_moveToSpace" />
+								<set_value name="$position" exact="$kAAIT_moveToPos" />
+								<abort_called_scripts resume="start"/>
+							</do_if>
+						</do_else>
+					</do_else>
 				</actions>
 			</handler>
 
@@ -871,7 +895,16 @@
 							<do_if value="$kAAIT_isTargetHighRisk_explosion">
 								<include_interrupt_actions ref="kAAIT_Order_Flee" />
 							</do_if>
-							<do_elseif value="this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget} gt this.assignedcontrolled.maxradarrange">
+							<do_elseif value="
+								(
+									$kAAIT_defensibleTarget.isclass.station and
+									(this.assignedcontrolled.sector and this.assignedcontrolled.sector == $kAAIT_defensibleTarget.sector)
+								) or
+								(
+									$kAAIT_defensibleTarget.isclass.ship and
+									this.assignedcontrolled.distanceto.{$kAAIT_defensibleTarget} le this.assignedcontrolled.maxradarrange * 1.25
+								)
+							">
 								<do_if value="@$kAAITParam_data.$defensibleTarget_stopKamikaze != @$kAAIT_defensibleTarget">
 									<!-- kAAIT_MoveToEngagePosition_ShipOrTargetChangedZone will set a better engage position when near the target. -->
 									<set_value name="$kAAIT_isStopKamikaze" exact="true" />
