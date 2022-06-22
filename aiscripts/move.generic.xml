@@ -140,7 +140,7 @@
 		<!-- <do_if value="not @$kAAITParam_data">
 			<set_value name="$kAAITParam_data" exact="table[]" />
 		</do_if> -->
-		<debug_text text="this.assignedcontrolled.idcode + ' $destination.knownname: ' + @$destination.knownname" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		<debug_text text="this.assignedcontrolled.idcode + ' $destination.knownname: ' + @$destination.knownname + ' $kAAITParam_isAttackOrder: ' + @$kAAITParam_isAttackOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$isMovingToEngagePosition: ' + @$kAAITParam_data.$isMovingToEngagePosition" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/> -->
 	</add>
 	<!-- add. purpose: recheck big enemies.
@@ -159,10 +159,13 @@
 				</check_all>
 			</conditions>
 			<actions>
-				<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+				<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name + ', $kAAITParam_isAttackOrder: ' + @$kAAITParam_isAttackOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+				<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_enemyAvoid.class: ' + @$kAAITParam_enemyAvoid.class" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+				<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$kAAIT_isEngagePositionSet: ' + @$kAAITParam_data.$kAAIT_isEngagePositionSet" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+				<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid}: ' + @this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 				<do_if value="@$kAAITParam_isAttackOrder and
 					@$kAAITParam_isStepForwardWithdraw and
-					@$kAAITParam_enemyAvoid.isclass.[class.station] and
+					@$kAAITParam_enemyAvoid.isclass.station and
 					(not @$kAAITParam_data.$kAAIT_isEngagePositionSet) and
 					this.assignedcontrolled.sector.exists and
 					this.assignedcontrolled.sector == @$kAAITParam_enemyAvoid.sector
@@ -171,6 +174,17 @@
 					<!-- order.fight.attack.object will return to its fight label, which will set move to engage position if required -->
 					<abort_called_scripts resume="finish"/>
 				</do_if>
+				<do_elseif value="@$kAAITParam_isAttackOrder and
+					@$kAAITParam_isAvoidHighRisk and
+					@$kAAITParam_enemyAvoid.isclass.ship and
+					(not @$kAAITParam_data.$kAAIT_isEngagePositionSet) and
+					this.assignedcontrolled.sector.exists and
+					this.assignedcontrolled.sector == @$kAAITParam_enemyAvoid.sector
+				">
+					<!-- move to engage position not set and target is close by -->
+					<!-- order.fight.attack.object will return to its fight label, which will set move to engage position if required -->
+					<abort_called_scripts resume="finish"/>
+				</do_elseif>
 				<do_else>
 					<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
 					<do_if value="$kAAIT_bigEnemies.count">
