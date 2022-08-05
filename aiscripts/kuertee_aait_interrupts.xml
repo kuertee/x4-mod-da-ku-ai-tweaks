@@ -52,9 +52,6 @@
 					</do_else>
 					<set_value name="$kAAIT_isAvoidOrderGiven" exact="false" />
 					<set_value name="$kAAIT_isStepForwardWithdrawGiven" exact="false" />
-					<do_if value="@$primarytarget.exists and (not $primarytarget.isclass.[class.ship, class.station])">
-						<set_value name="$kAAITParam_data.$kAAIT_moduleTarget" exact="@$primarytarget" />
-					</do_if>
 					<set_value name="$kAAIT_defensibleTarget" exact="@$primarytarget" />
 					<do_if value="not @$kAAIT_defensibleTarget.exists">
 						<set_value name="$kAAIT_defensibleTarget" exact="@$target" />
@@ -82,14 +79,19 @@
 						 	@$kAAITParam_data.$kAAIT_isEngagePositionSet and
 						 	@$kAAIT_isTargetHighRisk and
 							(
-								(@$primarytarget.exists and (not $primarytarget.isclass.[class.ship, class.station]) and @$kAAITParam_data.$kAAIT_moduleTarget != $primarytarget)
+								(@$primarytarget.exists and $primarytarget.isclass.module and @$kAAITParam_data.$kAAIT_moduleTarget != $primarytarget)
 								or
-								(@$target.exists and (not $target.isclass.[class.ship, class.station]) and @$kAAITParam_data.$kAAIT_moduleTarget != $target)
+								(@$target.exists and $target.isclass.module and @$kAAITParam_data.$kAAIT_moduleTarget != $target)
 							)
 						 ">
 							<debug_text text="this.assignedcontrolled.idcode + ' NEW MODULE TARGET'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<set_value name="$kAAIT_isLXLNewModuleTarget" exact="true" />
-							<set_value name="$kAAITParam_data.$kAAIT_moduleTarget" exact="if $primarytarget? then $primarytarget else $target" />
+							<do_if value="@$primarytarget.isclass.module">
+								<set_value name="$kAAITParam_data.$kAAIT_moduleTarget" exact="$primarytarget" />
+							</do_if>
+							<do_elseif value="@$target.isclass.module">
+								<set_value name="$kAAITParam_data.$kAAIT_moduleTarget" exact="$target" />
+							</do_elseif>
 							<set_value name="$kAAITParam_data.$inchForwardCount" exact="0" />
 						</do_if>
 					</do_if>
@@ -634,6 +636,8 @@
 					<debug_text text="this.assignedcontrolled.idcode + ' pos.distanceto.defensible: ' + $kAAIT_defensibleTarget.distanceto.{$kAAIT_moveToPos} + ' pos.bboxdistanceto.$kAAIT_defensibleTarget: ' + $kAAIT_defensibleTarget.bboxdistanceto.{$kAAIT_moveToPos}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<set_value name="$kAAITParam_isActive" exact="true" />
 					<set_value name="$kAAIT_isStepForwardWithdrawGiven" exact="true" />
+					<set_value name="$kAAITParam_data.$kAAIT_lockedAttackDist" exact="$kAAIT_moveToPos.distanceto.{$kAAIT_posTarget}" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$kAAIT_lockedAttackDist: ' + $kAAITParam_data.$kAAIT_lockedAttackDist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<do_if value="not @$kAAITParam_isAttackOrder">
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAttackOrder: ' + @$kAAITParam_isAttackOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<set_value name="$kAAIT_orderName" exact="'kAAIT_MoveStepForward'" />
@@ -720,8 +724,14 @@
 					<debug_text text="this.assignedcontrolled.idcode + ' ======================================'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<set_value name="$kAAIT_isStepForwardWithdrawGiven" exact="false" />
 					<include_interrupt_actions ref="kAAIT_LXL_GetCombatRange" />
-					<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+					<do_if value="@$kAAITParam_data.$lastAttack_enemy">
+						<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$kAAITParam_data.$lastAttack_enemy}" />
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+					</do_else>
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_distToTarget: ' + $kAAIT_distToTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$kAAIT_lockedAttackDist: ' + @$kAAITParam_data.$kAAIT_lockedAttackDist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_enemy: ' + @$kAAITParam_data.$lastAttack_enemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_time: ' + @$kAAITParam_data.$lastAttack_time" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' player.age - @$kAAITParam_data.$lastAttack_time gt 1min: ' + (player.age - @$kAAITParam_data.$lastAttack_time gt 1min)" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -734,7 +744,8 @@
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isStepForwardAllowed: ' + $kAAIT_isStepForwardAllowed" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<do_if value="
 							$kAAIT_isStepForwardAllowed and
-							this.assignedcontrolled.shieldpercentage ge 90
+							this.assignedcontrolled.shieldpercentage ge 90 and
+							$kAAIT_distToTarget ge @$kAAITParam_data.$kAAIT_lockedAttackDist * 0.9
 						">
 							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_lastAttack_time: ' + @$kAAITParam_data.$lastAttack_timeLastSafe" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<do_if value="player.age - @$kAAITParam_data.$lastAttack_timeLastSafe gt 1min">
@@ -758,9 +769,9 @@
 						</do_if>
 					</do_if>
 					<do_elseif value="
-						(@$kAAITParam_data.$lastAttack_enemy == $kAAIT_defensibleTarget and player.age - @$kAAITParam_data.$lastAttack_time lt 1min)
-						or
-						this.assignedcontrolled.shieldpercentage lt 90
+						(@$kAAITParam_data.$lastAttack_enemy == $kAAIT_defensibleTarget and player.age - @$kAAITParam_data.$lastAttack_time lt 1min) or
+						this.assignedcontrolled.shieldpercentage lt 90 or
+						$kAAIT_distToTarget lt @$kAAITParam_data.$kAAIT_lockedAttackDist * 0.9
 					">
 						<!--
 						lastAttack_enemy and lastAttack_time are only set when the event_object_attacked interrupts are triggered
@@ -769,27 +780,38 @@
 						<include_interrupt_actions ref="kAAIT_LXL_GetIsMoveOutOfRangeAllowed" />
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isMoveOutOfRangeAllowed: ' + $kAAIT_isMoveOutOfRangeAllowed" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$lastAttack_enemy.idcode: ' + @$kAAITParam_data.$lastAttack_enemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-						<do_if value="
-							$kAAIT_isMoveOutOfRangeAllowed and
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$lastAttack_enemy.assignedaipilot.$kAAIT_attackers_lxl.count: ' + @$kAAITParam_data.$lastAttack_enemy.assignedaipilot.$kAAIT_attackers_lxl.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$lastAttack_enemy.defencenpc.$kAAIT_attackers_lxl.count: ' + @$kAAITParam_data.$lastAttack_enemy.defencenpc.$kAAIT_attackers_lxl.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="$kAAITParam_test1" exact="$kAAIT_distToTarget lt @$kAAITParam_data.$kAAIT_lockedAttackDist * 0.9" />
+						<set_value name="$kAAITParam_test2" exact="
+							@$kAAITParam_data.$lastAttack_enemy.isclass.station and
+							this.assignedcontrolled.shieldpercentage lt 90
+						" />
+						<set_value name="$kAAITParam_test3" exact="
+							@$kAAITParam_data.$lastAttack_enemy.isclass.ship and
 							(
-								(
-									@$kAAITParam_data.$lastAttack_enemy.isclass.station and
-									this.assignedcontrolled.shieldpercentage lt 90
-								) or
-								(
-									@$kAAITParam_data.$lastAttack_enemy.isclass.ship and
-									this.assignedcontrolled.shieldpercentage lt 90 and
-									this.assignedcontrolled.shieldpercentage gt 25 and
-									this.assignedcontrolled.hullpercentage gt 50
-								)
+								$kAAITParam_test1 or
+								this.assignedcontrolled.shieldpercentage lt 90
 							) and
 							(
-								@$kAAITParam_data.$lastAttack_enemy.isclass.station or
-								(
-									@$kAAITParam_data.$lastAttack_enemy.assignedaipilot.$kAAIT_attackers_lxl.count ge 1 or
-									@$kAAITParam_data.$lastAttack_enemy.defencenpc.$kAAIT_attackers_lxl.count ge 1
-								)
+								this.assignedcontrolled.shieldpercentage gt 25 or
+								this.assignedcontrolled.hullpercentage gt 25
 							)
+						" />
+						<set_value name="$kAAITParam_test4" exact="@$kAAITParam_data.$lastAttack_enemy.isclass.station" />
+						<set_value name="$kAAITParam_test5" exact="
+							@$kAAITParam_data.$lastAttack_enemy.assignedaipilot.$kAAIT_attackers_lxl.count gt 1 or
+							@$kAAITParam_data.$lastAttack_enemy.defencenpc.$kAAIT_attackers_lxl.count gt 1
+						" />
+						<debug_text text="'$kAAITParam_test1 ($kAAIT_lockedAttackDist): ' + $kAAITParam_test1" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="'$kAAITParam_test2 (is station, shield lt 90): ' + $kAAITParam_test2" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="'$kAAITParam_test3 (is ship and (shield lt 90 or too near) and has chance to survive): ' + $kAAITParam_test3" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="'$kAAITParam_test4 (station): ' + $kAAITParam_test4" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="'$kAAITParam_test5 (has other attackers): ' + $kAAITParam_test5" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<do_if value="
+							$kAAIT_isMoveOutOfRangeAllowed and
+							($kAAITParam_test2 or $kAAITParam_test3) and
+							($kAAITParam_test4 or $kAAITParam_test5)
 						">
 							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isMoveOutOfRangeAllowed (confirmed): ' + $kAAIT_isMoveOutOfRangeAllowed" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<!-- check shield levels here again, in case the interrupt was triggered by another event -->
@@ -807,6 +829,11 @@
 						<do_else>
 							<!-- empty for now, but leave do_else as reminder that we can add other behaviours here. -->
 						</do_else>
+						<remove_value name="$kAAITParam_test1" />
+						<remove_value name="$kAAITParam_test2" />
+						<remove_value name="$kAAITParam_test3" />
+						<remove_value name="$kAAITParam_test4" />
+						<remove_value name="$kAAITParam_test5" />
 					</do_elseif>
 				</do_if>
 			</actions>

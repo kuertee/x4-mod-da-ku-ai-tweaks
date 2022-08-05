@@ -33,13 +33,6 @@
 	<add pos="before" sel="(//move_to)[3]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to (3) short attack move'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<!-- <set_value name="$kAAIT_moveToSpace" exact="$target" />
-			<set_value name="$kAAIT_moveToPos" exact="$pos" />
-			<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" /> -->
-			<do_if value="@$kAAITParam_data">
-				<remove_value name="$kAAITParam_data.$orderLocation_space" />
-				<remove_value name="$kAAITParam_data.$orderLocation_pos" />
-			</do_if>
 		</do_if>
 	</add>
 	<add pos="after" sel="(//move_to)[3]">
@@ -143,8 +136,15 @@
 		<check_value value="
 			player.age ge $time_waitend or
 			(
-				this.assignedcontrolled.shieldpercentage le 90 and
-				@$kAAITParam_isStepForwardWithdraw
+				@$kAAITParam_isStepForwardWithdraw and @$kAAIT_isTargetPotentialHighRisk and
+				(
+					this.assignedcontrolled.shieldpercentage le 90 or
+					this.assignedcontrolled.distanceto.{$target} lt @$kAAITParam_data.$kAAIT_lockedAttackDist * 0.9
+				) and
+				(
+					this.assignedcontrolled.shieldpercentage gt 25 and
+					this.assignedcontrolled.hullpercentage gt 25
+				)
 			)
 		" />
 	</replace>
@@ -158,7 +158,7 @@
 	</add>
 	<add pos="prepend" sel="//wait[@exact=&quot;$updatetime&quot;]/interrupt/actions">
 		<do_if value="@$kAAITParam_isStepForwardWithdraw">
-			<!-- <do_if value="event.param == @$kAAIT_defensibleTarget or @event.param.defensible == @$kAAIT_defensibleTarget"> -->
+			<debug_text text="'event.name: ' + @event.name + ' event.param: ' + @event.param.knownname + ', ' + @event.param.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<do_if value="event.param.isclass.[class.ship_l, class.ship_xl, class.station] or @event.param.defensible.isclass.[class.ship_l, class.ship_xl, class.station]">
 				<set_value name="$kAAITParam_data.$lastAttack_enemy" exact="event.param" />
 				<set_value name="$kAAITParam_data.$lastAttack_time" exact="player.age" />
@@ -183,13 +183,14 @@
 					<position value="$kAAIT_moveToPos"/>
 					<interrupt>
 						<conditions>
+							<event_object_destroyed object="$kAAIT_defensibleTarget"/>
 							<check_any>
 								<event_object_destroyed object="$kAAIT_defensibleTarget"/>
 								<check_all>
 									<event_object_attacked object="this.assignedcontrolled"/>
 									<check_value value="$kAAIT_defensibleTarget.isclass.ship" />
 									<check_value value="this.assignedcontrolled.shieldpercentage lt 25"/>
-									<check_value value="this.assignedcontrolled.hullpercentage lt 50"/>
+									<check_value value="this.assignedcontrolled.hullpercentage lt 25"/>
 								</check_all>
 							</check_any>
 						</conditions>
@@ -235,7 +236,7 @@
 			</do_if>
 		</do_if>
 	</add>
-<!-- add. purpose: consider shield for reaction.
+<!-- add. purpose: consider shield for reaction. MOVE_STRAFE.
 	<move_strafe destination="$target" abortpath="not @$abortpath" object="this.assignedcontrolled" finishonapproach="false" forcerotation="true" sinceversion="10">
 		<interrupt>
 			<conditions>
@@ -244,8 +245,16 @@
 	<add sel="//move_strafe[@destination=&quot;$target&quot;]/interrupt/conditions/check_any">
 		<check_all>
 			<event_object_attacked object="this.assignedcontrolled" />
-			<check_value value="this.assignedcontrolled.shieldpercentage le 90" />
 			<check_value value="@$kAAITParam_isStepForwardWithdraw" />
+			<check_value value="@$kAAIT_isTargetPotentialHighRisk" />
+			<check_any>
+				<check_value value="this.assignedcontrolled.shieldpercentage le 90" />
+				<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} lt @$kAAITParam_data.$kAAIT_lockedAttackDist * 0.9" />
+			</check_any>
+			<check_any>
+				<check_value value="this.assignedcontrolled.shieldpercentage gt 25" />
+				<check_value value="this.assignedcontrolled.hullpercentage gt 25" />
+			</check_any>
 		</check_all>
 	</add>
 <!-- add after. purpose: var for last attack.
@@ -256,6 +265,7 @@
 	<add pos="after" sel="//move_strafe[@destination=&quot;$target&quot;]/interrupt/conditions">
 		<actions>
 			<do_if value="@$kAAITParam_isStepForwardWithdraw">
+				<debug_text text="'event.name: ' + @event.name + ' event.param: ' + @event.param.knownname + ', ' + @event.param.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<do_if value="event.param.isclass.[class.ship_l, class.ship_xl, class.station] or @event.param.defensible.isclass.[class.ship_l, class.ship_xl, class.station]">
 					<set_value name="$kAAITParam_data.$lastAttack_enemy" exact="event.param" />
 					<set_value name="$kAAITParam_data.$lastAttack_time" exact="player.age" />
@@ -263,7 +273,7 @@
 			</do_if>
 		</actions>
 	</add>
-<!-- add. purpose: consider shield for reaction.
+<!-- add. purpose: consider shield for reaction. MOVE_TO (3).
 	<move_to destination="$target" abortpath="not @$noabortpath" object="this.assignedcontrolled" finishonapproach="false" forceposition="false" forcerotation="false" uselocalhighways="false" boost="@$boost" travel="@$travel">
 		<interrupt>
 			<conditions>
@@ -272,8 +282,16 @@
 	<add sel="//move_to[@destination=&quot;$target&quot;]/interrupt/conditions/check_any">
 		<check_all>
 			<event_object_attacked object="this.assignedcontrolled" />
-			<check_value value="this.assignedcontrolled.shieldpercentage le 90" />
 			<check_value value="@$kAAITParam_isStepForwardWithdraw" />
+			<check_value value="@$kAAIT_isTargetPotentialHighRisk" />
+			<check_any>
+				<check_value value="this.assignedcontrolled.shieldpercentage le 90" />
+				<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} lt @$kAAITParam_data.$kAAIT_lockedAttackDist * 0.9" />
+			</check_any>
+			<check_any>
+				<check_value value="this.assignedcontrolled.shieldpercentage gt 25" />
+				<check_value value="this.assignedcontrolled.hullpercentage gt 25" />
+			</check_any>
 		</check_all>
 	</add>
 <!-- add after. purpose: var for last attack.
@@ -284,6 +302,7 @@
 	<add pos="after" sel="//move_to[@destination=&quot;$target&quot;]/interrupt/conditions">
 		<actions>
 			<do_if value="@$kAAITParam_isStepForwardWithdraw">
+				<debug_text text="'event.name: ' + @event.name + ' event.param: ' + @event.param.knownname + ', ' + @event.param.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<do_if value="event.param.isclass.[class.ship_l, class.ship_xl, class.station] or @event.param.defensible.isclass.[class.ship_l, class.ship_xl, class.station]">
 					<set_value name="$kAAITParam_data.$lastAttack_enemy" exact="event.param" />
 					<set_value name="$kAAITParam_data.$lastAttack_time" exact="player.age" />
@@ -314,13 +333,14 @@
 					<position value="$kAAIT_moveToPos"/>
 					<interrupt>
 						<conditions>
+							<event_object_destroyed object="$kAAIT_defensibleTarget"/>
 							<check_any>
 								<event_object_destroyed object="$kAAIT_defensibleTarget"/>
 								<check_all>
 									<event_object_attacked object="this.assignedcontrolled"/>
 									<check_value value="$kAAIT_defensibleTarget.isclass.ship" />
 									<check_value value="this.assignedcontrolled.shieldpercentage lt 25"/>
-									<check_value value="this.assignedcontrolled.hullpercentage lt 50"/>
+									<check_value value="this.assignedcontrolled.hullpercentage lt 25"/>
 								</check_all>
 							</check_any>
 						</conditions>
