@@ -4,9 +4,6 @@
 	<params>
 -->
 	<add sel="//params">
-		<param name="kAAITParam_isAttackOrder" required="false" default="true" type="internal" />
-		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
-		<param name="kAAITParam_data" required="false" default="null" type="internal" />
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="false" />
 		<param name="kAAITParam_isStepForwardWithdraw" required="false" type="internal" text="{1111920, 109}" default="false" />
 	</add>
@@ -18,92 +15,34 @@
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
 	</add>
-<!--
-	             ,,            ,,  ,,        ,,
-	             db            db *MM      `7MM
-	                               MM        MM
-	`7M'   `MF'`7MM  ,pP"Ybd `7MM  MM,dMMb.  MM  .gP"Ya
-	  VA   ,V    MM  8I   `"   MM  MM    `Mb MM ,M'   Yb
-	   VA ,V     MM  `YMMMa.   MM  MM     M8 MM 8M""""""
-	    VVV      MM  L.   I8   MM  MM.   ,M9 MM YM.    ,
-	     W     .JMML.M9mmmP' .JMML.P^YbmdP'.JMML.`Mbmmd'
- -->
-<!--
-	add prepend. purpose: find new target if big target.
-	<do_while value="$target.canbeattacked">
+	<!--
+		Yb    dP 88 .dP"Y8 88 88""Yb 88     888888
+		 Yb  dP  88 `Ybo." 88 88__dP 88     88__
+		  YbdP   88 o.`Y8b 88 88""Yb 88  .o 88""
+		   YP    88 8bodP' 88 88oodP 88ood8 888888
+	 -->
+<!-- add before. purpose: avoid if required.
+	<attention min="visible">
+		<do_while value="$target.canbeattacked">
 -->
-	<add pos="prepend" sel="//do_while[@value=&quot;$target.canbeattacked&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
+	<add pos="before" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.canbeattacked&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and @this.$kAAIT_data.$isTargetHighRisk">
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
-<!-- add chance. purpose: suppress chatter
-	<include_interrupt_actions ref="NPCUseCase_AttackRun_Small" />
+	<!--
+		88   88 88b 88 88  dP 88b 88  dP"Yb  Yb        dP 88b 88
+		88   88 88Yb88 88odP  88Yb88 dP   Yb  Yb  db  dP  88Yb88
+		Y8   8P 88 Y88 88"Yb  88 Y88 Yb   dP   YbdPYbdP   88 Y88
+		`YbodP' 88  Y8 88  Yb 88  Y8  YbodP     YP  YP    88  Y8
+	 -->
+<!-- add before. purpose: avoid if required.
+	<attention min="unknown">
+		<do_while value="$bigtarget.canbeattacked and not $isdead" >
 -->
-	<add sel="//include_interrupt_actions[@ref=&quot;NPCUseCase_AttackRun_Small&quot;]" type="@chance">if @$kAAITParam_isAvoidHighRisk and @kAAIT_isTargetHighRisk then 0 else 100</add>
-<!-- add chance. purpose: prevent move_to big target.
-	<move_to object="this.ship" destination="$target" flightbehaviour="flightbehaviour.bigfight" forcesteering="true" travel="$duration_movement gt 40s">
--->
-	<add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target&quot;][@flightbehaviour=&quot;flightbehaviour.bigfight&quot;][@forcesteering=&quot;true&quot;][@travel=&quot;$duration_movement gt 40s&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<do_if value="@$kAAIT_isTargetHighRisk">
-				<set_value name="$duration_movement" exact="0" />
-			</do_if>
-		</do_if>
-	</add>
-<!--
-	add before. purpose: break off attack if a big target
-	<do_while value="$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)">
--->
-	<add pos="before" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
-			<do_if value="@$kAAIT_isTargetHighRisk">
-				<set_value name="$MaxGainDistance" exact="0" />
-			</do_if>
-		</do_if>
-	</add>
-	<add pos="after" sel="//do_while[@value=&quot;$target.canbeattacked and ($gaindistancetimeout gt player.age) and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
-		</do_if>
-	</add>
-<!--
-	                        `7MM
-	                          MM
-	`7MM  `7MM  `7MMpMMMb.    MM  ,MP'`7MMpMMMb.  ,pW"Wq.`7M'    ,A    `MF'`7MMpMMMb.
-	  MM    MM    MM    MM    MM ;Y     MM    MM 6W'   `Wb VA   ,VAA   ,V    MM    MM
-	  MM    MM    MM    MM    MM;Mm     MM    MM 8M     M8  VA ,V  VA ,V     MM    MM
-	  MM    MM    MM    MM    MM `Mb.   MM    MM YA.   ,A9   VVV    VVV      MM    MM
-	  `Mbod"YML..JMML  JMML..JMML. YA..JMML  JMML.`Ybmd9'     W      W     .JMML  JMML.
- -->
-<!--
-	add prepend: purpose: move elsewhere instead if big target
-	<do_while value="$bigtarget.canbeattacked and not $isdead">
--->
-	<add pos="prepend" sel="//do_while[@value=&quot;$bigtarget.canbeattacked and not $isdead&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<include_interrupt_actions ref="kAAIT_XSSM_AttackOrNot" />
-		</do_if>
-	</add>
-<!-- replace value. purpose: ignore if big target.
-	e.g.: <replace sel="root/bar/foo[@a='1']/@a">3</replace>
-	<do_if value="$bigtarget.canbeattacked">
-	<do_if value="$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc">
-	<do_if value="$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)">
--->
-	<replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked&quot;]/@value">$bigtarget.canbeattacked and (not @$kAAIT_isTargetHighRisk)</replace>
-	<replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc&quot;]/@value">$bigtarget.canbeattacked and not this.assignedcontrolled.defencenpc and (not @$kAAIT_isTargetHighRisk)</replace>
-	<replace sel="//do_if[@value=&quot;$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance)&quot;]/@value">$bigtarget.canbeattacked and (this.assignedcontrolled.bboxdistanceto.{$bigtarget} lt $MaxGainDistance) and (not @$kAAIT_isTargetHighRisk)</replace>
-<!-- add before: purpose: break if target too big.
-	<do_if value="player.age" min="$attacktime">
--->
-	<add pos="before" sel="//do_if[@value=&quot;player.age&quot;][@min=&quot;$attacktime&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<do_if value="@$kAAIT_isTargetHighRisk">
-				<!-- Avoid an infite loop-->
-				<resume label="finish" />
-			</do_if>
+	<add pos="before" sel="//attention[@min=&quot;unknown&quot;]//do_while[@value=&quot;$bigtarget.canbeattacked and not $isdead&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and @this.$kAAIT_data.$isTargetHighRisk">
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<!-- DeadAir Diffs -->

@@ -27,13 +27,13 @@
 						<reset_cue cue="kAAIT2_OnLuaLoaderReady" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="8">
+				<cue name="kAAIT2_Config" namespace="this" version="9">
 					<actions>
 						<set_value name="global.$kAAIT_Config" exact="this" />
 						<set_value name="global.$kAAIT_Config.$debugChance" exact="0" />
 						<!-- configs: -->
 						<debug_text text="'patch sinceversion 3, state: ' + this.state" />
-						<!-- kAAIT_XSSM_AttackOrNot, kAAIT_MoveAroundOrNot -->
+						<!-- kAAIT_ApplyCustomBehaviourOrNot, kAAIT_MoveAroundOrNot -->
 						<set_value name="global.$kAAIT_Config.$xssm_isAvoidHighRisk" exact="true" />
 						<set_value name="global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions" exact="false" />
 						<!-- kAAIT_MoveAroundOrNot -->
@@ -42,7 +42,6 @@
 						<set_value name="global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation" exact="true" />
 						<set_value name="global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions" exact="true" />
 						<!-- kAAIT_LXL_StepForwardOrMoveOutOfRange -->
-						<set_value name="global.$kAAIT_Config.$optimalRangeIsMax" exact="true" />
 						<set_value name="global.$kAAIT_Config.$lxl_moveToEngagePosition_vShip" exact="true" />
 						<set_value name="global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions" exact="false" />
 						<set_value name="global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip" exact="true" />
@@ -57,10 +56,6 @@
 						<set_value name="global.$kAAIT_Config.$m_outnumberVShips" exact="50" />
 						<set_value name="global.$kAAIT_Config.$m_outnumberVStations" exact="75" />
 					</actions>
-					<patch sinceversion="2">
-						<debug_text text="'sinceversion 2, state: ' + this.state" />
-						<set_value name="global.$kAAIT_Config.$optimalRangeIsMax" exact="true" />
-					</patch>
 					<patch sinceversion="5">
 						<debug_text text="'sinceversion 5, state: ' + this.state" />
 						<set_value name="global.$kAAIT_Config.$lxl_isStepForward_vShip" exact="global.$kAAIT_Config.$lxl_isStepForward" />
@@ -94,6 +89,10 @@
 					<patch sinceversion="8">
 						<debug_text text="'sinceversion 8, state: ' + this.state" />
 						<set_value name="global.$kAAIT_Config.$lxl_moveToEngagePosition_vShip" exact="true" />
+					</patch>
+					<patch sinceversion="9">
+						<debug_text text="'sinceversion 9, state: ' + this.state" />
+						<remove_value name="$optimalRangeIsMax" />
 					</patch>
 				</cue>
 			</cues>
@@ -365,20 +364,6 @@
 					param = "table[
 						$id = 'lxl_isMoveOutOfRange_vStation_allFactions',
 						$checked = global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions,
-						$col = 2,
-						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
-						$onClick = kAAIT_ExtOpts_OnCheckboxChange
-					]"/>
-
-				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
-				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='']" />
-				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
-				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 10}]" />
-				<signal_cue_instantly
-					cue = "md.Simple_Menu_API.Make_CheckBox"
-					param = "table[
-						$id = 'optimalRangeIsMax',
-						$checked = global.$kAAIT_Config.$optimalRangeIsMax,
 						$col = 2,
 						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
 						$onClick = kAAIT_ExtOpts_OnCheckboxChange
@@ -932,6 +917,9 @@
 					<check_any>
 						<check_value value="event.param3.$text == 'debug aait bombers'" />
 						<check_value value="event.param3.$text == 'debug aait gun count'" />
+						<check_value value="event.param3.$text == 'debug aait engage pos'" />
+						<check_value value="event.param3.$text == 'debug aait engage pos2'" />
+						<check_value value="event.param3.$text == 'debug aait give hull'" />
 					</check_any>
 				</check_all>
 			</conditions>
@@ -941,12 +929,59 @@
 					<debug_text text="player.target + ': ' + player.target.knownname + ', ' + player.target.idcode" />
 					<debug_text text="player.target + ' missile.count: ' + player.target.ammostorage.missile.count" />
 				</do_if>
-				<do_if value="event.param3.$text == 'debug aait gun count'">
+				<do_elseif value="event.param3.$text == 'debug aait gun count'">
 					<debug_text text="player.target + ': ' + @player.target.knownname + ', ' + @player.target.idcode" />
 					<debug_text text="player.target + ' weapons.operational.count: ' + @player.target.weapons.operational.count" />
 					<debug_text text="player.target + ' turrets.operational.count: ' + @player.target.turrets.operational.count" />
 					<debug_text text="player.target + ' maxradarrange: ' + @player.target.maxradarrange" />
-				</do_if>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait engage pos'">
+					<set_value name="md.$target2" exact="@md.$target1" />
+					<set_value name="md.$target1" exact="player.target" />
+					<debug_text text="'$target1: ' + @md.$target1.idcode" />
+					<debug_text text="'$target2: ' + @md.$target2.idcode" />
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait engage pos2'">
+					<do_if value="@md.$target1 and @md.$target2">
+						<set_value name="$attacker" exact="md.$target1" />
+						<set_value name="$victim" exact="md.$target2" />
+						<set_value name="$orderLocation_space" exact="$attacker.zone" />
+						<create_position name="$posShip" space="$orderLocation_space" object="md.$target1" />
+						<create_position name="$posTarget" space="$orderLocation_space" object="$victim" />
+						<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
+							<position value="$posTarget" />
+						</create_orientation>
+						<debug_text text="'$rotFromTarget: ' + $rotFromTarget" />
+						<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
+						<debug_text text="'$yaw_deg: ' + $yaw_deg" />
+						<!-- <do_if value="$victim.isclass.ship or @$victim.defensible.isclass.ship">
+							<set_value name="$yaw_deg" exact="$yaw_deg + [-30, -22, -15, -7, 0, 7, 15, 22, 30].random" />
+						</do_if>
+						<do_else>
+							<set_value name="$yaw_deg" exact="$yaw_deg + [-45, -37, -30, -22, -15, -7, 0, 7, 15, 22, 30, 37, 45].random" />
+						</do_else> -->
+						<!-- <set_value name="$yaw_deg" exact="$yaw_deg - 45" /> -->
+						<debug_text text="'$yaw_deg (adj): ' + $yaw_deg" />
+						<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
+						<set_value name="$kAAIT_maxCombatRange" exact="8km" />
+						<create_position name="$orderLocation_pos"
+							x="$posTarget.x + $kAAIT_maxCombatRange * sin ($yaw) * cos ($rotFromTarget.pitch)"
+							y="$posTarget.y + $kAAIT_maxCombatRange * sin ($rotFromTarget.pitch) + [-5m, -2.5m, 0, 2.5m, 5m].random"
+							z="$posTarget.z + $kAAIT_maxCombatRange * cos ($yaw) * cos ($rotFromTarget.pitch)"
+						/>
+						<do_if value="@md.$beacon_debug">
+							<destroy_object object="md.$beacon_debug" />
+						</do_if>
+						<create_object name="md.$beacon_debug"
+							zone="$orderLocation_space"
+							macro="macro.env_deco_nav_beacon_t1_macro"
+							owner="faction.player">
+							<position x="$orderLocation_pos.x" y="$orderLocation_pos.y" z="$orderLocation_pos.z" />
+						</create_object>
+					</do_if>
+				</do_elseif>
+				<do_elseif value="event.param3.$text == 'debug aait give hull'">
+				</do_elseif>
 				<reset_cue cue="this" />
 			</actions>
 		</cue>

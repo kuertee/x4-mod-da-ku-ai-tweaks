@@ -1,290 +1,182 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <diff>
-	<!-- add. purpose: data store
-		<params>
-	-->
+<!-- add. purpose: params.
+	<params>
+-->
 	<add sel="//params">
-		<param name="kAAITParam_isActive" required="false" default="false" type="internal"/>
-		<param name="kAAITParam_isAttackOrder" required="false" default="false" type="internal" />
-		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal"/>
-		<param name="kAAITParam_data" required="false" default="null" type="internal"/>
 		<param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal"/>
-		<param name="kAAITParam_aroundDir" required="false" default="0" type="internal"/>
 		<param name="kAAITParam_isSkipAvoidance" required="false" default="null" type="internal"/>
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
-			if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then 
-				this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user
-			else (
-				if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
-				(
-					(
-						this.assignedcontrolled.isplayerowned and
-						this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-						@global.$kAAIT_Config.$xssm_isAvoidHighRisk
-					) or
-					(
-						(not this.assignedcontrolled.isplayerowned) and
-						this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
-						@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
-					) or
-					(
-						this.assignedcontrolled.isplayerowned and
-						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-						(
-							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip or
-							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
-						)
-					) or
-					(
-						(not this.assignedcontrolled.isplayerowned) and
-						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-						(
-							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions or
-							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
-						)
-					)
-				) then true else false
-			)
-		"/>
-		<param name="kAAITParam_isStepForwardWithdraw" required="false" type="bool" text="{1111920, 109}" default="
-			if (not this.assignedcontrolled.isunit) and
-			(
-				(
-					this.assignedcontrolled.isplayerowned and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						@global.$kAAIT_Config.$lxl_isStepForward_vShip or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip or
-						@global.$kAAIT_Config.$lxl_isStepForward_vStation or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation
-					)
-				) or
-				(
-					(not this.assignedcontrolled.isplayerowned) and
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					(
-						@global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions or
-						@global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions or
-						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions
-					)
-				)
-			) then true else false
+		  if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then 
+		    this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user
+		  else (
+		    if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+		    (
+		      (
+		        this.assignedcontrolled.isplayerowned and
+		        (
+		          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
+		        ) and
+		        @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+		      ) or
+		      (
+		        (not this.assignedcontrolled.isplayerowned) and
+		        (
+		          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
+		        ) and
+		        @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+		      ) or
+		      (
+		        this.assignedcontrolled.isplayerowned and
+		        this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+		        this.assignedcontrolled.primarypurpose != purpose.fight and
+		        (
+		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip or
+		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
+		        )
+		      ) or
+		      (
+		        (not this.assignedcontrolled.isplayerowned) and
+		        this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+		        this.assignedcontrolled.primarypurpose != purpose.fight and
+		        (
+		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions or
+		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
+		        )
+		      )
+		    ) then true else false
+		  )
 		"/>
 	</add>
-	<!-- add before at 5 instances. purpose: debug.
-		<move_to>
-	-->
+<!-- add before. purpose: show movement.
+	<location object="$destination" position="$position" condition="$destination and $position"/>
+-->
+	<add pos="before" sel="//location[@object=&quot;$destination&quot;][@position=&quot;$position&quot;][@condition=&quot;$destination and $position&quot;]">
+		<location object="@this.$kAAIT_data.$orderLocation_space" position="@this.$kAAIT_data.$orderLocation_pos" condition="@this.$kAAIT_data.$orderLocation_space and @this.$kAAIT_data.$orderLocation_pos" />
+		<location object="@$target" condition="@$target.canbeattacked" />
+	</add>
+<!-- add before at 5 instances. purpose: debug.
+	<move_to>
+-->
 	<add pos="before" sel="(//move_to)[1]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (1) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (move away from exit gate) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
 	<add pos="before" sel="(//move_to)[2]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (2) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (move to destination and position) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
 	<add pos="before" sel="(//move_to)[3]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (3) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (move to destination) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
 	<add pos="before" sel="(//move_to)[4]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (4) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (small move to final with rotation) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
 	<add pos="before" sel="(//move_to)[5]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to (5) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to (small move to final) $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
-	<!--
-		add after. purpose: debug.
-		<label name="start"/>
-		<label name="check" />
-		<label name="move" />
-		<label name="finish"/>
-		<label name="cleanup"/>
-	-->
+<!--
+	add after. purpose: debug.
+	<label name="start"/>
+	<label name="check" />
+	<label name="move" />
+	<label name="finish"/>
+	<label name="cleanup"/>
+-->
 	<add pos="after" sel="//label[@name=&quot;start&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' label start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' start $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' ====='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;check&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' label check'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' check $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' ====='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;move&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' label move'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-		</do_if>
-	</add>
-	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' label finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' move $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' ===='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;cleanup&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' label cleanup'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' cleanup $kAAITParam_isSkipAvoidance: ' + @$kAAITParam_isSkipAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+			<debug_text text="this.assignedcontrolled.idcode + ' ======='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 		</do_if>
 	</add>
-	<!-- add. purpose init.
-		<init>
-	-->
-	<add sel="//init">
-		<!-- <do_if value="not @$kAAITParam_data">
-			<set_value name="$kAAITParam_data" exact="table[]" />
-		</do_if> -->
-		<debug_text text="this.assignedcontrolled.idcode + ' $destination.knownname: ' + @$destination.knownname + ' $kAAITParam_isAttackOrder: ' + @$kAAITParam_isAttackOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-		<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$isMovingToEngagePosition: ' + @$kAAITParam_data.$isMovingToEngagePosition" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/> -->
-	</add>
-	<!-- add. purpose: recheck big enemies.
-		<interrupts>
-	-->
+<!-- add. purpose: recheck big enemies.
+	<interrupts>
+-->
 	<add sel="//interrupts">
+		<handler ref="kAAIT_Handler_WithdrawOrJustFight"/>
 		<handler>
 			<conditions>
 				<event_object_changed_zone object="this.assignedcontrolled"/>
-				<check_all>
-					<check_value value="not @$kAAITParam_isSkipAvoidance" />
-					<check_any>
-						<check_value value="@$kAAITParam_isAvoidHighRisk" />
-						<check_value value="@$kAAITParam_isStepForwardWithdraw" />
-					</check_any>
-				</check_all>
+				<check_value value="not @$kAAITParam_isSkipAvoidance" />
+				<check_value value="@$kAAITParam_isAvoidHighRisk" />
 			</conditions>
 			<actions>
-				<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name + ', $kAAITParam_isAttackOrder: ' + @$kAAITParam_isAttackOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_enemyAvoid.class: ' + @$kAAITParam_enemyAvoid.class" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-				<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_data.$kAAIT_isEngagePositionSet: ' + @$kAAITParam_data.$kAAIT_isEngagePositionSet" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-				<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid}: ' + @this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-				<do_if value="@$kAAITParam_isAttackOrder and
-					@$kAAITParam_isStepForwardWithdraw and
-					@$kAAITParam_enemyAvoid.isclass.station and
-					(not @$kAAITParam_data.$kAAIT_isEngagePositionSet) and
-					this.assignedcontrolled.sector.exists and
-					this.assignedcontrolled.sector == @$kAAITParam_enemyAvoid.sector
-				">
-					<!-- move to engage position not set and target is in sector, so finish this move -->
-					<!-- order.fight.attack.object will return to its fight label, which will set move to engage position if required -->
-					<abort_called_scripts resume="finish"/>
+				<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+				<do_if value="$kAAIT_bigEnemies.count">
+					<abort_called_scripts resume="check"/>
 				</do_if>
-				<do_elseif value="@$kAAITParam_isAttackOrder and
-					@$kAAITParam_isAvoidHighRisk and
-					@$kAAITParam_enemyAvoid.isclass.ship and
-					(not @$kAAITParam_data.$kAAIT_isEngagePositionSet) and
-					this.assignedcontrolled.sector.exists and
-					this.assignedcontrolled.sector == @$kAAITParam_enemyAvoid.sector
-				">
-					<!-- move to engage position not set and target is close by -->
-					<!-- order.fight.attack.object will return to its fight label, which will set move to engage position if required -->
-					<abort_called_scripts resume="finish"/>
-				</do_elseif>
-				<do_else>
-					<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-					<do_if value="$kAAIT_bigEnemies.count">
-						<abort_called_scripts resume="check"/>
-					</do_if>
-				</do_else>
 			</actions>
 		</handler>
 	</add>
-	<!-- add after. purpose: update engage position if required by cancelling this order. the attack order will re-order the move to engage position, if it requires it.
-		<label name="check" />
-	-->
-	<!-- <add pos="after" sel="//label[@name=&quot;check&quot;]">
-		<do_if value="@$kAAITParam_hasMoved and @$kAAITParam_data.$isMovingToEngagePosition">
-			<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' $kAAITParam_data.$isMovingToEngagePosition: ' + $kAAITParam_data.$isMovingToEngagePosition" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-			<resume label="cleanup" />
+<!-- add after. purpose: avoid or not.
+	<label name="check" />
+	<wait exact="1ms" sinceversion="7"/>
+-->
+	<add pos="after" sel="//label[@name=&quot;check&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_isSkipAvoidance)">
+			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
-	</add> -->
-	<!-- add after. purpose: update engae position if required.
-		<label name="move" />
-	-->
-	<!-- <add pos="after" sel="//label[@name=&quot;move&quot;]">
-		<set_value name="$kAAITParam_hasMoved" exact="true" />
-	</add> -->
-	<!-- add before. purpose: if enemy stations on the way, move elsewhere first.
-		<do_if value="not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway">
-		<do_if value="$position"> (2nd instance)
-		<do_if value="not @$rotation">
-	-->
+	</add>
 	<add pos="before" sel="//do_if[@value=&quot;not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway&quot;]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (1): ' + @$kAAITParam_isSkipAvoidance"/>
-		</do_if>
-		<do_if value="
-			(
-				this.assignedcontrolled.primarypurpose != purpose.fight or
-				this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
-			) and
-			(not @$kAAITParam_isSkipAvoidance) and
-			@$kAAITParam_isAvoidHighRisk
-		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_isSkipAvoidance)">
+			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="(//do_if[@value=&quot;$position&quot;])[2]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (2): ' + @$kAAITParam_isSkipAvoidance"/>
-		</do_if>
-		<do_if value="
-			(
-				this.assignedcontrolled.primarypurpose != purpose.fight or
-				this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
-			) and
-			(not @$kAAITParam_isSkipAvoidance) and
-			@$kAAITParam_isAvoidHighRisk
-		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_isSkipAvoidance)">
+			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="//do_if[@value=&quot;not @$rotation&quot;]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isSkipAvoidance (3): ' + @$kAAITParam_isSkipAvoidance"/>
-		</do_if>
-		<do_if value="
-			(
-				this.assignedcontrolled.primarypurpose != purpose.fight or
-				this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
-			) and
-			(not @$kAAITParam_isSkipAvoidance) and
-			@$kAAITParam_isAvoidHighRisk
-		">
-			<include_interrupt_actions ref="kAAIT_MoveAroundOrNot" />
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_isSkipAvoidance)">
+			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
-	<!-- add before. purpose: debug.
-		<remove_value name="$locblacklistgroup"/>
-	-->
-	<add pos="before" sel="//remove_value[@name=&quot;$locblacklistgroup&quot;]">
-		<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-			<debug_text text="this.assignedcontrolled.idcode + ' event_object_changed_zone'"/>
+<!-- add after. purpose: cleanup.
+	<label name="cleanup" />
+-->
+	<add pos="after" sel="//label[@name=&quot;cleanup&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_isSkipAvoidance)">
+			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</do_if>
 	</add>
-	<!-- add after. purpose: clean-up.
-		<label name="finish"/>
-	-->
-	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance">
-				<debug_text text="this.assignedcontrolled.idcode + ' finish'"/>
-			</do_if>
-			<do_if value="@$kAAITParam_data">
-				<!--
-					set to remember.
-					if this order was cancelled, then this will never be set,
-					and any attack order that made this move will initialise when it runs again.
-					this is ok, because this move order was cancelled.
-				-->
-				<set_value name="this.$kAAITParam_dataAfterMoveGeneric" exact="$kAAITParam_data"/>
-			</do_if>
-		</do_if>
+<!-- add. purpose: clean-up.
+	<on_abort>
+-->
+	<add sel="//on_abort">
+		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
 	<!-- DeadAir Diffs -->
 	<replace sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_if[@value='$recallsubordinates and this.assignedcontrolled.subordinates.count and (@this.assignedcontrolled.order.state != orderstate.critical) and not this.$recalling_subordinates?']/do_for_each[@name='$locsub']/do_if[@value='$locsub.isoperational and this.assignedcontrolled.dockingallowed.{$locsub} and (not $locsub.dock or not $locsub.hascontext.{this.assignedcontrolled})']/@value">$locsub.isoperational and this.assignedcontrolled.dockingallowed.{$locsub} and (not $locsub.dock or not $locsub.hascontext.{this.assignedcontrolled}) and (not ((@$locsub.assignment == assignment.assist) or (@$locsub.defaultorder.id == 'Assist')))</replace>

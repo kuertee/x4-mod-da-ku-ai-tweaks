@@ -4,9 +4,6 @@
 	<params>
 -->
 	<add sel="//params">
-		<param name="kAAITParam_isAttackOrder" required="false" default="true" type="internal" />
-		<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
-		<param name="kAAITParam_data" required="false" default="null" type="internal" />
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="false" />
 		<param name="kAAITParam_isStepForwardWithdraw" required="false" type="internal" text="{1111920, 109}" default="false" />
 	</add>
@@ -29,69 +26,13 @@
 	     W     .JMML.M9mmmP' .JMML.P^YbmdP'.JMML.`Mbmmd'
  -->
 <!--
-	add prepend. purpose: break off attack if near a big target
+	add before. purpose: break off attack if near a big target
 	<do_while value="$target.isoperational">
+		<do_if value="$target.isoperational">
 -->
-	<add pos="prepend" sel="//do_while[@value=&quot;$target.isoperational&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$kAAIT_isFlee" exact="false" />
-			<set_value name="$kAAIT_isBreakOff" exact="false" />
-			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-			<do_if value="@$kAAIT_isShipNearBigEnemy">
-				<set_value name="$kAAIT_isFlee" exact="true" />
-			</do_if>
-			<do_if value="@$kAAIT_isTargetNearBigEnemy">
-				<do_if value="$allowothertargets">
-					<do_if value="this.assignedcontrolled.sector == $kAAIT_defensibleTarget.sector">
-						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-					</do_if>
-				</do_if>
-				<do_if value="not @$kAAITParam_data.$orders.$attackOther.exists">
-					<set_value name="$kAAIT_isBreakOff" exact="true" />
-				</do_if>
-			</do_if>
-			<debug_text text="this.assignedcontrolled.idcode + ' (1) $kAAIT_isFlee: ' + $kAAIT_isFlee + ' $kAAIT_isBreakOff: ' + $kAAIT_isBreakOff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		</do_if>
-	</add>
-<!-- replace value if instance 2 because diffs are applied top-down, [2] will be made invalid by replacing [1].
-	doing this backwards ensures that all required instances are replaced.
-	purpose: prevent move to if ship or target is near big enemy.
-	e.g.: <replace sel="root/bar/foo[@a='1']/@a">3</replace>
-	<do_if value="$target.isoperational">
--->
-	<replace sel="(//do_if[@value=&quot;$target.isoperational&quot;])[2]/@value">$target.isoperational and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)</replace>
-<!-- add before. purpose: set MaxGainDistance to prevent move to target if near big enemy.
-	<do_if value="$target.isoperational and this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance">
--->
-	<add pos="before" sel="//do_if[@value=&quot;$target.isoperational and this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
-			<do_if value="@$kAAIT_isFlee or @$kAAIT_isBreakOff">
-				<set_value name="$MaxGainDistance" exact="0" />
-			</do_if>
-		</do_if>
-	</add>
-	<add pos="after" sel="//do_if[@value=&quot;$target.isoperational and this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
-		</do_if>
-	</add>
-<!-- add before. purpose: flee or break-off.
-	<do_if value="$doevade and $target.isoperational">
--->
-	<add pos="before" sel="//do_if[@value=&quot;$doevade and $target.isoperational&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<do_if value="@$kAAIT_isFlee">
-				<set_value name="$doevade" exact="false" />
-				<set_value name="$kAAIT_isFlee" exact="false" />
-				<include_interrupt_actions ref="kAAIT_Order_Flee" />
-			</do_if>
-			<do_if value="@$kAAIT_isBreakOff">
-				<set_value name="$doevade" exact="false" />
-				<set_value name="$kAAIT_isBreakOff" exact="false" />
-				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
-			</do_if>
+	<add pos="before" sel="//do_while[@value=&quot;$target.isoperational&quot;]//do_if[@value=&quot;$target.isoperational&quot;][1]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and @this.$kAAIT_data.$isTargetHighRisk">
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 <!--
@@ -104,74 +45,13 @@
 	  `Mbod"YML..JMML  JMML..JMML. YA..JMML  JMML.`Ybmd9'     W      W     .JMML  JMML.
  -->
 <!--
-	add prepend. purpose: break off attack if near a big target
+	add before. purpose: break off attack if near a big target
 	<do_while value="$target.isoperational and not $isdead" >
+		<do_if value="$target.isoperational">
 -->
-	<add pos="prepend" sel="//do_while[@value=&quot;$target.isoperational and not $isdead&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$kAAIT_isFlee" exact="false" />
-			<set_value name="$kAAIT_isBreakOff" exact="false" />
-			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-			<do_if value="@$kAAIT_isShipNearBigEnemy">
-				<set_value name="$kAAIT_isFlee" exact="true" />
-			</do_if>
-			<do_if value="@$kAAIT_isTargetNearBigEnemy">
-				<do_if value="$allowothertargets">
-					<do_if value="this.assignedcontrolled.sector == $kAAIT_defensibleTarget.sector">
-						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-					</do_if>
-				</do_if>
-				<do_if value="not @$kAAITParam_data.$orders.$attackOther.exists">
-					<set_value name="$kAAIT_isBreakOff" exact="true" />
-				</do_if>
-			</do_if>
-			<debug_text text="this.assignedcontrolled.idcode + ' (1) $kAAIT_isFlee: ' + $kAAIT_isFlee + ' $kAAIT_isBreakOff: ' + $kAAIT_isBreakOff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		</do_if>
-	</add>
-<!-- replace value of instance 2 - now 1 because the first was already replaced.
-	purpose: skip if flee or break-off.
-	<do_if value="$target.isoperational">
--->
-	<replace sel="(//do_if[@value=&quot;$target.isoperational&quot;])[1]/@value">$target.isoperational and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)</replace>
-<!-- replace value. purpose: skip if flee or break-off.
-	<do_if value="$target.isoperational and not this.ship.defencenpc">
--->
-	<replace sel="//do_if[@value=&quot;$target.isoperational and not this.ship.defencenpc&quot;]/@value">$target.isoperational and (not @this.ship.defencenpc) and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)</replace>
-<!-- add before. purpose: set MaxGainDistance to skip if flee or break-off.
-	<do_if value="$target.isoperational and (this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance)">
--->
-	<add pos="before" sel="//do_if[@value=&quot;$target.isoperational and (this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance)&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$kAAIT_MaxGainDistance" exact="$MaxGainDistance" />
-			<do_if value="@$kAAIT_isFlee or @$kAAIT_isBreakOff">
-				<set_value name="$MaxGainDistance" exact="0" />
-			</do_if>
-		</do_if>
-	</add>
-	<add pos="after" sel="//do_if[@value=&quot;$target.isoperational and (this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance)&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<set_value name="$MaxGainDistance" exact="$kAAIT_MaxGainDistance" />
-		</do_if>
-	</add>
-<!-- add before: purpose: do flee or break-off behaviours
-	<do_if value="player.age" min="$attacktime">
--->
-	<add pos="before" sel="//do_if[@value=&quot;player.age&quot;][@min=&quot;$attacktime&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
-			<debug_text text="this.assignedcontrolled.idcode + ' (2) $kAAIT_isFlee: ' + @$kAAIT_isFlee + ' $kAAIT_isBreakOff: ' + @$kAAIT_isBreakOff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<do_if value="@$kAAIT_isFlee">
-				<set_value name="$kAAIT_isFlee" exact="false" />
-				<include_interrupt_actions ref="kAAIT_Order_Flee" />
-				<!-- Avoid an infite loop-->
-				<break />
-			</do_if>
-			<do_if value="@$kAAIT_isBreakOff">
-				<set_value name="$kAAIT_isBreakOff" exact="false" />
-				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
-				<!-- Avoid an infite loop-->
-				<break />
-			</do_if>
+	<add pos="before" sel="//do_while[@value=&quot;$target.isoperational and not $isdead&quot;]//do_if[@value=&quot;$target.isoperational&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and @this.$kAAIT_data.$isTargetHighRisk">
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<!-- DeadAir Diffs -->
@@ -183,9 +63,9 @@
 	<replace sel="/aiscript/attention[@min='visible']/actions/set_value[@name='$MinGainDistance'][@exact='1400m']/@exact">[$MaxGainDistance * 0.5,700m].max</replace>
 	<replace sel="/aiscript/attention[@min='visible']/actions/set_value[@name='$delaymissiles'][@min='player.age + 10s * (6 - (this.skill.piloting / 3))'][@max='player.age + 20s * (6 - (this.skill.piloting / 3))']/@min">player.age + 2s</replace>
 	<replace sel="/aiscript/attention[@min='visible']/actions/set_value[@name='$delaymissiles'][@min='player.age + 2s'][@max='player.age + 20s * (6 - (this.skill.piloting / 3))']/@max">player.age + 5s</replace>
-	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.isoperational']/do_if[@value='$target.isoperational and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)'][1]/do_if[@value='not this.ship.defencenpc']/do_if[@value='not $target.isclass.ship_xs and ((not this.ship.dps.lasers.all and this.ship.dps.missiles.all) or (this.ship.dps.missiles.all gt 0 and player.age gt $delaymissiles))']/set_value[@name='$delaymissiles'][@min='player.age + 10s * (6 - (this.skill.piloting / 3))'][@max='player.age + 15s * (6 - (this.skill.piloting / 3))']/@min">player.age + 2s</replace>
-	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.isoperational']/do_if[@value='$target.isoperational and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)'][1]/do_if[@value='not this.ship.defencenpc']/do_if[@value='not $target.isclass.ship_xs and ((not this.ship.dps.lasers.all and this.ship.dps.missiles.all) or (this.ship.dps.missiles.all gt 0 and player.age gt $delaymissiles))']/set_value[@name='$delaymissiles'][@min='player.age + 2s'][@max='player.age + 15s * (6 - (this.skill.piloting / 3))']/@max">player.age + 5s</replace>
-	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.isoperational']/do_if[@value='$target.isoperational and (not @$kAAIT_isFlee) and (not @$kAAIT_isBreakOff)'][1]/move_to/@travel">($duration_movement gt 40s) and (((this.assignedcontrolled.bboxdistanceto.{$target} + this.assignedcontrolled.size) gt this.assignedcontrolled.maxcombatrange.all) or ((this.assignedcontrolled.bboxdistanceto.{$target} + this.assignedcontrolled.size) gt (this.assignedcontrolled.currentradarrange)))</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.isoperational']/do_if[@value='$target.isoperational'][1]/do_if[@value='not this.ship.defencenpc']/do_if[@value='not $target.isclass.ship_xs and ((not this.ship.dps.lasers.all and this.ship.dps.missiles.all) or (this.ship.dps.missiles.all gt 0 and player.age gt $delaymissiles))']/set_value[@name='$delaymissiles'][@min='player.age + 10s * (6 - (this.skill.piloting / 3))'][@max='player.age + 15s * (6 - (this.skill.piloting / 3))']/@min">player.age + 2s</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.isoperational']/do_if[@value='$target.isoperational'][1]/do_if[@value='not this.ship.defencenpc']/do_if[@value='not $target.isclass.ship_xs and ((not this.ship.dps.lasers.all and this.ship.dps.missiles.all) or (this.ship.dps.missiles.all gt 0 and player.age gt $delaymissiles))']/set_value[@name='$delaymissiles'][@min='player.age + 2s'][@max='player.age + 15s * (6 - (this.skill.piloting / 3))']/@max">player.age + 5s</replace>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.isoperational']/do_if[@value='$target.isoperational'][1]/move_to/@travel">($duration_movement gt 40s) and (((this.assignedcontrolled.bboxdistanceto.{$target} + this.assignedcontrolled.size) gt this.assignedcontrolled.maxcombatrange.all) or ((this.assignedcontrolled.bboxdistanceto.{$target} + this.assignedcontrolled.size) gt (this.assignedcontrolled.currentradarrange)))</replace>
 	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$target.isoperational']/do_if[@value='$target.isoperational and this.assignedcontrolled.bboxdistanceto.{$target} lt $MaxGainDistance']/do_if[@value='$allowboost and (this.assignedcontrolled.combinedskill ge 30 or this.race == race.terran) and (this.assignedcontrolled.shieldpercentage gt 50)']/@value">$allowboost and (this.assignedcontrolled.shieldpercentage gt 50)</replace>
 	<replace sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$ToleranceWeapon1'][@exact='7.0deg']/@exact">4.0deg</replace>
 	<replace sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$ToleranceWeapon2'][@exact='5.0deg']/@exact">4.0deg</replace>

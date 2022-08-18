@@ -1,10 +1,72 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <!-- add. purpose: withdraw ai.
+<!-- add. purpose: params.
+  <params>
+-->
+  <add sel="//params">
+    <param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
+      if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then 
+        this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user
+      else (
+        if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+        (
+          (
+            this.assignedcontrolled.isplayerowned and
+            (
+              this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
+            ) and
+            @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+          ) or
+          (
+            (not this.assignedcontrolled.isplayerowned) and
+            (
+              this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
+            ) and
+            @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+          ) or
+          (
+            this.assignedcontrolled.isplayerowned and
+            this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+            this.assignedcontrolled.primarypurpose != purpose.fight and
+            (
+              @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip or
+              @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
+            )
+          ) or
+          (
+            (not this.assignedcontrolled.isplayerowned) and
+            this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+            this.assignedcontrolled.primarypurpose != purpose.fight and
+            (
+              @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions or
+              @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
+            )
+          )
+        ) then true else false
+      )
+    "/>
+  </add>
+<!-- add before. purpose: show movement.
+  <location object="$target" condition="$target.exists" />
+-->
+  <add pos="before" sel="//location[@object=&quot;$target&quot;][@condition=&quot;$target.exists&quot;]">
+    <location object="@this.$kAAIT_data.$orderLocation_space" position="@this.$kAAIT_data.$orderLocation_pos" condition="@this.$kAAIT_data.$orderLocation_space and @this.$kAAIT_data.$orderLocation_pos" />
+  </add>
+<!-- add. purpose: withdraw ai.
   <interrupts>
-  -->
+-->
   <add sel="//interrupts">
-    <handler ref="kAAIT_WithdrawHandler"/>
+    <handler ref="kAAIT_Handler_WithdrawOrJustFight"/>
+  </add>
+<!-- add before. purpose: avoid.
+  <move_to object="this.ship" destination="$target.zone" uselocalhighways="false" travel="true" sinceversion="2">
+-->
+  <add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;][@uselocalhighways=&quot;false&quot;][@travel=&quot;true&quot;]">
+    <do_if value="@$kAAITParam_isAvoidHighRisk">
+      <set_value name="$kAAIT_destination" exact="$target" />
+      <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
+      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+    </do_if>
   </add>
   <!-- DeadAir Diffs -->
   <replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='@$target.pilot.$attacktarget.canbeattacked']/shoot_at[@tolerance='12deg']/@tolerance">4.0deg</replace>

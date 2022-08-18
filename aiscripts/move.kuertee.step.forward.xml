@@ -2,52 +2,9 @@
 <aiscript name="move.kuertee.step.forward" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="18">
 	<order id="kAAIT_MoveStepForward" name="{1111920, 107}" description="{1111920, 107}" category="internal">
 		<params>
-			<param name="destination" type="object" text="{1041, 10027}" comment="Destination. can be a space or an object in a zone. Providing Sector and Cluster will attempt to find the nearest zone"/>
-			<param name="position" default="null" type="internal" text="{1041, 10085}" comment="Position. position is treated as an offset to destination. Default: safe position on [0,0,0] of destination"/>
-			<param name="rotation" default="null" type="internal" comment="Rotation. rotation the ship should have - overrides lookat"/>
-			<param name="lookat" default="null" type="internal" text="{1041, 10050}" comment="Look at. position the ship should point to - overridden by rotation"/>
-			<param name="noboost" default="false" type="internal" text="{1041, 10077}" comment="No boosting. set true to prevent ships boosting"/>
-			<param name="disablecollisionavoidance" type="internal" default="false" text="{1041, 10028}" comment="Disable collision avoidance. HACK - disable collision-avoidance for this ship"/>
-			<param name="abortpath" default="true" type="internal" text="{1041, 10000}" comment="Abort path. disable aborting existing path"/>
-			<param name="forcesteering" default="false" type="internal" text="{1041, 10154}" comment="Force steering. force steering flight control model"/>
-			<param name="endintargetzone" default="false" type="internal" text="{1041, 10035}" comment="End in target zone. complete this script if we are in the correct zone, no matter where"/>
-			<param name="activepatrol" default="false" type="internal" text="{1041, 10002}" comment="Active patrol. Should subordinates actively engage any targets at the target location?"/>
-			<param name="recallsubordinates" default="true" type="internal" comment="recall subordinates and cancel the recall of subordinates. disabled in the move.generic call from move.gate"/>
-			<param name="strictblacklist" default="false" type="internal" comment="Enforce sector blacklist even if no path is possible. Should only be true if the ship does an order that results from an automated behavior."/>
-			<param name="precise" default="false" type="internal" comment="Skips safepos and position randomization. Do not use if moving multiple ships to the same position. ignored if position param is not populated."/>
-			<param name="playerprecise" default="false" type="internal" comment="Skips position randomization but does safepos. Do not use if moving multiple ships to the same position. ignored if position param is not populated."/>
-			<param name="waitforatgate" default="null" type="internal" comment="Wait for object with this component ID after crossing every gate to the destination. Passed to move.gate. Only works if at least one gate is crossed."/>
-			<param name="uselocalhighways" default="not this.ship.iscapitalship" type="internal" comment="Allow usage of local highways as appropriate. Note that L and XL ships will still not use local highways. Do not set to false when destination is a local highway or in a local highway.">
-				<patch value="not this.ship.iscapitalship" sinceversion="10" early="true"/>
-			</param>
-			<param name="pursuetargets" default="true" type="internal"/>
-			<param name="escort" default="null" type="internal"/>
-			<param name="pursuedistance" default="this.assignedcontrolled.maxradarrange" type="internal"/>
-			<param name="changecommandaction" default="true" type="internal" comment="Allow this script to change commandaction">
-				<patch value="true" sinceversion="12"/>
-			</param>
-			<param name="targetclasses" default="[]" type="internal" comment="classes of valid targets used in conjunction with activepatrol">
-				<patch value="[class.ship, class.station]" sinceversion="13"/>
-			</param>
-
-			<param name="radius" default="null" type="internal" comment="do not engage if target is beyond this distance relative to radiusanchorpos in radiusanchorspace. only used with activepatrol."/>
-			<param name="radiusanchorpos" default="null" type="internal"/>
-			<param name="radiusanchorspace" default="null" type="internal"/>
-
-			<param name="stopondetect" default="null" type="internal" comment="component ID. stop movement when object detected by gravidar unless $endintargetzone is true and we are not in the same zone."/>
-			<param name="allowwreck" default="false" type="internal" comment="moves to destination even if destination is wrecked.">
-				<patch value="false" sinceversion="16"/>
-			</param>
-			<param name="debugchance" type="bool" default="0" advanced="true" text="{1041, 10086}" comment="Print debug output">
-				<input_param name="truevalue" value="100"/>
-			</param>
-			<param name="kAAITParam_isActive" required="false" default="false" type="internal" />
-			<param name="kAAITParam_isAutoAdded" required="false" default="false" type="internal" />
-			<param name="kAAITParam_data" required="false" default="null" type="internal" />
-			<param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal" />
-			<param name="kAAITParam_aroundDir" required="false" default="0" type="internal" />
-			<param name="kAAITParam_isSkipAvoidance" required="false" default="null" type="internal" />
-			<param name="kAAITParam_isAvoidHighRisk" required="false" type="internal" text="{1111920, 3}" default="
+			<param name="target" required="false" default="null" type="internal" />
+			<param name="kAAITParam_iskAAITOrder" required="false" default="true" type="internal" />
+			<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
 				if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then 
 					this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user
 				else (
@@ -55,113 +12,151 @@
 					(
 						(
 							this.assignedcontrolled.isplayerowned and
-							this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+							(
+								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+								this.assignedcontrolled.primarypurpose != purpose.fight
+							) and
 							@global.$kAAIT_Config.$xssm_isAvoidHighRisk
 						) or
 						(
 							(not this.assignedcontrolled.isplayerowned) and
-							this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+							(
+								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+								this.assignedcontrolled.primarypurpose != purpose.fight
+							) and
 							@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
 						) or
 						(
 							this.assignedcontrolled.isplayerowned and
 							this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-							(
-								@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip or
-								@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
-							)
+							($target.isclass.ship or @$target.defensible.isclass.ship) and
+							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip
+						) or
+						(
+							this.assignedcontrolled.isplayerowned and
+							this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+							($target.isclass.station or @$target.defensible.isclass.station) and
+							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
 						) or
 						(
 							(not this.assignedcontrolled.isplayerowned) and
 							this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-							(
-								@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions or
-								@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
-							)
+							($target.isclass.ship or @$target.defensible.isclass.ship) and
+							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions
+						) or
+						(
+							(not this.assignedcontrolled.isplayerowned) and
+							this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+							($target.isclass.station or @$target.defensible.isclass.station) and
+							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
 						)
 					) then true else false
 				)
 			" />
-			<param name="kAAITParam_isStepForwardWithdraw" required="false" type="internal" text="{1111920, 109}" default="
-				if (not this.assignedcontrolled.isunit) and
+			<param name="kAAITParam_isStepForwardWithdraw" required="false" type="bool" text="{1111920, 109}" default="
+				if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
 				(
 					(
 						this.assignedcontrolled.isplayerowned and
 						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 						(
-							@global.$kAAIT_Config.$lxl_isStepForward_vShip or
-							@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip or
-							@global.$kAAIT_Config.$lxl_isStepForward_vStation or
-							@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation
+							($target.isclass.ship or @$target.defensible.isclass.ship) and
+							(
+								@global.$kAAIT_Config.$lxl_isStepForward_vShip or
+								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip
+							)
+						) or
+						(
+							($target.isclass.station or @$target.defensible.isclass.station) and
+							(
+								@global.$kAAIT_Config.$lxl_isStepForward_vStation or
+								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation
+							)
 						)
 					) or
 					(
 						(not this.assignedcontrolled.isplayerowned) and
 						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 						(
-							@global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions or
-							@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions or
-							@global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions or
-							@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions
+							($target.isclass.ship or @$target.defensible.isclass.ship) and
+							(
+								@global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions or
+								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions
+							)
+						) or
+						(
+							($target.isclass.station or @$target.defensible.isclass.station) and
+							(
+								@global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions or
+								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions
+							)
 						)
 					)
 				) then true else false
 			" />
+			<param name="debugchance" type="bool" default="0" advanced="true" text="{1041, 10086}" comment="Print debug output">
+				<input_param name="truevalue" value="100"/>
+			</param>
 		</params>
 		<requires>
 			<match shiptype="shiptype.lasertower" negate="true"/>
 		</requires>
-		<location object="@$kAAITParam_data.$orderLocation_space" position="@$kAAITParam_data.$orderLocation_pos" condition="@$kAAITParam_data.$orderLocation_space and @$kAAITParam_data.$orderLocation_pos" />
-		<location object="$destination" position="$position" condition="$destination and $position"/>
-		<location object="$destination" condition="$destination"/>
+		<location object="@$orderLocation_space" position="@$orderLocation_pos" condition="@$orderLocation_space and @$orderLocation_pos" />
 	</order>
+	<interrupts>
+		<handler ref="DisengageHandler"/>
+		<handler ref="kAAIT_Handler_WithdrawOrJustFight"/>
+		<handler ref="kAAIT_Handler_UpdateOrderLocation" />
+	</interrupts>
 	<attention min="unknown">
 		<actions>
+			<include_interrupt_actions ref="kAAIT_Init" />
+
 			<label name="start"/>
-			<set_value name="$kAAIT_moveToSpace" exact="$destination" />
-			<set_value name="$kAAIT_moveToPos" exact="$position" />
-			<include_interrupt_actions ref="kAAIT_UpdateOrderLocation" />
-			<do_if value="@$kAAITParam_enemyAvoid.exists">
-				<set_value name="$kAAIT_defensibleTarget" exact="$kAAITParam_enemyAvoid" />
+			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveStepForward start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<set_value name="this.$kAAIT_data.$time_lastStepForward" exact="player.age" />
+			<do_if value="not @this.$kAAIT_data.$count_stepForward">
+				<set_value name="this.$kAAIT_data.$count_stepForward" exact="1" />
 			</do_if>
-			<run_script name="'move.generic'">
-				<param name="destination" value="$destination" />
-				<param name="position" value="$position" />
-				<param name="noboost" value="if @$kAAITParam_enemyAvoid.exists and @this.assignedcontrolled.distanceto.{$kAAITParam_enemyAvoid} lt [@this.assignedcontrolled.maxradarrange,[@this.assignedcontrolled.maxcombatrange.all,@$kAAITParam_enemyAvoid.maxcombatrange.all].max].min then true else false" />
-				<param name="disablecollisionavoidance" value="$disablecollisionavoidance" />
-				<param name="abortpath" value="$abortpath" />
-				<param name="forcesteering" value="true" />
-				<param name="endintargetzone" value="false" />
-				<param name="recallsubordinates" value="false" />
-				<param name="strictblacklist" value="$strictblacklist" />
-				<param name="precise" value="$precise" />
-				<param name="waitforatgate" value="$waitforatgate" />
-				<param name="uselocalhighways" value="$uselocalhighways" />
-				<param name="pursuetargets" value="$pursuetargets" />
-				<param name="escort" value="$escort" />
-				<param name="pursuedistance" value="$pursuedistance" />
-				<param name="changecommandaction" value="$changecommandaction" />
-				<param name="targetclasses" value="$targetclasses" />
-				<param name="radius" value="$radius" />
-				<param name="radiusanchorpos" value="$radiusanchorpos" />
-				<param name="radiusanchorspace" value="$radiusanchorspace" />
-				<param name="stopondetect" value="$stopondetect" />
-				<param name="allowwreck" value="$allowwreck" />
-				<param name="kAAITParam_isAutoAdded" value="true" />
-				<param name="kAAITParam_data" value="$kAAITParam_data" />
-				<param name="kAAITParam_enemyAvoid" value="@$kAAITParam_enemyAvoid" />
-				<param name="kAAITParam_aroundDir" value="@$kAAIT_aroundDir" />
-				<param name="kAAITParam_isSkipAvoidance" value="@$kAAITParam_isSkipAvoidance" />
-				<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
-				<param name="debugchance" value="$debugchance" />
-			</run_script>
+			<do_else>
+				<set_value operation="add" name="this.$kAAIT_data.$count_stepForward" exact="1" />
+			</do_else>
+			<set_value name="$orderLocation_space" exact="this.assignedcontrolled.sector" />
+			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
+			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
+			<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
+				<position value="$posTarget" />
+			</create_orientation>
+			<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+			<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="[$distToTarget, this.$kAAIT_data.$combatRange_max - this.$kAAIT_data.$count_stepForward * 1km].min" />
+			<do_if value="this.$kAAIT_data.$distance_attackFrom lt this.$kAAIT_data.$combatRange_min">
+				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.$kAAIT_data.$combatRange_min" />
+				<set_value operation="subtract" name="this.$kAAIT_data.$count_stepForward" exact="1" />
+			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<create_position name="$orderLocation_pos"
+				x="$posTarget.x + this.$kAAIT_data.$distance_attackFrom * sin ($rotFromTarget.yaw) * cos ($rotFromTarget.pitch)"
+				y="$posTarget.y + this.$kAAIT_data.$distance_attackFrom * sin ($rotFromTarget.pitch)"
+				z="$posTarget.z + this.$kAAIT_data.$distance_attackFrom * cos ($rotFromTarget.yaw) * cos ($rotFromTarget.pitch)"
+			/>
+			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" param2="table[$kAAIT_moveToSpace = $orderLocation_space, $kAAIT_moveToPos = $orderLocation_pos]" />
+			<move_to object="this.assignedcontrolled"
+				destination="$orderLocation_space"
+				uselocalhighways="false"
+				useknownpath="this.isplayerowned"
+				forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
+				commandaction="false">
+				<position value="$orderLocation_pos"/>
+			</move_to>
+
+			<label name="finish" />
+			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveStepForward finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" />
+			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</actions>
-		<label name="finish" />
 	</attention>
 	<on_abort>
-		<do_if value="@$kAAITParam_data">
-			<remove_value name="$kAAITParam_data.$orderLocation_space" />
-			<remove_value name="$kAAITParam_data.$orderLocation_pos" />
-		</do_if>
+		<signal_objects object="this.assignedcontrolled" param="'update_order_location'" />
+		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</on_abort>
 </aiscript>
