@@ -41,10 +41,22 @@
 	<init>
 -->
 	<add pos="prepend" sel="//init">
+		<debug_text text="this.assignedcontrolled.idcode + ' init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
 	</add>
+<!-- replace. purpose: ignore canbeattacked 'coz move to engage position will handle it.
+	<do_if value="not $target.canbeattacked">
+		<resume label="finish" />
+-->
+	<!-- <replace sel="//do_if[@value=&quot;not $target.canbeattacked&quot;]/resume[@label=&quot;finish&quot;]">
+		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetPotentialHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+		</do_if>
+		<do_else>
+			<resume label="finish" />
+		</do_else>
+	</replace> -->
 <!-- add before. purpose: move to engage position and just_fight if low chance of survivability.
 	<label name="fight" />
 -->
@@ -122,13 +134,19 @@
 						<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
 					</do_if>
 					<resume label="move_to_engage_position_order" />
+					<!-- <resume label="move_to_engage_position" /> -->
 				</do_elseif>
 				<do_elseif value="$target.isclass.module">
-					<do_if value="$target != @this.$kAAIT_data.$moduleTarget">
+					<do_if value="this.$kAAIT_data.$moduleTarget? and $target != @this.$kAAIT_data.$moduleTarget">
+						<!-- only move to engage position AGAIN if there was a previous module target -->
+						<debug_text text="this.assignedcontrolled.idcode + ' NEW this.$kAAIT_data.$moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
-						<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<resume label="move_to_engage_position" />
 					</do_if>
+					<do_else>
+						<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
+						<debug_text text="this.assignedcontrolled.idcode + ' FIRST this.$kAAIT_data.$moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</do_else>
 				</do_elseif>
 				<do_else>
 					<set_value name="this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="this.$kAAIT_data.$defensibleTarget" />

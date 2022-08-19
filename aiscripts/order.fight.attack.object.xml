@@ -102,6 +102,27 @@
 		<location object="@this.$kAAIT_data.$orderLocation_space" position="@this.$kAAIT_data.$orderLocation_pos" condition="@this.$kAAIT_data.$orderLocation_space and @this.$kAAIT_data.$orderLocation_pos" />
 		<location object="@$target" condition="@$target.canbeattacked" />
 	</add>
+<!-- replace. purpose: do not cancel attack due to kAAIT_MoveEngagePosition order.
+	<check_all>
+		<event_object_order_ready object="this.assignedcontrolled.commander" check="false"/>
+		<check_value value="event.object.isoperational"/>
+		<check_value value="event.param == event.object.order"/>
+		<check_any>
+			<check_value value="event.param.id != 'Attack'"/>
+			<check_value value="event.param.$primarytarget != $primarytarget"/>
+-->
+	<replace sel="//check_value[@value=&quot;event.param.id != 'Attack'&quot;]">
+		<check_all>
+			<check_value value="event.param.id != 'Attack'" />
+			<check_value value="event.param.id != 'kAAIT_MoveEngagePosition'" />
+		</check_all>
+	</replace>
+	<replace sel="//check_value[@value=&quot;event.param.$primarytarget != $primarytarget&quot;]">
+		<check_all>
+			<check_value value="event.param.$primarytarget?" />
+			<check_value value="@event.param.$primarytarget != $primarytarget" />
+		</check_all>
+	</replace>
 <!-- add after. purpose: keep track of attackers
 	<label name="fight"/>
 -->
@@ -115,14 +136,19 @@
 	</add>
 <!-- add. purpose: send attack command to subordinates immediately.
 	address the issue of ships in escort arriving at the target WAAAY ahead of this ship but WITHOUT the attack order.
-	<run_script name="'move.generic'" result="$movesuccess">
+	<label name="fight"/>
 -->
-	<add pos="before" sel="//run_script[@name=&quot;'move.generic'&quot;]">
+	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' @this.$escortgroup.count: ' + @this.$escortgroup.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@this.$escortgroup.count">
 			<set_value name="$loctarget" exact="$target"/>
+			<do_if value="not $loctarget">
+				<set_value name="$loctarget" exact="$primarytarget" />
+			</do_if>
 			<do_if value="$loctarget.defensible">
 				<set_value name="$loctarget" exact="$loctarget.defensible"/>
 			</do_if>
+			<debug_text text="this.assignedcontrolled.idcode + ' @$loctarget: ' + @$loctarget.knownname + ', ' + @$loctarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<do_for_each name="$locsub" in="this.$escortgroup" reverse="true">
 				<do_if value="($locsub.assignment == assignment.attack) and not $locsub.subordinategroupdockoverride">
 					<debug_text text="'%s %s %s ordering attack subordinate %s %s %s to attack %s %s %s.'.[@this.assignedcontrolled.idcode, @this.assignedcontrolled.knownname, this.assignedcontrolled, @$locsub.idcode, @$locsub.knownname, $locsub, @$loctarget.idcode, @$loctarget.knownname, $loctarget]" chance="$debugchance"/>
@@ -163,7 +189,7 @@
 		<debug_text text="this.assignedcontrolled.idcode + ' run_script ' + $DefensibleScript" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 	</add>
 	<add sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
-		<param name="kAAITParam_isAvoidHighRisk" value="if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user else @$kAAITParam_isAvoidHighRisk" />
+		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 		<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
 	</add>
 <!-- add after. purpose: cleanup.
