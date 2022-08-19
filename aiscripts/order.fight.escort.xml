@@ -64,6 +64,17 @@
   <add sel="//interrupts">
     <handler ref="kAAIT_Handler_WithdrawOrJustFight"/>
   </add>
+<!-- add before. purpose: prevent attack.
+  <actions name="CreateAttackOrder">
+    <create_order id="'Attack'" object="this.assignedcontrolled" immediate="true">
+-->
+  <add pos="before" sel="//actions[@name=&quot;CreateAttackOrder&quot;]//create_order[@id=&quot;'Attack'&quot;][@object=&quot;this.assignedcontrolled&quot;][@immediate=&quot;true&quot;]">
+    <do_if value="@$kAAITParam_isAvoidHighRisk">
+      <debug_text text="this.assignedcontrolled.idcode + ' CreateAttackOrder create_order Attack'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
+      <set_value name="$kAAIT_destination" exact="$target" />
+      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+    </do_if>
+  </add>
 <!-- add. purpose: debug.
   <attention min="visible">
     <label name="start" />
@@ -203,6 +214,18 @@
       </do_if>
     </do_if>
   </add>
+<!-- add before. purpose: prevent attack.
+  <create_order id="'Attack'" object="$locattacker" immediate="true">
+-->
+  <add pos="before" sel="//attention[@min=&quot;visible&quot;]//create_order[@id=&quot;'Attack'&quot;][@object=&quot;$locattacker&quot;][@immediate=&quot;true&quot;]">
+    <do_if value="@$kAAITParam_isAvoidHighRisk">
+      <do_if value="$locattacker == this.assignedcontrolled">
+        <debug_text text="this.assignedcontrolled.idcode + ' create_order Attack'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
+        <set_value name="$kAAIT_destination" exact="$target" />
+        <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+      </do_if>
+    </do_if>
+  </add>
 <!-- add before. purpose: ensure labels between attentions are the same.
   <wait exact="500ms"/>
 -->
@@ -243,6 +266,18 @@
       <debug_text text="this.assignedcontrolled.idcode + ' move_to $target.zone'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
       <set_value name="$kAAIT_destination" exact="$target" />
       <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+    </do_if>
+  </add>
+<!-- add before. purpose: prevent attack.
+  <create_order id="'Attack'" object="$locattacker" immediate="true">
+-->
+  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//create_order[@id=&quot;'Attack'&quot;][@object=&quot;$locattacker&quot;][@immediate=&quot;true&quot;]">
+    <do_if value="@$kAAITParam_isAvoidHighRisk">
+      <do_if value="$locattacker == this.assignedcontrolled">
+        <debug_text text="this.assignedcontrolled.idcode + ' create_order Attack'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
+        <set_value name="$kAAIT_destination" exact="$target" />
+        <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+      </do_if>
     </do_if>
   </add>
   <!-- DeadAir Diffs -->
