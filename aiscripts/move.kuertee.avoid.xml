@@ -103,7 +103,6 @@
 				</do_if>
 			</actions>
 		</handler>
-		<handler ref="kAAIT_Handler_UpdateOrderLocation" />
 	</interrupts>
 	<init>
 		<!-- required for disengage handler -->
@@ -121,6 +120,7 @@
 
 			<label name="start"/>
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveEngagePosition start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<set_value name="this.$kAAIT_data.$isAvoiding" exact="true" />
 			<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 			<do_if value="not @this.$kAAIT_data.$aroundDir">
 				<set_value name="this.$kAAIT_data.$aroundDir" exact="[-1, 1].random" />
@@ -150,7 +150,7 @@
 				<debug_text text="this.assignedcontrolled.idcode + ' MOVING AROUND'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<set_value name="$yaw_adj" min="30" max="45" />
 				<set_value name="$yaw_deg" exact="$ship_yaw_deg + $yaw_adj * this.$kAAIT_data.$aroundDir" />
-				<set_value name="$pitch_adj" min="0" max="15" />
+				<set_value name="$pitch_adj" min="-15" max="15" />
 				<set_value name="$pitch_deg" exact="$ship_pitch_deg + $pitch_adj" />
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
@@ -162,20 +162,28 @@
 				y="$posTarget.y + $distAvoid * sin ($pitch)"
 				z="$posTarget.z + $distAvoid * cos ($yaw) * cos ($pitch)"
 			/>
-			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" param2="table[$kAAIT_moveToSpace = $orderLocation_space, $kAAIT_moveToPos = $orderLocation_pos]" />
+			<set_value name="this.$kAAIT_data.$orderLocation_space" exact="$orderLocation_space" />
+			<set_value name="this.$kAAIT_data.$orderLocation_pos" exact="$orderLocation_pos" />
 			<run_script name="'move.generic'" result="$movesuccess">
 				<param name="destination" value="$orderLocation_space" />
 				<param name="position" value="$orderLocation_pos" />
-				<param name="kAAITParam_isSkipAvoidance" value="true" />
+				<param name="kAAITParam_iskAAITOrder" value="true" />
 			</run_script>
 
 			<label name="finish" />
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveAvoid finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" />
+			<set_value name="this.$kAAIT_data.$isAvoiding" exact="false" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</actions>
 	</attention>
 	<on_abort>
+		<do_if value="@this.$kAAIT_data">
+			<set_value name="this.$kAAIT_data.$isAvoiding" exact="false" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
+		</do_if>
 		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</on_abort>
 </aiscript>

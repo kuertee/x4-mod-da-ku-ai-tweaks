@@ -34,7 +34,6 @@
 	<interrupts>
 -->
 	<add pos="prepend" sel="//interrupts">
-		<handler ref="kAAIT_Handler_UpdateOrderLocation" />
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
 	</add>
 <!-- add prepend. purpose: init var.
@@ -162,7 +161,8 @@
 				</do_if>
 			</do_else> -->
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
-			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 		</do_if>
 	</add>
 <!-- add after. purpose: hijack effective range and move thresholds to limit the ship's movements to step forward or withdraw behaviours.
@@ -267,6 +267,7 @@
 -->
 	<add pos="after" sel="(//get_safe_pos[@result=&quot;$pos&quot;][@object=&quot;$target&quot;][@min=&quot;$minoperationalrange&quot;][@max=&quot;$maxoperationalrange&quot;][@sector=&quot;$target.sector&quot;][@direction=&quot;$weakquadrant&quot;][@directionobject=&quot;$target&quot;][@radius=&quot;this.ship.size/2.0&quot;][@ignored=&quot;this.ship&quot;])[2]">
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetPotentialHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
 			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
 			<do_if value="@$kAAIT_bigEnemy">
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_bigEnemy (too near): ' + @$kAAIT_bigEnemy.knownname + ' ' + @$kAAIT_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -318,7 +319,8 @@
 			<debug_text text="this.assignedcontrolled.idcode + ' finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' ======'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
-			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 		</do_if>
 	</add>
 	<!-- DeadAir Diffs -->
@@ -349,7 +351,7 @@
 	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_if[@value='$distance gt $movethreshold_max']/create_position[@name='$locpos']" pos="before">
 		<create_position name="$targetposition" space="$target.sector" object="$target"/>
 	</add>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else[2]/set_value[@name='$boost']/@chance">if (this.assignedcontrolled.shieldpercentage gt 75) then $allowboost * 100 else 0</replace>
+	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else/set_value[@name='$boost']/@chance">if (this.assignedcontrolled.shieldpercentage gt 75) then $allowboost * 100 else 0</replace>
 	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='@$holdposition']/set_value[@name='$time_waitend'][@exact='player.age + (($updatetime * 4) / (16 - $skill_morale))']/@exact">player.age + (($updatetime * 4) / (16 - [$skill_morale,9].max))</replace>
 	<remove sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='not ($isstation or $frontweapon?)']/@chance"/>
 	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/move_to" type="@boost">false</add>

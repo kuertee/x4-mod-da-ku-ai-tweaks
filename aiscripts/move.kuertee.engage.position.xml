@@ -140,7 +140,6 @@
 				</do_else>
 			</actions>
 		</handler>
-		<handler ref="kAAIT_Handler_UpdateOrderLocation" />
 	</interrupts>
 	<init>
 		<!-- required for disengage handler -->
@@ -178,7 +177,7 @@
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to_target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<run_script name="'move.generic'" result="$movesuccess">
 				<param name="destination" value="$target" />
-				<param name="kAAITParam_isSkipAvoidance" value="true" />
+				<param name="kAAITParam_iskAAITOrder" value="true" />
 			</run_script>
 			<resume label="start" />
 
@@ -211,7 +210,8 @@
 				y="$posTarget.y + this.$kAAIT_data.$distance_attackFrom * sin ($rotFromTarget.pitch) + [-5m, -2.5m, 0, 2.5m, 5m].random"
 				z="$posTarget.z + this.$kAAIT_data.$distance_attackFrom * cos ($yaw) * cos ($rotFromTarget.pitch)"
 			/>
-			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" param2="table[$kAAIT_moveToSpace = $orderLocation_space, $kAAIT_moveToPos = $orderLocation_pos]" />
+			<set_value name="this.$kAAIT_data.$orderLocation_space" exact="$orderLocation_space" />
+			<set_value name="this.$kAAIT_data.$orderLocation_pos" exact="$orderLocation_pos" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
 				uselocalhighways="false"
@@ -223,11 +223,16 @@
 
 			<label name="finish" />
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveEngagePosition finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<signal_objects object="this.assignedcontrolled" param="'update_order_location'" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</actions>
 	</attention>
 	<on_abort>
+		<do_if value="@this.$kAAIT_data">
+			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
+		</do_if>
 		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</on_abort>
 </aiscript>
