@@ -9,32 +9,6 @@
 		<library>
 -->
 	<add sel="//interrupts/library">
-		<actions name="kAAIT_GetRallyPoint">
-			<set_value name="$kAAIT_space" exact="this.assignedcontrolled.sector" />
-			<create_position name="$kAAIT_posShip" space="$kAAIT_space" object="this.assignedcontrolled" />
-			<create_position name="$kAAIT_posTarget" space="$kAAIT_space" object="$primarytarget" />
-			<create_orientation name="$kAAIT_rotFromTarget" orientation="look_at" refposition="$kAAIT_posShip">
-				<position value="$kAAIT_posTarget" />
-			</create_orientation>
-			<set_value name="$kAAIT_yaw_deg" exact="$kAAIT_rotFromTarget.yaw * 180 / pi + [-15, -11.25, -7.5, -3.25, 0, 3.25, 7.5, 11.25, 15].random" />
-			<set_value name="$kAAIT_yaw" exact="$kAAIT_yaw_deg * pi / 180" />
-			<do_if value="$primarytarget.isclass.ship">
-				<do_if value="$primarytarget.travel.active">
-					<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 0.25, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
-				</do_if>
-				<do_else>
-					<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 1.25, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
-				</do_else>
-			</do_if>
-			<do_else>
-				<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 0.5, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
-			</do_else>
-			<create_position name="$kAAIT_pos"
-				x="$kAAIT_posTarget.x + $kAAIT_tacticalDistance * sin ($kAAIT_yaw) * cos ($kAAIT_rotFromTarget.pitch)"
-				y="$kAAIT_posTarget.y + $kAAIT_tacticalDistance * sin ($kAAIT_rotFromTarget.pitch)"
-				z="$kAAIT_posTarget.z + $kAAIT_tacticalDistance * cos ($kAAIT_yaw) * cos ($kAAIT_rotFromTarget.pitch)"
-			/>
-		</actions>
 		<actions name="kAAIT_AdjustRallyPoint" comment="move rally point further from target and with a random yaw">
 			<create_orientation name="$kAAIT_rotFromTarget" orientation="look_at" refposition="$initialpos">
 				<position value="$enemypos" />
@@ -118,13 +92,9 @@
 		<set_value name="$kAAIT_isMovingToSector" exact="false" />
 		<set_value name="$kAAIT_isReady" exact="true" />
 	</add>
-<!-- replace. purpose: move rally point 40km from target. move to engage position that is applied AFTER this will be closer to the target.
+<!-- add. purpose: move rally point 40km from target. move to engage position that is applied AFTER this will be closer to the target.
 	<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
 -->
-	<!-- <replace sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[1]">
-		<include_interrupt_actions ref="kAAIT_GetRallyPoint" />
-		<set_value name="$initialpos" exact="$kAAIT_pos" />
-	</replace> -->
 	<add pos="after" sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[1]">
 		<include_interrupt_actions ref="kAAIT_AdjustRallyPoint" />
 	</add>
@@ -134,7 +104,7 @@
 	<replace sel="(//include_interrupt_actions[@ref=&quot;create_orders&quot;])[3]">
 		<debug_text text="'$subordinate.orders.count (3): ' + @$subordinate.orders.count" chance="100" />
 		<do_if value="
-			this.assignedcontrolled.gatedistanceto.{$subordinate} le 1 and
+			this.assignedcontrolled.gatedistance.{$subordinate} le 1 and
 			(
 				(not @$subordinate.orders.count) or
 				(
@@ -151,7 +121,7 @@
 	<replace sel="(//include_interrupt_actions[@ref=&quot;create_orders&quot;])[2]">
 		<debug_text text="'$subordinate.orders.count (2): ' + @$subordinate.orders.count" chance="100" />
 		<do_if value="
-			this.assignedcontrolled.gatedistanceto.{$subordinate} le 1 and
+			this.assignedcontrolled.gatedistance.{$subordinate} le 1 and
 			(
 				(not $subordinate.orders.count) or
 				(
@@ -168,7 +138,7 @@
 	<replace sel="(//include_interrupt_actions[@ref=&quot;create_orders&quot;])[1]">
 		<debug_text text="'$subordinate.orders.count (1): ' + @$subordinate.orders.count" chance="100" />
 		<do_if value="
-			this.assignedcontrolled.gatedistanceto.{$subordinate} le 1 and
+			this.assignedcontrolled.gatedistance.{$subordinate} le 1 and
 			(
 				(not $subordinate.orders.count) or
 				(
@@ -188,13 +158,9 @@
 	<add pos="after" sel="//label[@name=&quot;attack&quot;]">
 		<set_value name="$kAAIT_isAttacking" exact="true" />
 	</add>
-<!-- replace. purpose: move rally point 40km from target. move to engage position that is applied AFTER this will be closer to the target.
+<!-- add. purpose: move rally point 40km from target. move to engage position that is applied AFTER this will be closer to the target.
 	<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
 -->
-	<!-- <replace sel="//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;]">
-		<include_interrupt_actions ref="kAAIT_GetRallyPoint" />
-		<set_value name="$initialpos" exact="$kAAIT_pos" />
-	</replace> -->
 	<add pos="after" sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[2]">
 		<include_interrupt_actions ref="kAAIT_AdjustRallyPoint" />
 	</add>

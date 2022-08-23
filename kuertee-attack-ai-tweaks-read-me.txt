@@ -9,22 +9,14 @@ Dead Air AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-t
 
 Updates
 =======
-v5.1.0301, 3 July 2022:
--kuertee: New feature: On new module targets: L and XL ships uses withdraw behaviour but with horizontal and vertical offsets - promotes ships to move around their station targets.
--kuertee: New feature: L and XL ships stop their withdraw behaviour against ships if their hull is less than 50%. Allows the ship to stand their ground instead of to flee a losing battle.
--kuertee: Tweak/bug-fix: When attacking a target in a different sector, the move to engage behaviour will not activate until appropriate. This prevents the bug where the engage position is at the other side of the target.
--kuertee: Bug-fix: Move to engage position behaviour against ships now update as the ships move, preventing ramming behaviour against ships. Previous versions had this disabled.
--kuertee: Bug-fix: Escorts were ignoring the new behaviours because they weren't evaluating their "$primarytarget" var properly.
--kuertee: Bug-fix: User toggle for avoid high risk wasn't sticking.
--kuertee: Bug-fix: "Move around instead of attack" behaviour applied only on XS, S, M or non-fighter ships.
--Dead Air: move.attack.object.capital: Adjusted ideal ranges for ships against stations, capitalships, and smaller ships. They will attempt to keep more distance against stations. Player ships no longer get artificial skill boost. Missile ships will no longer act as if they have a front weapon unless they actually have one. Ships will attempt to get above/below ships much less often (due to front weapon and capital aiming restrictions by egosoft). Ships will consider their minoperationalrange and maxoperationalrange when finding a position near the enemy with less RNG. Capital ships will use travel drive and boost much less often when the target is within range. Capital ships will no longer try to get into the weakquadrant of ships since it mostly led to them getting too close or trying to move too often.
--Dead Air: Engineer: Default script - removed all changes other than hull damage limit. Optional Script - Increased station repair amount 5X and scaled frequency to 5X. Reduced station max repair per cycle to 1% hull instead of 5%.
--Dead Air: lib.target.selection: Reduced stickiness of primary target by 20%. Reduced relation impact to vanilla and removed impact from subordinates relation value. XL ships will be more likely to target L/XL ship hulls or station modules themselves instead of turrets now.  L will be more likely to target M/L/XL ship hulls and XL turrets/engines/shields. Torp S/M will be more likely to target L/XL ship hulls, station modules, or L/XL/Station turrets/engines/shields. Reduced chance of non torpedo S/M of attacking station over preferred targets.
--Dead Air: move.flee: Reduced chance of AI ships dropping their cargo every time they flee.
--Dead Air: drops.xml: Reverted seminar drop rate changes.
--Dead Air: faction logic changes: Hold Space: Set default range search for defense ships to 3 jumps (preliminary steps taken to allow user to enable/disable change), balanced the desired fleet sizes so moodlevel is less likely to have fleets never engage, improved defense station placement to vicinity of gates further (preliminary steps taken to allow user to enable/disable change). Invade Space: Set default range search to include all owned sectors for the faction. No more fleets sitting around idle doing nothing in backwater systems. Balanced desired fleet sizes so moodlevel is less likely to have fleets never engage, enabled factions to order more ships from shipyard/wharf to meet their desired fleet strength. Patrol coordination: balanced acceptable force differential so patrols are more likely to engage enemies for certain moodlevels.
--Dead Air: Carrier attack fix: Added logic for current bug where docked subordinates on a carrier never receive new orders. This fix checks all docked ships and re-adds then to $escortgroup. Behavior for attacking carriers slightly changed where they will send all of their subordinates that are currently available at their primary target or it's turrets/engines/shields. If attacking and a station is a primary target but not the only target, the carrier will send a subordinate L/XL if available, else it will focus down smaller targets first. Carriers will now auto repair docked subordinate ships if they have a shiptrader.
--Dead Air: Old bugfixes: Mining ships will now drop all of the unsellable cargo if they are stuck at or above 50% cargo after mining and unable to sell. Recon - updated threat scaling of stations to account for possible weapons.operational bug
+v5.1.0302, 8 Aug 2022:
+-New feature: Escort, Follow, and Protect orders (and any other AIs that use these, e.g. Supply) acquires the Withdraw custom behaviour.
+-New feature: Ships that are not fighters (e.g. Auxiliaries) will always stay away (e.g. Avoid custom behaviour) from their target. E.g. Monitors will never find themselves caught in a station's turrets.
+-New feature: Coordinated attack changes. Read more below. Summary: much further rally points, small targets first checkbox disabled by default, subordinates that are busy or are more than 2 gates away do not join the attack, etc.
+-New feature: Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw.
+-New feature: Refactored about 90% of Attack AI Tweaks - my portion of the mod. DeadAir's portions are unchanged. The codebase is cleaner and easier to edit.
+-Bug-fix: The user-controlled order options for the custom behaviours weren't working.
+-New feature: Board and Protect orders now have the attack "Avoid high-risk" and "Step forward/withdraw" order options.
 
 Attack AI Tweaks:
 =================
@@ -45,8 +37,10 @@ XS (except for drones), S, and M class ships will circle high-risk station targe
 
 L, and XL class ships, enroute to their targets, will stop short of their targets to prevent accidental kamikaze attacks.
 
-L, and XL AI behaviours
-=======================
+Non-fighters (e.g. auxiliaries) will stay away from their targets.
+
+Additional L, and XL AI behaviours
+==================================
 Step forward: When attacking high-risk targets, L and XL ships will move forward from near their max range up to an optimal range based on the times they withdrew and the times they didn't have to withdraw. The player's removal of high-damage turrets have a direct effect on the AI's behaviour.
 
 Previous versions start at their optimal range based on their DPS, their target DPS and the number of times they withdrew. You can enable this previous version in the Extension Options.
@@ -55,9 +49,23 @@ The current version makes use of long-range weapons earlier and for a longer tim
 
 Withdraw out of range: When shields drop below 90%, L and XL ships will withdraw out of range of high-risk stations at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge. Against high-risk ships, L, and XL attackers will not withdraw unless there are other L, and XL attackers.
 
+Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw.
+
 High-risk enemies
 =================
 Potentially high-risk enemies are 1.5x larger physically than the ship. For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers. For L, and XL ships, high-risk enemies have more DPS than the ship.
+
+Coordinated attack changes
+==========================
+1. "Weak targets first" option is disabled by default.
+	Addresses this problem in this AI of the base game: The opposite default in the base game would make the attackers chase after fighters and ignore their capital ship primary target.)
+1. Rally points are much further from the target.
+	Addresses this problem: This minimises the occurence of the target attacking the ships while they wait for the others to arrive at the rally point.
+2. The rally points are not set until the ships are in the same sector as the target.
+	Addresses this problem: This prevents rally points from sometimes getting set on the other side of the target - causing your ships to fly across its turrets.
+3. The attackers will not wait for wingmen that are busy or are two or more sectors away. This allows ships in the fleet to do other activities.
+	Addresses this problem: E.g. Wingmen that you want to get repaired needed to removed from the fleet. Otherwise, they'll get pulled into attack formation.
+4. The Coordinate Attack order of the fleet commander is converted into a normal Attack order when the attack begins. I think this is a little cleaner than keeping the Coordinate Attack order active.
 
 Interact Menu
 =============
@@ -105,6 +113,23 @@ Japanese localisation by Arkblade.
 
 History
 =======
+v5.1.0301, 3 July 2022:
+-kuertee: New feature: On new module targets: L and XL ships uses withdraw behaviour but with horizontal and vertical offsets - promotes ships to move around their station targets.
+-kuertee: New feature: L and XL ships stop their withdraw behaviour against ships if their hull is less than 50%. Allows the ship to stand their ground instead of to flee a losing battle.
+-kuertee: Tweak/bug-fix: When attacking a target in a different sector, the move to engage behaviour will not activate until appropriate. This prevents the bug where the engage position is at the other side of the target.
+-kuertee: Bug-fix: Move to engage position behaviour against ships now update as the ships move, preventing ramming behaviour against ships. Previous versions had this disabled.
+-kuertee: Bug-fix: Escorts were ignoring the new behaviours because they weren't evaluating their "$primarytarget" var properly.
+-kuertee: Bug-fix: User toggle for avoid high risk wasn't sticking.
+-kuertee: Bug-fix: "Move around instead of attack" behaviour applied only on XS, S, M or non-fighter ships.
+-Dead Air: move.attack.object.capital: Adjusted ideal ranges for ships against stations, capitalships, and smaller ships. They will attempt to keep more distance against stations. Player ships no longer get artificial skill boost. Missile ships will no longer act as if they have a front weapon unless they actually have one. Ships will attempt to get above/below ships much less often (due to front weapon and capital aiming restrictions by egosoft). Ships will consider their minoperationalrange and maxoperationalrange when finding a position near the enemy with less RNG. Capital ships will use travel drive and boost much less often when the target is within range. Capital ships will no longer try to get into the weakquadrant of ships since it mostly led to them getting too close or trying to move too often.
+-Dead Air: Engineer: Default script - removed all changes other than hull damage limit. Optional Script - Increased station repair amount 5X and scaled frequency to 5X. Reduced station max repair per cycle to 1% hull instead of 5%.
+-Dead Air: lib.target.selection: Reduced stickiness of primary target by 20%. Reduced relation impact to vanilla and removed impact from subordinates relation value. XL ships will be more likely to target L/XL ship hulls or station modules themselves instead of turrets now.  L will be more likely to target M/L/XL ship hulls and XL turrets/engines/shields. Torp S/M will be more likely to target L/XL ship hulls, station modules, or L/XL/Station turrets/engines/shields. Reduced chance of non torpedo S/M of attacking station over preferred targets.
+-Dead Air: move.flee: Reduced chance of AI ships dropping their cargo every time they flee.
+-Dead Air: drops.xml: Reverted seminar drop rate changes.
+-Dead Air: faction logic changes: Hold Space: Set default range search for defense ships to 3 jumps (preliminary steps taken to allow user to enable/disable change), balanced the desired fleet sizes so moodlevel is less likely to have fleets never engage, improved defense station placement to vicinity of gates further (preliminary steps taken to allow user to enable/disable change). Invade Space: Set default range search to include all owned sectors for the faction. No more fleets sitting around idle doing nothing in backwater systems. Balanced desired fleet sizes so moodlevel is less likely to have fleets never engage, enabled factions to order more ships from shipyard/wharf to meet their desired fleet strength. Patrol coordination: balanced acceptable force differential so patrols are more likely to engage enemies for certain moodlevels.
+-Dead Air: Carrier attack fix: Added logic for current bug where docked subordinates on a carrier never receive new orders. This fix checks all docked ships and re-adds then to $escortgroup. Behavior for attacking carriers slightly changed where they will send all of their subordinates that are currently available at their primary target or it's turrets/engines/shields. If attacking and a station is a primary target but not the only target, the carrier will send a subordinate L/XL if available, else it will focus down smaller targets first. Carriers will now auto repair docked subordinate ships if they have a shiptrader.
+-Dead Air: Old bugfixes: Mining ships will now drop all of the unsellable cargo if they are stuck at or above 50% cargo after mining and unable to sell. Recon - updated threat scaling of stations to account for possible weapons.operational bug
+
 v5.1.00081, 27 May 2022:
 -Bug-fix: Avoid high-risk Extension Options was getting ignored by the aiscript.
 
