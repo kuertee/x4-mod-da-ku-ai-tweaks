@@ -7,32 +7,25 @@
 		<param name="kAAITParam_iskAAITOrder" required="false" default="false" type="internal" />
 		<param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal"/>
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
-		  if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then 
-		    this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user
+		  if this.$kAAIT_isAvoidHighRisk_user? then 
+		    this.$kAAIT_isAvoidHighRisk_user
 		  else (
 		    if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
 		    (
 		      (
 		        this.assignedcontrolled.isplayerowned and
-		        (
-		          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
-		        ) and
+		        this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
 		        @global.$kAAIT_Config.$xssm_isAvoidHighRisk
 		      ) or
 		      (
 		        (not this.assignedcontrolled.isplayerowned) and
-		        (
-		          this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
-		        ) and
+		        this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
 		        @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
 		      ) or
 		      (
 		        this.assignedcontrolled.isplayerowned and
 		        this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-		        (
-		        	@this.assignedcontrolled.orders.{1}.id != 'Attack' and
-		        	(not @this.assignedcontrolled.orders.{1}.$kAAITParam_iskAAITOrder)
-		        ) and
+		        this.assignedcontrolled.primarypurpose != purpose.fight and
 		        (
 		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip or
 		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
@@ -41,10 +34,7 @@
 		      (
 		        (not this.assignedcontrolled.isplayerowned) and
 		        this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-		        (
-		        	@this.assignedcontrolled.orders.{1}.id != 'Attack' and
-		        	(not @this.assignedcontrolled.orders.{1}.$kAAITParam_iskAAITOrder)
-		        ) and
+		        this.assignedcontrolled.primarypurpose != purpose.fight and
 		        (
 		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions or
 		          @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
@@ -106,12 +96,13 @@
 	<interrupts>
 -->
 	<add sel="//interrupts">
-		<handler ref="kAAIT_Handler_WithdrawOrJustFight"/>
-		<handler>
+		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+		<!-- <handler>
 			<conditions>
 				<event_object_changed_zone object="this.assignedcontrolled"/>
 				<check_value value="@$kAAITParam_isAvoidHighRisk" />
 				<check_value value="not @$kAAITParam_iskAAITOrder" />
+				<check_value value="not @this.$kAAIT_data.$isIgnoreKAAIT" />
 			</conditions>
 			<actions>
 				<debug_text text="this.assignedcontrolled.idcode + ' event_object_changed_zone'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
@@ -121,32 +112,32 @@
 					<abort_called_scripts resume="check"/>
 				</do_if>
 			</actions>
-		</handler>
+		</handler> -->
 	</add>
 <!-- add after. purpose: avoid or not.
 	<label name="check" />
 	<wait exact="1ms" sinceversion="7"/>
 -->
 	<add pos="after" sel="//label[@name=&quot;check&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder)">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' check $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="//do_if[@value=&quot;not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder)">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' wait for subordinates'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="(//do_if[@value=&quot;$position&quot;])[2]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder)">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' not $intersector'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="//do_if[@value=&quot;not @$rotation&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder)">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' before final move'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>

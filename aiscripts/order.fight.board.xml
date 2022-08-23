@@ -1,5 +1,107 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
+<!-- add. purpose: kaait data
+  <params>
+-->
+  <add sel="//params">
+    <param name="kAAITParam_iskAAITOrder" required="false" default="false" type="internal" />
+    <param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
+      if this.$kAAIT_isAvoidHighRisk_user? then 
+        this.$kAAIT_isAvoidHighRisk_user
+      else (
+        if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+        (
+          (
+            this.assignedcontrolled.isplayerowned and
+            this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+            @global.$kAAIT_Config.$xssm_isAvoidHighRisk
+          ) or
+          (
+            (not this.assignedcontrolled.isplayerowned) and
+            this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+            @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
+          ) or
+          (
+            this.assignedcontrolled.isplayerowned and
+            this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+            ($target.isclass.ship or @$target.defensible.isclass.ship) and
+            @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip
+          ) or
+          (
+            this.assignedcontrolled.isplayerowned and
+            this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+            ($target.isclass.station or @$target.defensible.isclass.station) and
+            @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
+          ) or
+          (
+            (not this.assignedcontrolled.isplayerowned) and
+            this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+            ($target.isclass.ship or @$target.defensible.isclass.ship) and
+            @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions
+          ) or
+          (
+            (not this.assignedcontrolled.isplayerowned) and
+            this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+            ($target.isclass.station or @$target.defensible.isclass.station) and
+            @global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
+          )
+        ) then true else false
+      )
+    " />
+    <param name="kAAITParam_isStepForwardWithdraw" required="false" type="bool" text="{1111920, 109}" default="
+      if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+      (
+        (
+          this.assignedcontrolled.isplayerowned and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          (
+            ($target.isclass.ship or @$target.defensible.isclass.ship) and
+            (
+              @global.$kAAIT_Config.$lxl_isStepForward_vShip or
+              @global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip
+            )
+          ) or
+          (
+            ($target.isclass.station or @$target.defensible.isclass.station) and
+            (
+              @global.$kAAIT_Config.$lxl_isStepForward_vStation or
+              @global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation
+            )
+          )
+        ) or
+        (
+          (not this.assignedcontrolled.isplayerowned) and
+          this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+          (
+            ($target.isclass.ship or @$target.defensible.isclass.ship) and
+            (
+              @global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions or
+              @global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions
+            )
+          ) or
+          (
+            ($target.isclass.station or @$target.defensible.isclass.station) and
+            (
+              @global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions or
+              @global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions
+            )
+          )
+        )
+      ) then true else false
+    " />
+  </add>
+<!-- add. purpose: send params.
+  <run_script name="'order.fight.attack.object'">
+  <run_script name="'move.generic'" result="$movesuccess">
+-->
+  <add sel="//run_script[@name=&quot;'order.fight.attack.object'&quot;]">
+    <param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk"/>
+    <param name="kAAITParam_isStepForwardWithdraw" value="$kAAITParam_isStepForwardWithdraw"/>
+  </add>
+  <add sel="//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
+    <param name="kAAITParam_isAvoidHighRisk" value="$kAAITParam_isAvoidHighRisk"/>
+  </add>
+  <!-- DeadAir Diffs -->
   <replace sel="/aiscript/attention[@min='unknown']/actions/move_to/@boost">this.assignedcontrolled.shieldpercentage gt 75</replace>
   <replace sel="/aiscript/attention[@min='unknown']/actions/move_to/@travel">(this.assignedcontrolled.distanceto.[$target.sector, $launchpos_pod] gt 15km)</replace>
   <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.assignedcontrolled.iscapitalship']/move_to/@boost">this.assignedcontrolled.shieldpercentage gt 75</replace>

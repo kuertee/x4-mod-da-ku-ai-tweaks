@@ -4,26 +4,20 @@
 		<params>
 			<param name="target" required="false" default="null" type="internal" />
 			<param name="kAAITParam_iskAAITOrder" required="false" default="true" type="internal" />
-			<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
-				if this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user? then 
-					this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user
+			<param name="kAAITParam_isAvoidHighRisk" required="false" type="internal" text="{1111920, 3}" default="
+				if this.$kAAIT_isAvoidHighRisk_user? then 
+					this.$kAAIT_isAvoidHighRisk_user
 				else (
 					if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
 					(
 						(
 							this.assignedcontrolled.isplayerowned and
-							(
-								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
-								this.assignedcontrolled.primarypurpose != purpose.fight
-							) and
+							this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
 							@global.$kAAIT_Config.$xssm_isAvoidHighRisk
 						) or
 						(
 							(not this.assignedcontrolled.isplayerowned) and
-							(
-								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
-								this.assignedcontrolled.primarypurpose != purpose.fight
-							) and
+							this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
 							@global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
 						) or
 						(
@@ -53,24 +47,26 @@
 					) then true else false
 				)
 			" />
-			<param name="kAAITParam_isStepForwardWithdraw" required="false" type="bool" text="{1111920, 109}" default="
+			<param name="kAAITParam_isStepForwardWithdraw" required="false" type="internal" text="{1111920, 109}" default="
 				if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
 				(
 					(
 						this.assignedcontrolled.isplayerowned and
 						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 						(
-							($target.isclass.ship or @$target.defensible.isclass.ship) and
 							(
-								@global.$kAAIT_Config.$lxl_isStepForward_vShip or
-								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip
-							)
-						) or
-						(
-							($target.isclass.station or @$target.defensible.isclass.station) and
+								$target.isclass.ship or @$target.defensible.isclass.ship and
+								(
+									@global.$kAAIT_Config.$lxl_isStepForward_vShip or
+									@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip
+								)
+							) or
 							(
-								@global.$kAAIT_Config.$lxl_isStepForward_vStation or
-								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation
+								$target.isclass.station or @$target.defensible.isclass.station and
+								(
+									@global.$kAAIT_Config.$lxl_isStepForward_vStation or
+									@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation
+								)
 							)
 						)
 					) or
@@ -78,17 +74,19 @@
 						(not this.assignedcontrolled.isplayerowned) and
 						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 						(
-							($target.isclass.ship or @$target.defensible.isclass.ship) and
 							(
-								@global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions or
-								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions
-							)
-						) or
-						(
-							($target.isclass.station or @$target.defensible.isclass.station) and
+								$target.isclass.ship or @$target.defensible.isclass.ship and
+								(
+									@global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions or
+									@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions
+								)
+							) or
 							(
-								@global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions or
-								@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions
+								$target.isclass.station or @$target.defensible.isclass.station and
+								(
+									@global.$kAAIT_Config.$lxl_isStepForward_vStation_allFactions or
+									@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vStation_allFactions
+								)
 							)
 						)
 					)
@@ -105,7 +103,7 @@
 	</order>
 	<interrupts>
 		<handler ref="DisengageHandler"/>
-		<handler ref="kAAIT_Handler_WithdrawOrJustFight"/>
+		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
 		<handler name="kAAIT_MoveToEngagePosition_ShipOrTargetChangedZone">
 			<conditions>
 				<check_any>
@@ -203,7 +201,12 @@
 				<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-45, -30, -15, 0, 15, 30, 45].random" />
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
-			<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.$kAAIT_data.$combatRange_max" />
+			<do_if value="this.assignedcontrolled.primarypurpose == purpose.fight">
+				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$target.size * 0.5 + this.$kAAIT_data.$combatRange_max" />
+			</do_if>
+			<do_else>
+				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5" />
+			</do_else>
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
 				x="$posTarget.x + this.$kAAIT_data.$distance_attackFrom * sin ($yaw) * cos ($rotFromTarget.pitch)"
