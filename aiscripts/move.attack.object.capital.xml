@@ -110,8 +110,6 @@
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetPotentialHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' ====='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_distToTarget: ' + $kAAIT_distToTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_GetIsWithdraw" />
 			<do_if value="this.assignedcontrolled.primarypurpose != purpose.fight">
 				<resume label="kAAITLabel_avoid" />
@@ -119,56 +117,46 @@
 			<do_elseif value="$kAAIT_isWithdraw">
 				<resume label="kAAITLabel_withdraw" />
 			</do_elseif>
-			<do_elseif value="
-				(
-					(
-						this.$kAAIT_data.$defensibleTarget.isclass.station and
-						$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange * 0.5
-					) or
-					(
-						this.$kAAIT_data.$defensibleTarget.isclass.ship and
-						$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange
-					)
-				) and
-				this.$kAAIT_data.$defensibleTarget != @this.$kAAIT_data.$defensibleTarget_stoppedKamikaze
-			">
-				<set_value name="this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="this.$kAAIT_data.$defensibleTarget" />
-				<debug_text text="this.assignedcontrolled.idcode + ' $defensibleTarget_stoppedKamikaze: ' + this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<do_if value="$target.isclass.module">
-					<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
-				</do_if>
-				<resume label="kAAITLabel_move_to_engage_position_order" />
-				<!-- <resume label="kAAITLabel_move_to_engage_position" /> -->
-			</do_elseif>
-			<do_elseif value="$target.isclass.module">
-				<do_if value="this.$kAAIT_data.$moduleTarget?">
-					<do_if value="$target != @this.$kAAIT_data.$moduleTarget"
-						comment="only move to engage position AGAIN if there was a previous module target">
-						<debug_text text="this.assignedcontrolled.idcode + ' NEW $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-						<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
+			<do_else>
+				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
+				<do_if value="$kAAIT_isMovetoEngage">
+					<do_if value="this.assignedcontrolled.order.id == 'Attack'">
+						<resume label="kAAITLabel_move_to_engage_position_order" />
+					</do_if>
+					<do_elseif value="this.assignedcontrolled.order.id == 'TacticalOrder'">
 						<resume label="kAAITLabel_move_to_engage_position" />
+					</do_elseif>
+				</do_if>
+				<do_elseif value="$target.isclass.module">
+					<do_if value="this.$kAAIT_data.$moduleTarget?">
+						<do_if value="$target != @this.$kAAIT_data.$moduleTarget"
+							comment="only move to engage position AGAIN if there was a previous module target">
+							<debug_text text="this.assignedcontrolled.idcode + ' NEW $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
+							<resume label="kAAITLabel_move_to_engage_position" />
+						</do_if>
+						<do_else>
+							<debug_text text="this.assignedcontrolled.idcode + ' SAME $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						</do_else>
 					</do_if>
 					<do_else>
-						<debug_text text="this.assignedcontrolled.idcode + ' SAME $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
+						<debug_text text="this.assignedcontrolled.idcode + ' FIRST $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					</do_else>
-				</do_if>
+				</do_elseif>
 				<do_else>
-					<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
-					<debug_text text="this.assignedcontrolled.idcode + ' FIRST $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<set_value name="this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="this.$kAAIT_data.$defensibleTarget" />
+					<do_if value="$target.isclass.module">
+						<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
+					</do_if>
 				</do_else>
-			</do_elseif>
-			<do_else>
-				<set_value name="this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="this.$kAAIT_data.$defensibleTarget" />
-				<do_if value="$target.isclass.module">
-					<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
-				</do_if>
 			</do_else>
 		</do_if>
 
 		<label name="kAAITLabel_just_fight" />
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetPotentialHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<debug_text text="this.assignedcontrolled.idcode + ' just_fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<debug_text text="this.assignedcontrolled.idcode + ' =========='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<!-- <debug_text text="this.assignedcontrolled.idcode + ' just_fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+			<!-- <debug_text text="this.assignedcontrolled.idcode + ' =========='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
@@ -302,10 +290,30 @@
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetPotentialHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' ======'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
+		</do_if>
+		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
+		<do_if value="@this.$kAAIT_data">
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 		</do_if>
+	</add>
+	<!--
+		   db    88""Yb  dP"Yb  88""Yb 888888
+		  dPYb   88__dP dP   Yb 88__dP   88
+		 dP__Yb  88""Yb Yb   dP 88"Yb    88
+		dP""""Yb 88oodP  YbodP  88  Yb   88
+	 -->
+<!-- add after. purpose: cleanup.
+	<attention min="unknown">
+-->
+	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]">
+		<on_abort>
+			<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
+			<do_if value="@this.$kAAIT_data">
+				<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+				<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
+			</do_if>
+		</on_abort>
 	</add>
 	<!-- DeadAir Diffs -->
 	<replace sel="/aiscript/params/param[@name='minrange']/@default">if @$target.iscapitalship or $target.isrealclass.station or $target.container.isrealclass.station then ([this.ship.maxcombatrange.all,this.assignedcontrolled.maxradarrange].min * 0.6) else ([this.ship.maxcombatrange.all,this.assignedcontrolled.maxradarrange].min * 0.3)</replace>

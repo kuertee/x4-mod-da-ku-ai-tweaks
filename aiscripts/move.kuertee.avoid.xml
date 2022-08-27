@@ -73,30 +73,6 @@
 	<interrupts>
 		<handler ref="DisengageHandler"/>
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
-		<handler name="kAAIT_MoveAvoid_ShipOrTargetChangedZone">
-			<conditions>
-				<check_any>
-					<event_object_changed_zone object="this.assignedcontrolled" />
-					<event_object_changed_zone object="$target" />
-					<event_object_attacked object="this.assignedcontrolled" />
-				</check_any>
-				<check_any>
-					<check_value value="$target.isclass.ship" />
-					<check_value value="event.name == 'event_object_attacked'" />
-				</check_any>
-			</conditions>
-			<actions>
-				<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-				<do_if value="
-					event.name == 'event_object_attacked' or
-					$distToTarget gt this.assignedcontrolled.maxradarrange or
-					$distToTarget lt this.assignedcontrolled.maxradarrange * 0.25
-				">
-					<abort_called_scripts resume="finish" />
-				</do_if>
-			</actions>
-		</handler>
 	</interrupts>
 	<init>
 		<!-- required for disengage handler -->
@@ -175,7 +151,10 @@
 				(not this.assignedcontrolled.travel.active) and
 				this.assignedcontrolled.speed le this.assignedcontrolled.maxspeed * 0.25
 			"> -->
-			<do_if value="not @this.assignedcontrolled.orders.{2}.exists">
+			<do_if value="
+				(not @this.assignedcontrolled.orders.{2}.exists) and
+				@this.assignedcontrolled.commander.exists
+			">
 				<debug_text text="this.assignedcontrolled.idcode + ' MOVING DIRECTLY BACK'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<do_if value="@this.assignedcontrolled.commander.orders.{1}.$primarytarget.exists" comment="get position from commander at their target's orientation">
 					<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled.commander" />
@@ -215,10 +194,17 @@
 				<param name="position" value="$orderLocation_pos" />
 				<param name="kAAITParam_iskAAITOrder" value="true" />
 			</run_script>
+			<resume label="finish" />
+
+			<label name="flee" />
+			<include_interrupt_actions ref="kAAIT_Order_Flee" />
+			<wait min="1s" max="3s" />
+
+			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just finish." />
 
 			<label name="finish" />
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveAvoid finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<do_if value="this.$kAAIT_data">
+			<do_if value="@this.$kAAIT_data">
 				<set_value name="this.$kAAIT_data.$isAvoiding" exact="false" />
 				<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 				<remove_value name="this.$kAAIT_data.$orderLocation_pos" />

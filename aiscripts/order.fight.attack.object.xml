@@ -24,7 +24,6 @@
 					(
 						this.assignedcontrolled.isplayerowned and
 						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-						this.assignedcontrolled.primarypurpose != purpose.fight and
 						(
 							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip or
 							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation
@@ -45,7 +44,6 @@
 					(
 						(not this.assignedcontrolled.isplayerowned) and
 						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-						this.assignedcontrolled.primarypurpose != purpose.fight and
 						(
 							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vShip_allFactions or
 							@global.$kAAIT_Config.$lxl_isAvoidHighRisk_vStation_allFactions
@@ -72,7 +70,6 @@
 				(
 					this.assignedcontrolled.isplayerowned and
 					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					this.assignedcontrolled.primarypurpose != purpose.fight and
 					(
 						@global.$kAAIT_Config.$lxl_isStepForward_vShip or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip or
@@ -103,7 +100,6 @@
 				(
 					(not this.assignedcontrolled.isplayerowned) and
 					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-					this.assignedcontrolled.primarypurpose != purpose.fight and
 					(
 						@global.$kAAIT_Config.$lxl_isStepForward_vShip_allFactions or
 						@global.$kAAIT_Config.$lxl_isMoveOutOfRange_vShip_allFactions or
@@ -162,7 +158,16 @@
 			<check_value value="@event.param.$primarytarget != $primarytarget" />
 		</check_all>
 	</replace>
-<!-- add after. purpose: keep track of attackers
+<!-- add. purpose: debug
+	<init>
+-->
+	<add sel="//init">
+		<debug_text text="this.assignedcontrolled.idcode + ' init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' ===='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+	</add>
+<!-- add after.
+	purpose: keep track of attackers and
+	purpose: send attack command to subordinates immediately.
 	<label name="fight"/>
 -->
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
@@ -173,12 +178,6 @@
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 		</do_if>
-	</add>
-<!-- add. purpose: send attack command to subordinates immediately.
-	address the issue of ships in escort arriving at the target WAAAY ahead of this ship but WITHOUT the attack order.
-	<label name="fight"/>
--->
-	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="this.assignedcontrolled.idcode + ' @this.$escortgroup.count: ' + @this.$escortgroup.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@this.$escortgroup.count">
 			<set_value name="$loctarget" exact="$target"/>
@@ -213,6 +212,33 @@
 			<remove_value name="$loctarget"/>
 		</do_if>
 	</add>
+<!-- add after. purpose: move to engage position.
+	<set_value name="$Defensible" exact="this.defensible"/>
+-->
+	<!-- <add pos="after" sel="//set_value[@name=&quot;$Defensible&quot;][@exact=&quot;this.defensible&quot;]">
+		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+			<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
+			<do_if value="$kAAIT_isMovetoEngage">
+				<debug_text text="this.assignedcontrolled.idcode + ' move_to_engage_position_order'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' ============================='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<create_order object="this.assignedcontrolled" id="'kAAIT_MoveEngagePosition'" immediate="true">
+					<param name="target" value="$primarytarget"/>
+					<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk"/>
+					<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw"/>
+				</create_order>
+				<wait min="5s" max="10s" />
+				<debug_text text="this.assignedcontrolled.idcode + ' shouldnt be here because kAAIT_MoveEngagePosition should have been activated'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			</do_if>
+		</do_if>
+	</add> -->
+<!-- add before. purpose: debug.
+	<run_script name="'move.generic'" result="$movesuccess">
+-->
+	<add pos="before" sel="//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
+		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+			<debug_text text="this.assignedcontrolled.idcode + ' target out of range. pursue with move.generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		</do_if>
+	</add>
 <!-- add. purpose: pass data to first move to target.
 	<run_script name="'move.generic'" result="$movesuccess">
 -->
@@ -242,13 +268,15 @@
 			<do_if value="@this.$kAAIT_data">
 				<set_value name="this.$kAAIT_data.$isRemoveDataOnFinish" exact="true" />
 			</do_if>
-			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</do_if>
+		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
 <!-- add. purpose: cleanup.
 	<on_abort>
 -->
 	<add sel="//on_abort">
+		<debug_text text="this.assignedcontrolled.idcode + ' on_abort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' ========'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
 	<!-- DeadAir Diffs -->

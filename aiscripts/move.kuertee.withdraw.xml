@@ -103,11 +103,10 @@
 	</order>
 	<interrupts>
 		<handler ref="DisengageHandler"/>
-		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
 	</interrupts>
 	<init>
 		<!-- required for disengage handler -->
-		<set_value name="$pursuetargets" exact="true" />
+		<set_value name="$pursuetargets" exact="false" />
 		<set_value name="$pursuedistance" exact="this.assignedcontrolled.maxradarrange" />
 		<set_value name="$debugchance" exact="0" />
 	</init>
@@ -167,6 +166,9 @@
 			<create_position name="$orderLocation_pos" x="$orderLocation_pos.x" y="$posShip.y" z="$orderLocation_pos.z" />
 			<set_value name="this.$kAAIT_data.$orderLocation_space" exact="$orderLocation_space" />
 			<set_value name="this.$kAAIT_data.$orderLocation_pos" exact="$orderLocation_pos" />
+
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<set_value name="$dist_targetToWithdrawDest" exact="$target.distanceto.[$orderLocation_space, $orderLocation_pos]" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
 				uselocalhighways="false"
@@ -174,9 +176,58 @@
 				forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
 				commandaction="false">
 				<position value="$orderLocation_pos"/>
+				<interrupt>
+					<conditions>
+						<check_any>
+							<event_object_attacked object="this.assignedcontrolled" />
+							<event_object_attacked object="$target" />
+						</check_any>
+						<check_value value="this.assignedcontrolled.primarypurpose == purpose.fight" />
+						<check_value value="this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25" />
+						<check_any>
+							<check_all>
+								<check_value value="this.assignedcontrolled.shieldpercentage lt 25" />
+								<check_any>
+									<check_all>
+										<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.ship" />
+										<check_value value="this.$kAAIT_data.$defensibleTarget.shieldpercentage lt 50" />
+									</check_all>
+									<check_any>
+										<check_all>
+											<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.ship" />
+											<check_value value="this.assignedcontrolled.hullpercentage lt 50" />
+										</check_all>
+										<check_all>
+											<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.station" />
+											<check_value value="this.assignedcontrolled.hullpercentage lt 25" />
+										</check_all>
+									</check_any>
+								</check_any>
+								<set_value name="$kAAIT_isJustFight" exact="true" />
+							</check_all>
+							<check_all>
+								<check_value value="this.assignedcontrolled.distanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
+								<check_value value="$target.distanceto.[$orderLocation_space, $orderLocation_pos] gt $dist_targetToWithdrawDest" comment="enemy ship must have stopped chasing" />
+								<set_value name="$kAAIT_isCancelWithdrawal" exact="true" />
+							</check_all>
+						</check_any>
+					</conditions>
+					<actions>
+						<do_if value="$kAAIT_isJustFight">
+							<set_value name="this.$kAAIT_data.$isIgnoreKAAIT" exact="$kAAIT_isJustFight" />
+							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isJustFight: ' + $kAAIT_isJustFight" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						</do_if>
+						<do_elseif value="$kAAIT_isCancelWithdrawal">
+							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isCancelWithdrawal: ' + $kAAIT_isCancelWithdrawal" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						</do_elseif>
+					</actions>
+				</interrupt>
 			</move_to>
+			<debug_text text="this.assignedcontrolled.idcode + ' move_to end'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<remove_value name="this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" />
 			<remove_value name="this.$kAAIT_data.$moduleTarget" />
+
+			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just finish." />
 
 			<label name="finish" />
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveWithdraw finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />

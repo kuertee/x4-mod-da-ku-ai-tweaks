@@ -10,13 +10,16 @@ Dead Air AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-t
 Updates
 =======
 v5.1.0302, 8 Aug 2022:
--New feature: Escort, Follow, and Protect orders (and any other AIs that use these, e.g. Supply) acquires the Withdraw custom behaviour.
+-New feature: Escort, Follow, and Protect orders (and any other AIs that use these, e.g. Supply) acquire the Withdraw custom behaviour.
 -New feature: Ships that are not fighters (e.g. Auxiliaries) will always stay away (e.g. Avoid custom behaviour) from their target. E.g. Monitors will never find themselves caught in a station's turrets.
--New feature: Coordinated attack changes. Read more below. Summary: much further rally points, small targets first checkbox disabled by default, subordinates that are busy or are more than 2 gates away do not join the attack, etc.
--New feature: Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw.
--New feature: Refactored about 90% of Attack AI Tweaks - my portion of the mod. DeadAir's portions are unchanged. The codebase is cleaner and easier to edit.
--Bug-fix: The user-controlled order options for the custom behaviours weren't working.
+-New feature: Coordinated attack quality-of-life changes: much further rally points, small targets first checkbox disabled by default, subordinates that are busy or are more than 2 gates away do not join the attack, etc. Read more in the Coordinated Attack section.
+-New feature: Refactored about 90% of my portion of the mod. DeadAir's portions are unchanged. The codebase is cleaner and easier to edit. DeadAir will be happier. :D
+-Bug-fix: The user-controlled order options (Enable/disable Avoid High-Risk Enemies, etc.) for the custom behaviours weren't working.
 -New feature: Board and Protect orders now have the attack "Avoid high-risk" and "Step forward/withdraw" order options.
+-Tweak: Withdrawal condition: low operational weapon count.
+-Tweak: Withdrawal cancellation: Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw or cancel their withdrwals.
+-Tweak: Withdrawal cancellation: Withdrawing ships cancel their withdrawal when their ship target stop chasing them (and when they are at least 10km away, to allow for some shields to recharge).
+-Bug-fix: The base Resupply AI was sometimes getting stuck in an infinite loop of dock > repair > undock > dock > repair > undock, etc... when its hull or components are only repaired over 99% but never to 100%. Bug has been reported to Egosoft.
 
 Attack AI Tweaks:
 =================
@@ -47,15 +50,17 @@ Previous versions start at their optimal range based on their DPS, their target 
 
 The current version makes use of long-range weapons earlier and for a longer time - softening up their target. The previous version used all weapons sooner (because they get closer sooner) but put the ship in danger sooner - causing some ships to withdraw sooner and more often.
 
-Withdraw out of range: When shields drop below 90%, L and XL ships will withdraw out of range of high-risk stations at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge. Against high-risk ships, L, and XL attackers will not withdraw unless there are other L, and XL attackers.
+Withdraw out of range: When shields drop below 90% or operational weapon count is low, L and XL ships will withdraw out of range of high-risk enemies at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge. Against high-risk ships, L, and XL attackers will not withdraw unless there are other L, and XL attackers.
 
-Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw.
+Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw or cancel their withdrawals.
+
+Withdrawing ships cancel their withdrawal when their ship target stop chasing them (and when they are at least 10km away, to allow for some shields to recharge).
 
 High-risk enemies
 =================
 Potentially high-risk enemies are 1.5x larger physically than the ship. For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers. For L, and XL ships, high-risk enemies have more DPS than the ship.
 
-Coordinated attack changes
+Coordinated Attack changes
 ==========================
 1. "Weak targets first" option is disabled by default.
 	Addresses this problem in this AI of the base game: The opposite default in the base game would make the attackers chase after fighters and ignore their capital ship primary target.)
@@ -64,8 +69,12 @@ Coordinated attack changes
 2. The rally points are not set until the ships are in the same sector as the target.
 	Addresses this problem: This prevents rally points from sometimes getting set on the other side of the target - causing your ships to fly across its turrets.
 3. The attackers will not wait for wingmen that are busy or are two or more sectors away. This allows ships in the fleet to do other activities.
-	Addresses this problem: E.g. Wingmen that you want to get repaired needed to removed from the fleet. Otherwise, they'll get pulled into attack formation.
-4. The Coordinate Attack order of the fleet commander is converted into a normal Attack order when the attack begins. I think this is a little cleaner than keeping the Coordinate Attack order active.
+	Addresses this problem: E.g. Subordinates don't need get removed from the fleet if you've ordered them to get repaired already.
+4. Rally points are reset when the target moves.
+	Addresses this problem: The target has moved elsewhere.
+5. Target is engaged when either: it attacks or when it moves away and its travel drive is active.
+	Addresses this problems: The ships continue to wait at the rally point when they should just attack.
+6. The Coordinated Attack order of lead ship is replaced with the normal Attack order when the attack starts. The attack routines work better with the mod when they are not embedded in another order.
 
 Interact Menu
 =============

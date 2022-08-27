@@ -104,50 +104,18 @@
 	<interrupts>
 		<handler ref="DisengageHandler"/>
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
-		<handler name="kAAIT_MoveToEngagePosition_ShipOrTargetChangedZone">
-			<conditions>
-				<check_any>
-					<event_object_changed_zone object="this.assignedcontrolled" />
-					<event_object_changed_zone object="$target" />
-					<event_object_attacked object="this.assignedcontrolled" param="$target" />
-				</check_any>
-				<check_any>
-					<check_value value="$target.isclass.ship" />
-					<check_value value="event.name == 'event_object_attacked'" />
-				</check_any>
-			</conditions>
-			<actions>
-				<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<do_if value="@this.assignedcontrolled.sector != $target.sector">
-					<abort_called_scripts resume="move_to_target"/>
-				</do_if>
-				<do_else>
-					<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-					<debug_text text="this.assignedcontrolled.idcode + ' $distToTarget: ' + $distToTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-					<do_if value="$distToTarget le this.assignedcontrolled.maxradarrange">
-						<do_if value="not @$isMovedToEngagePosition">
-							<abort_called_scripts resume="move_to_engage_position" />
-						</do_if>
-						<do_else>
-							<abort_called_scripts resume="finish" />
-						</do_else>
-					</do_if>
-					<do_else>
-						<abort_called_scripts resume="move_to_target" />
-					</do_else>
-				</do_else>
-			</actions>
-		</handler>
 	</interrupts>
 	<init>
 		<!-- required for disengage handler -->
-		<set_value name="$pursuetargets" exact="true" />
+		<set_value name="$pursuetargets" exact="false" />
 		<set_value name="$pursuedistance" exact="this.assignedcontrolled.maxradarrange" />
 		<set_value name="$debugchance" exact="0" />
 	</init>
 	<attention min="unknown">
 		<actions>
 			<include_interrupt_actions ref="kAAIT_Init" />
+
+			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just restart." />
 
 			<label name="start" />
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveEngagePosition start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -175,6 +143,7 @@
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to_target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<run_script name="'move.generic'" result="$movesuccess">
 				<param name="destination" value="$target" />
+				<param name="stopondetect" value="$target"/>
 				<param name="kAAITParam_iskAAITOrder" value="true" />
 			</run_script>
 			<resume label="start" />
