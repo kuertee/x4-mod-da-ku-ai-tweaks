@@ -35,6 +35,7 @@
 					</do_elseif>
 				</do_if>
 				<include_interrupt_actions ref="kAAIT_GetCombatRange" />
+				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 				<include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
 				<include_interrupt_actions ref="kAAIT_GetIsJustFight" />
 				<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data: ' + this.$kAAIT_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -311,6 +312,18 @@
 				</actions>
 			</handler>
 
+			<handler name="kAAIT_Handler_TargetDestroyed">
+				<conditions>
+					<check_any>
+						<event_object_destroyed object="$target" check="false" />
+						<event_object_destroyed object="@this.$kAAIT_data.$defensibleTarget" check="false" />
+					</check_any>
+				</conditions>
+				<actions>
+					<abort_called_scripts resume="finish" />
+				</actions>
+			</handler>
+
 			<actions name="kAAIT_GetCombatRange">
 				<set_value name="this.$kAAIT_data.$combatRange_max" exact="[
 					this.assignedcontrolled.maxcombatrange.primary,
@@ -345,31 +358,34 @@
 								[@this.$kAAIT_data.$defensibleTarget.weapons.operational.count, @this.$kAAIT_data.$defensibleTarget.turrets.operational.count].max
 							" />
 						</do_else>
+						<do_if value="not this.$kAAIT_data.$skill_attackers_count_mult?">
+							<include_interrupt_actions ref="kAAIT_GetSkillVars" />
+						</do_if>
 						<set_value name="this.$kAAIT_data.$isTargetHighRisk" exact="
 							this.$kAAIT_data.$isTargetPotentialHighRisk and
 							(
 								(
 									this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s] and
 									@this.$kAAIT_data.$defensibleTarget.isclass.ship and
-									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
+									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count * this.$kAAIT_data.$skill_attackers_count_mult le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
 								)
 								or
 								(
 									this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s] and
 									@this.$kAAIT_data.$defensibleTarget.isclass.station and
-									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
+									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count * this.$kAAIT_data.$skill_attackers_count_mult le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
 								)
 								or
 								(
 									this.assignedcontrolled.isclass.ship_m and
 									@this.$kAAIT_data.$defensibleTarget.isclass.ship and
-									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$m_outnumberVShips / 100.0
+									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count * this.$kAAIT_data.$skill_attackers_count_mult le $kAAIT_gunCount * global.$kAAIT_Config.$m_outnumberVShips / 100.0
 								)
 								or
 								(
 									this.assignedcontrolled.isclass.ship_m and
 									@this.$kAAIT_data.$defensibleTarget.isclass.station and
-									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count le $kAAIT_gunCount * global.$kAAIT_Config.$m_outnumberVStations / 100.0
+									@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers.count * this.$kAAIT_data.$skill_attackers_count_mult le $kAAIT_gunCount * global.$kAAIT_Config.$m_outnumberVStations / 100.0
 								)
 								or
 								this.$kAAIT_data.$defensibleTarget.hullpercentage lt 1
@@ -405,33 +421,26 @@
 						<do_if value="@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}">
 							<set_value operation="subtract" name="$kAAIT_attackersCount" exact="1" />
 						</do_if>
+						<do_if value="(not this.$kAAIT_data.$skill_attackers_count_mult?) or (not this.$kAAIT_data.$skill_shieldPercentage_withdrawAt?)">
+							<include_interrupt_actions ref="kAAIT_GetSkillVars" />
+						</do_if>
+						<set_value name="$kAAIT_attackersCount" exact="$kAAIT_attackersCount * this.$kAAIT_data.$skill_attackers_count_mult" />
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_attackersCount: ' + $kAAIT_attackersCount" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-						<!-- <do_if value="
-							$kAAIT_attackersCount lt 2 or
-							(
-								@this.$kAAIT_data.$defensibleTarget.isclass.station and
-								this.assignedcontrolled.shieldpercentage le 90
-							) or
-							(
-								@this.$kAAIT_data.$defensibleTarget.isclass.ship and
-								this.assignedcontrolled.shieldpercentage le 50
-							)
-						"> -->
 						<do_if value="
 							(not this.assignedcontrolled.weapons.operational.count) or
 							(
-								$kAAIT_attackersCount gt 0 and
+								$kAAIT_attackersCount ge 1 and
 								this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25
 							) or
 							(
-								$kAAIT_attackersCount gt 0 and
+								$kAAIT_attackersCount ge 1 and
 								@this.$kAAIT_data.$defensibleTarget.isclass.station and
-								this.assignedcontrolled.shieldpercentage le 90
+								this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt
 							) or
 							(
-								$kAAIT_attackersCount gt 0 and
+								$kAAIT_attackersCount ge 1 and
 								@this.$kAAIT_data.$defensibleTarget.isclass.ship and
-								this.assignedcontrolled.shieldpercentage le 90
+								this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt
 							)
 						">
 							<set_value name="$kAAIT_isWithdraw" exact="true" />
@@ -586,6 +595,23 @@
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_smallerTarget (post-obstruction test): ' + @$kAAIT_smallerTarget.knownname + ' ' + @$kAAIT_smallerTarget.idcode + ' size: ' + @$kAAIT_smallerTarget.size + ' weapons: ' + @$kAAIT_smallerTarget.weapons.operational.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					</do_if>
 				</do_if>
+			</actions>
+
+			<actions name="kAAIT_GetSkillVars">
+				<do_if value="global.$kAAIT_Config.$isUseNPCSkills">
+					<set_value name="this.$kAAIT_data.$skill_attackers_count_mult" exact="0.75 + (this.skill.piloting + this.skill.morale) / 30.0 * 0.25" comment="0 = * 0.75, 5 = * 1" />
+					<set_value name="this.$kAAIT_data.$skill_distance_engagePosition_mult" exact="0.75 + (this.skill.piloting + this.skill.morale) / 30.0 * 0.25" comment="combat range max * (0 = * 0.75, 5 = 1)" />
+					<set_value name="this.$kAAIT_data.$skill_distance_stepForward_mult" exact="3 - (this.skill.piloting + this.skill.morale) / 30.0 * 2" comment="count of step forwards * (0 = 3km, 5 = 1km)" />
+					<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt" exact="50 + (this.skill.piloting + this.skill.morale) / 30.0 * 40" comment="0 = 50, 5 = 90" />
+					<set_value name="this.$kAAIT_data.$skill_distance_withdraw" exact="this.assignedcontrolled.maxradarrange * (0.25 + (this.skill.piloting + this.skill.morale) / 30.0 * 0.25)" comment="0 = * 0.25, 5 = * 0.5" />
+				</do_if>
+				<do_else>
+					<set_value name="this.$kAAIT_data.$skill_attackers_count_mult" exact="1" />
+					<set_value name="this.$kAAIT_data.$skill_distance_engagePosition_mult" exact="1" />
+					<set_value name="this.$kAAIT_data.$skill_distance_stepForward_mult" exact="1" />
+					<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt" exact="90" />
+					<set_value name="this.$kAAIT_data.$skill_distance_withdraw" exact="this.assignedcontrolled.maxradarrange * 0.5" />
+				</do_else>
 			</actions>
 
 			<!--

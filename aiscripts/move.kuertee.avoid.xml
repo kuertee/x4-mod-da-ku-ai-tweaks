@@ -73,6 +73,7 @@
 	<interrupts>
 		<handler ref="DisengageHandler"/>
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+		<handler ref="kAAIT_Handler_TargetDestroyed" />
 	</interrupts>
 	<init>
 		<!-- required for disengage handler -->
@@ -101,26 +102,10 @@
 						<position value="this.assignedcontrolled.position" />
 					</create_orientation>
 					<set_value name="$yawToAttackTarget" exact="$rotToAttackTarget.yaw * 180 / pi" />
-					<!-- <do_while value="$yawToAttackTarget lt -180 or $yawToAttackTarget gt 179">
-						<do_if value="$yawToAttackTarget lt -180">
-							<set_value name="$yawToAttackTarget" exact="$yawToAttackTarget + 179" />
-						</do_if>
-						<do_elseif value="$yawToAttackTarget gt 179">
-							<set_value name="$yawToAttackTarget" exact="$yawToAttackTarget - 179" />
-						</do_elseif>
-					</do_while> -->
 					<create_orientation name="$rotToTarget" orientation="look_at" refobject="$target">
 						<position value="this.assignedcontrolled.position" />
 					</create_orientation>
 					<set_value name="$yawToTarget" exact="$rotToTarget.yaw * 180 / pi" />
-					<!-- <do_while value="$yawToTarget lt -180 or $yawToTarget gt 179">
-						<do_if value="$yawToTarget lt -180">
-							<set_value name="$yawToTarget" exact="$yawToTarget + 179" />
-						</do_if>
-						<do_elseif value="$yawToTarget gt 179">
-							<set_value name="$yawToTarget" exact="$yawToTarget - 179" />
-						</do_elseif>
-					</do_while> -->
 					<debug_text text="this.assignedcontrolled.idcode + ' $yawToAttackTarget: ' + $yawToAttackTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' $yawToTarget: ' + $yawToTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<do_if value="$yawToAttackTarget ge $yawToTarget">
@@ -147,10 +132,6 @@
 			</create_orientation>
 			<set_value name="$ship_yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
 			<set_value name="$ship_pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
-			<!-- <do_if value="
-				(not this.assignedcontrolled.travel.active) and
-				this.assignedcontrolled.speed le this.assignedcontrolled.maxspeed * 0.25
-			"> -->
 			<do_if value="
 				(not @this.assignedcontrolled.orders.{2}.exists) and
 				@this.assignedcontrolled.commander.exists
@@ -180,7 +161,10 @@
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
 			<set_value name="$pitch" exact="$pitch_deg * pi / 180" />
-			<set_value name="$distAvoid" exact="[this.assignedcontrolled.maxradarrange * 0.5, $distToTarget].max" />
+			<do_if value="not this.$kAAIT_data.$skill_distance_withdraw?">
+				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
+			</do_if>
+			<set_value name="$distAvoid" exact="[this.$kAAIT_data.$skill_distance_withdraw, $distToTarget].max" />
 			<debug_text text="this.assignedcontrolled.idcode + ' $distAvoid: ' + @$distAvoid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
 				x="$posTarget.x + $distAvoid * sin ($yaw) * cos ($pitch)"

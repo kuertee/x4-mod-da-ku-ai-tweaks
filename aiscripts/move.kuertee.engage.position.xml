@@ -104,6 +104,7 @@
 	<interrupts>
 		<handler ref="DisengageHandler"/>
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+		<handler ref="kAAIT_Handler_TargetDestroyed" />
 	</interrupts>
 	<init>
 		<!-- required for disengage handler -->
@@ -170,11 +171,14 @@
 				<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-45, -30, -15, 0, 15, 30, 45].random" />
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
+			<do_if value="not this.$kAAIT_data.$skill_distance_engagePosition_mult?">
+				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
+			</do_if>
 			<do_if value="this.assignedcontrolled.primarypurpose == purpose.fight">
-				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$target.size * 0.5 + this.$kAAIT_data.$combatRange_max" />
+				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$target.size * 0.5 + this.$kAAIT_data.$combatRange_max * this.$kAAIT_data.$skill_distance_engagePosition_mult" />
 			</do_if>
 			<do_else>
-				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5" />
+				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5 * this.$kAAIT_data.$skill_distance_engagePosition_mult" />
 			</do_else>
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
