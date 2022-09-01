@@ -9,16 +9,38 @@ Dead Air AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-t
 
 Updates
 =======
-v5.1.0302, 8 Aug 2022:
--New feature: Escort, Follow, and Protect orders (and any other AIs that use these, e.g. Supply) acquire the Withdraw custom behaviour.
--New feature: Ships that are not fighters (e.g. Auxiliaries) will always stay away (e.g. Avoid custom behaviour) from their target. E.g. Monitors will never find themselves caught in a station's turrets.
--New feature: Coordinated attack quality-of-life changes: much further rally points, small targets first checkbox disabled by default, subordinates that are busy or are more than 2 gates away do not join the attack, etc. Read more in the Coordinated Attack section.
+v5.1.0303, 1 Sep 2022:
 -New feature: Refactored about 90% of my portion of the mod. DeadAir's portions are unchanged. The codebase is cleaner and easier to edit. DeadAir will be happier. :D
--Bug-fix: The user-controlled order options (Enable/disable Avoid High-Risk Enemies, etc.) for the custom behaviours weren't working.
+-New feature: Escort, Follow, and Protect orders (and any other AIs that use these, e.g. Supply) acquire the Withdraw custom behaviour. The implementation in previous versions of the withdrawal behaviour on these AIs didn't working.
+-New feature: Ships that are not fighters (e.g. Auxiliaries) will always stay away (e.g. Avoid custom behaviour) from their target. E.g. Monitors will never find themselves caught within an enemy station's weapon range.
+-New feature: Coordinated Attack Quality-Of-Life Changes
+	1. "Weak targets first" option is disabled by default.
+		Addresses this problem in this AI of the base game: The opposite default in the base game would make the attackers chase after fighters and ignore their capital ship primary target.)
+	1. Rally points are much further from the target.
+		Addresses this problem: This minimises the occurence of the target attacking the ships while they wait for the others to arrive at the rally point.
+	2. The rally points are not set until the ships are in the same sector as the target.
+		Addresses this problem: This prevents rally points from sometimes getting set on the other side of the target - causing your ships to fly across its turrets.
+	3. The attackers will not wait for wingmen that are busy or are two or more sectors away. This allows you to order other ships in the fleet to do other activities. In the base game, their orders will be overriden by orders from the Coordinated Attack AI.
+		Addresses this problem: E.g. Subordinates don't need get removed from the fleet if you've ordered them to get repaired already.
+	4. Rally points are reset when the target moves.
+		Addresses this problem: The target has moved elsewhere.
+	5. Target is engaged when either: it attacks or when it moves away and its travel drive is activated.
+		Addresses this problem: The ships continue to wait at the rally point when they should just attack.
+	6. The Coordinated Attack order of the lead ship is replaced with the normal Attack order when the attack starts. The attack routines work better with the mod when they are not embedded in another order.
+-New feature: NPC Piloting Skills and Morale
+	The NPC pilot's piloting skills and morale affect these behaviours:
+	1. Counting attackers on enemy targets: Pilots of lower skills and morale overly count attackers - juding their targets to be of lower-risk than they should be.
+	2. Engage position: The engage position of pilots with lower skills and morale are closer to the target - specifically, 75% combat range instead of 100% combat range.
+	3. Step forward distance: Pilots of lower skills and morale step forward 3 km at a time instead of 1 km at a time.
+	4. Shield percentage for withdrawal: Pilots of lower skills and morale will withdraw when their shields are at 50% instead of at 90%.
+	5. Withdrwal and avoidance distance: Pilots of lower skills and morale withdraw to 25% their max radar range (approximately, 10 km) instead of to 50% their max radar range (approximately 20 km).
+	As an overall guide for these settings, I assumed lower-skilled pilots with low morale to be more impulsive and overly-confidennt.
+	And higher-skilled pilots with high morale are more careful and patient.
+	Disable all these skills-based features so that all ships operate at perfect skills and high morale in the Extension Options.
+-Bug-fix: The order options, Enable/disable Avoid High-Risk Enemies, etc., for the custom behaviours weren't working.
 -New feature: Board and Protect orders now have the attack "Avoid high-risk" and "Step forward/withdraw" order options.
--Tweak: Withdrawal condition: low operational weapon count.
--Tweak: Withdrawal cancellation: Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw or cancel their withdrwals.
--Tweak: Withdrawal cancellation: Withdrawing ships cancel their withdrawal when their ship target stop chasing them (and when they are at least 10km away, to allow for some shields to recharge).
+-Tweak: New withdrawal cancellation: Ships that have a low chance of survival or ships with enemies that have a low chance of survival never withdraw or cancel their withdrwals.
+-Tweak: New withdrawal cancellation: Withdrawing ships cancel their withdrawal when their enemy ship stop chasing them (and when they are at least 10km away, to allow for some shields to recharge).
 
 Attack AI Tweaks:
 =================
@@ -57,23 +79,39 @@ Withdrawing ships cancel their withdrawal when their ship target stop chasing th
 
 High-risk enemies
 =================
-Potentially high-risk enemies are 1.5x larger physically than the ship. For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers. For L, and XL ships, high-risk enemies have more DPS than the ship.
+Potentially high-risk enemies are 1.5x larger physically than the ship.
+For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers.
+For L, and XL ships, high-risk enemies have more DPS than the ship.
 
-Coordinated Attack changes
-==========================
+NPC Piloting Skills and Morale
+==============================
+The NPC pilot's piloting skills and morale affect these behaviours:
+1. Counting attackers on enemy targets: Pilots of lower skills and morale overly count attackers - juding their targets to be of lower-risk than they should be.
+2. Engage position: The engage position of pilots with lower skills and morale are closer to the target - specifically, 75% combat range instead of 100% combat range.
+3. Step forward distance: Pilots of lower skills and morale step forward 3 km at a time instead of 1 km at a time.
+4. Shield percentage for withdrawal: Pilots of lower skills and morale will withdraw when their shields are at 50% instead of at 90%.
+5. Withdrwal and avoidance distance: Pilots of lower skills and morale withdraw to 25% their max radar range (approximately, 10 km) instead of to 50% their max radar range (approximately 20 km).
+
+As an overall guide for these settings, I assumed lower-skilled pilots with low morale to be more impulsive and overly-confident.
+And higher-skilled pilots with high morale are more careful and patient.
+
+Disable all these skill-based features in the Extension Options so that all ships operate at perfect skills and high morale.
+
+Coordinated Attack Quality-Of-Life Changes
+==========================================
 1. "Weak targets first" option is disabled by default.
 	Addresses this problem in this AI of the base game: The opposite default in the base game would make the attackers chase after fighters and ignore their capital ship primary target.)
 1. Rally points are much further from the target.
 	Addresses this problem: This minimises the occurence of the target attacking the ships while they wait for the others to arrive at the rally point.
 2. The rally points are not set until the ships are in the same sector as the target.
 	Addresses this problem: This prevents rally points from sometimes getting set on the other side of the target - causing your ships to fly across its turrets.
-3. The attackers will not wait for wingmen that are busy or are two or more sectors away. This allows ships in the fleet to do other activities.
+3. The attackers will not wait for wingmen that are busy or are two or more sectors away. This allows you to order other ships in the fleet to do other activities. In the base game, their orders will be overriden by orders from the Coordinated Attack AI.
 	Addresses this problem: E.g. Subordinates don't need get removed from the fleet if you've ordered them to get repaired already.
 4. Rally points are reset when the target moves.
 	Addresses this problem: The target has moved elsewhere.
-5. Target is engaged when either: it attacks or when it moves away and its travel drive is active.
-	Addresses this problems: The ships continue to wait at the rally point when they should just attack.
-6. The Coordinated Attack order of lead ship is replaced with the normal Attack order when the attack starts. The attack routines work better with the mod when they are not embedded in another order.
+5. Target is engaged when either: it attacks or when it moves away and its travel drive is activated.
+	Addresses this problem: The ships continue to wait at the rally point when they should just attack.
+6. The Coordinated Attack order of the lead ship is replaced with the normal Attack order when the attack starts. The attack routines work better with the mod when they are not embedded in another order.
 
 Interact Menu
 =============
