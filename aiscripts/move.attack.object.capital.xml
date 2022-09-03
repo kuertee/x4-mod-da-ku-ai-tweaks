@@ -110,11 +110,14 @@
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetPotentialHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' ====='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<include_interrupt_actions ref="kAAIT_GetIsWithdraw" />
-			<do_if value="this.assignedcontrolled.primarypurpose != purpose.fight">
+			<!-- <include_interrupt_actions ref="kAAIT_GetIsWithdraw" /> -->
+			<do_if value="
+				this.assignedcontrolled.primarypurpose != purpose.fight or
+				this.assignedcontrolled.type == shiptype.carrier
+			">
 				<resume label="kAAITLabel_avoid" />
 			</do_if>
-			<do_elseif value="$kAAIT_isWithdraw">
+			<do_elseif value="@$kAAIT_isWithdraw">
 				<resume label="kAAITLabel_withdraw" />
 			</do_elseif>
 			<do_else>
@@ -226,14 +229,17 @@
 			</do_if>
 		</do_if>
 	</add>
-<!-- add before. purpose: if primarypurpose != fight, stay away from target
+<!-- add before. purpose: if primarypurpose != fight or shiptype == carrier, stay away from target
 	<do_if value="this.ship.sector == $target.sector">
 		...
 		<do_if value="$strafe?">
 -->
 	<add pos="before" sel="//do_if[@value=&quot;this.ship.sector == $target.sector&quot;]//do_if[@value=&quot;$strafe?&quot;]">
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetPotentialHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<do_if value="this.assignedcontrolled.primarypurpose != purpose.fight" comment="if not primarypurpose fight, then keep away from target">
+			<do_if value="
+				this.assignedcontrolled.primarypurpose != purpose.fight or
+				this.assignedcontrolled.type == shiptype.carrier
+			" comment="if not primarypurpose fight or carrier, then keep away from target">
 				<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.primarypurpose (keep away from target): ' + this.assignedcontrolled.primarypurpose" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<create_orientation name="$kAAIT_rotFromTarget" orientation="look_at" refobject="this.assignedcontrolled">
 					<position object="$target" />

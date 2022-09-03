@@ -53,7 +53,15 @@
 					)
 				">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Deinit orders.{1}.id: ' + @this.assignedcontrolled.order.id" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $isRemoveAllKAAITScripts: ' + @this.$kAAIT_data.$isRemoveAllKAAITScripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 					<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
+					<!-- <do_if value="@this.$kAAIT_data.$isRemoveAllKAAITScripts">
+						<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders" reverse="true">
+							<do_if value="@$kAAIT_order.$kAAITParam_iskAAITOrder">
+								<cancel_order order="$kAAIT_order" />
+							</do_if>
+						</do_for_each>
+					</do_if> -->
 					<remove_value name="this.$kAAIT_data" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' this.$kAAIT_data: ' + @this.$kAAIT_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				</do_if>
@@ -208,6 +216,9 @@
 							</check_all>
 						</check_any>
 						<check_value value="not @this.$kAAIT_data.$isIgnoreKAAIT" />
+						<check_value value="not @this.$kAAIT_data.$isWithdrawing" />
+						<check_value value="this.assignedcontrolled.order.id != 'kAAIT_MoveWithdraw'" />
+						<check_value value="this.assignedcontrolled.order.id != 'kAAIT_MoveAvoid'" />
 					</check_all>
 				</conditions>
 				<actions>
@@ -256,18 +267,11 @@
 										</create_order>
 									</do_else>
 								</do_if>
-								<do_elseif value="
-									(not @this.$kAAIT_data.$isWithdrawing) and
-									this.assignedcontrolled.order.id != 'kAAIT_MoveWithdraw' and
-									this.assignedcontrolled.order.id != 'kAAIT_MoveAvoid'
-								">
+								<do_else>
 									<do_if value="@this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
 										<abort_called_scripts resume="finish" />
 									</do_if>
-									<do_elseif value="
-										@this.assignedcontrolled.order.id == 'Attack' and
-										this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]
-									">
+									<do_elseif value="@this.assignedcontrolled.order.id == 'Attack'">
 										<abort_called_scripts resume="kAAITLabel_withdraw" />
 									</do_elseif>
 									<do_else>
@@ -277,8 +281,6 @@
 											<param name="kAAITParam_isStepForwardWithdraw" value="true"/>
 										</create_order>
 									</do_else>
-								</do_elseif>
-								<do_else>
 								</do_else>
 							</do_if>
 							<do_else>
@@ -433,7 +435,6 @@
 								this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25
 							) or
 							(
-								$kAAIT_attackersCount ge 1 and
 								@this.$kAAIT_data.$defensibleTarget.isclass.station and
 								this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt
 							) or
@@ -447,6 +448,7 @@
 						</do_if>
 					</do_if>
 				</do_if>
+				<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$skill_shieldPercentage_withdrawAt: ' + @this.$kAAIT_data.$skill_shieldPercentage_withdrawAt" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isWithdraw: ' + $kAAIT_isWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			</actions>
 
@@ -455,11 +457,18 @@
 				<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
 					<do_if value="
 						this.assignedcontrolled.primarypurpose == purpose.fight and
+						this.assignedcontrolled.type != shiptype.carrier and
 						this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25 and
 						this.assignedcontrolled.shieldpercentage lt 25 and
 						(
-							this.$kAAIT_data.$isTargetHighRisk or
-							this.$kAAIT_data.$isTargetPotentialHighRisk
+							(
+								this.$kAAIT_data? and
+								(
+									@this.$kAAIT_data.$isTargetHighRisk or
+									@this.$kAAIT_data.$isTargetPotentialHighRisk
+								)
+							) or
+							(not this.$kAAIT_data?)
 						) and
 						(
 							(
@@ -504,7 +513,7 @@
 							) or
 							(
 								this.$kAAIT_data.$defensibleTarget.isclass.ship and
-								(not this.$kAAIT_data.$defensibleTarget.isclass.ship.travel.active) and
+								(not @this.$kAAIT_data.$defensibleTarget.isclass.ship.travel.active) and
 								$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange
 							)
 						)
@@ -602,8 +611,8 @@
 				<do_if value="global.$kAAIT_Config.$isUseNPCSkills">
 					<set_value name="this.$kAAIT_data.$skill_attackers_count_mult" exact="2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1" comment="0 = * 2, 5 = * 1" />
 					<set_value name="this.$kAAIT_data.$skill_distance_engagePosition_mult" exact="0.75 + (this.skill.piloting + this.skill.morale) / 30.0 * 0.25" comment="combat range max * (0 = * 0.75, 5 = 1)" />
-					<set_value name="this.$kAAIT_data.$skill_distance_stepForward_mult" exact="3 - (this.skill.piloting + this.skill.morale) / 30.0 * 2" comment="count of step forwards * (0 = 3km, 5 = 1km)" />
-					<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt" exact="50 + (this.skill.piloting + this.skill.morale) / 30.0 * 40" comment="0 = 50, 5 = 90" />
+					<set_value name="this.$kAAIT_data.$skill_distance_stepForward_mult" exact="2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1" comment="count of step forwards * (0 = 2km, 5 = 1km)" />
+					<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt" exact="75 + (this.skill.piloting + this.skill.morale) / 30.0 * 25" comment="0 = 75, 5 = 90" />
 					<set_value name="this.$kAAIT_data.$skill_distance_withdraw" exact="this.assignedcontrolled.maxradarrange * (0.25 + (this.skill.piloting + this.skill.morale) / 30.0 * 0.25)" comment="0 = * 0.25, 5 = * 0.5" />
 				</do_if>
 				<do_else>
@@ -725,7 +734,10 @@
 							</do_if>
 							<do_elseif value="
 								this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-								this.assignedcontrolled.primarypurpose != purpose.fight
+								(
+									this.assignedcontrolled.primarypurpose != purpose.fight or
+									this.assignedcontrolled.type == shiptype.carrier
+								)
 							">
 								<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.distanceto.{this.$kAAIT_data.$defensibleTarget}" />
 								<do_if value="$kAAIT_distToTarget le this.assignedcontrolled.maxradarrange * 0.5">
@@ -794,6 +806,7 @@
 							<do_if value="
 								this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 								this.assignedcontrolled.primarypurpose == purpose.fight and
+								this.assignedcontrolled.type != shiptype.carrier and
 								(
 									@this.assignedcontrolled.order.id == 'Attack' or
 									@this.assignedcontrolled.order.id == 'TacticalOrder'
