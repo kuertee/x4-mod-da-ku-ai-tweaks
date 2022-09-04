@@ -118,6 +118,7 @@
 			<label name="start"/>
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveWithdraw start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<set_value name="this.$kAAIT_data.$isWithdrawing" exact="true" />
+			<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$isWithdrawing: ' + @this.$kAAIT_data.$isWithdrawing" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data: ' + @this.$kAAIT_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<set_value name="this.$kAAIT_data.$count_stepForward" exact="0" />
@@ -175,28 +176,18 @@
 						<check_any>
 							<event_object_attacked object="this.assignedcontrolled" />
 							<event_object_attacked object="$target" />
+							<event_object_changed_zone object="this.assignedcontrolled" />
+							<event_object_changed_zone object="$target" />
 						</check_any>
 						<check_value value="this.assignedcontrolled.primarypurpose == purpose.fight" />
 						<check_value value="this.assignedcontrolled.type != shiptype.carrier" />
 						<check_value value="this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25" />
 						<check_any>
 							<check_all>
-								<check_value value="this.assignedcontrolled.shieldpercentage lt 25" />
+								<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.ship" />
 								<check_any>
-									<check_all>
-										<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.ship" />
-										<check_value value="this.$kAAIT_data.$defensibleTarget.shieldpercentage lt 50" />
-									</check_all>
-									<check_any>
-										<check_all>
-											<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.ship" />
-											<check_value value="this.assignedcontrolled.hullpercentage lt 50" />
-										</check_all>
-										<check_all>
-											<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.station" />
-											<check_value value="this.assignedcontrolled.hullpercentage lt 25" />
-										</check_all>
-									</check_any>
+									<check_value value="this.$kAAIT_data.$defensibleTarget.shieldpercentage lt 50" />
+									<check_value value="this.assignedcontrolled.hullpercentage lt 50" />
 								</check_any>
 								<set_value name="$kAAIT_isJustFight" exact="true" />
 							</check_all>
@@ -208,7 +199,7 @@
 						</check_any>
 					</conditions>
 					<actions>
-						<do_if value="$kAAIT_isJustFight">
+						<do_if value="@$kAAIT_isJustFight">
 							<set_value name="this.$kAAIT_data.$isIgnoreKAAIT" exact="$kAAIT_isJustFight" />
 							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isJustFight: ' + $kAAIT_isJustFight" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						</do_if>

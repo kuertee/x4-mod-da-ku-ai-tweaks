@@ -158,12 +158,19 @@
 			<check_value value="@event.param.$primarytarget != $primarytarget" />
 		</check_all>
 	</replace>
+<!-- add. purpose: add handlers.
+	<interrupts>
+-->
+	<add pos="prepend" sel="//interrupts">
+		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+	</add>
 <!-- add. purpose: debug
 	<init>
 -->
 	<add sel="//init">
 		<debug_text text="this.assignedcontrolled.idcode + ' init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<debug_text text="this.assignedcontrolled.idcode + ' ===='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<include_interrupt_actions ref="kAAIT_CleanOrders" />
 	</add>
 <!-- add after.
 	purpose: keep track of attackers and
@@ -265,11 +272,8 @@
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="this.assignedcontrolled.idcode + ' finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' ======'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<do_if value="@this.$kAAIT_data">
-				<set_value name="this.$kAAIT_data.$isRemoveDataOnFinish" exact="true" />
-			</do_if>
+			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</do_if>
-		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
 <!-- add. purpose: cleanup.
 	<on_abort>
@@ -278,12 +282,8 @@
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="this.assignedcontrolled.idcode + ' on_abort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' ========'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<do_if value="@this.$kAAIT_data">
-				<set_value name="this.$kAAIT_data.$isRemoveDataOnFinish" exact="true" />
-				<!-- <set_value name="this.$kAAIT_data.$isRemoveAllKAAITScripts" exact="true" /> -->
-			</do_if>
+			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</do_if>
-		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
 	<!-- DeadAir Diffs -->
 	<replace sel="/aiscript/attention[@min='unknown']/actions/wait[@exact='[((100 - this.assignedcontrolled.combinedskill) / 400)s, 1ms].max']/@exact">[1ms, 2ms].random</replace>

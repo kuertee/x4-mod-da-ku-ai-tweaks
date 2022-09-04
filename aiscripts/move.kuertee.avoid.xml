@@ -91,6 +91,7 @@
 
 			<label name="start"/>
 			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveAvoid start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			<debug_text text="this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$defensibleTarget: ' + @this.$kAAIT_data.$defensibleTarget.knownname + ' ' + @$this.kAAIT_data.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<set_value name="this.$kAAIT_data.$isAvoiding" exact="true" />
@@ -173,11 +174,36 @@
 			/>
 			<set_value name="this.$kAAIT_data.$orderLocation_space" exact="$orderLocation_space" />
 			<set_value name="this.$kAAIT_data.$orderLocation_pos" exact="$orderLocation_pos" />
-			<run_script name="'move.generic'" result="$movesuccess">
+			<!-- <run_script name="'move.generic'" result="$movesuccess">
 				<param name="destination" value="$orderLocation_space" />
 				<param name="position" value="$orderLocation_pos" />
 				<param name="kAAITParam_iskAAITOrder" value="true" />
-			</run_script>
+			</run_script> -->
+			<set_value name="$dist_targetToWithdrawDest" exact="$target.distanceto.[$orderLocation_space, $orderLocation_pos]" />
+			<move_to object="this.assignedcontrolled"
+				destination="$orderLocation_space"
+				uselocalhighways="false"
+				useknownpath="this.isplayerowned"
+				forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
+				commandaction="false">
+				<position value="$orderLocation_pos"/>
+				<interrupt>
+					<conditions>
+						<check_any>
+							<event_object_attacked object="this.assignedcontrolled" />
+							<event_object_attacked object="$target" />
+							<event_object_changed_zone object="this.assignedcontrolled" />
+							<event_object_changed_zone object="$target" />
+						</check_any>
+						<check_value value="this.assignedcontrolled.distanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
+						<check_value value="$target.distanceto.[$orderLocation_space, $orderLocation_pos] gt $dist_targetToWithdrawDest" comment="enemy ship must have moved away to not be in the way" />
+						<set_value name="$kAAIT_isCancelAvoidance" exact="true" />
+					</conditions>
+					<actions>
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isCancelAvoidance: ' + $kAAIT_isCancelAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</actions>
+				</interrupt>
+			</move_to>
 			<resume label="finish" />
 
 			<label name="flee" />
