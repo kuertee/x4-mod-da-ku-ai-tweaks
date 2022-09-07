@@ -138,15 +138,14 @@
 				@this.assignedcontrolled.commander.exists
 			">
 				<debug_text text="this.assignedcontrolled.idcode + ' MOVING DIRECTLY BACK'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<do_if value="@this.assignedcontrolled.commander.orders.{1}.$primarytarget.exists" comment="get position from commander at their target's orientation">
+				<do_if value="@this.assignedcontrolled.commander.order.$primarytarget.exists" comment="get position from commander at their target's orientation">
 					<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled.commander" />
-					<create_position name="$posTarget" space="$orderLocation_space" object="this.assignedcontrolled.commander.orders.{1}.$primarytarget" />
+					<create_position name="$posTarget_commander" space="$orderLocation_space" object="this.assignedcontrolled.commander.order.$primarytarget" />
 					<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
-						<position value="$posTarget" />
+						<position value="$posTarget_commander" />
 					</create_orientation>
 					<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
 					<set_value name="$pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
-					<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
 				</do_if>
 				<do_else>
 					<set_value name="$yaw_deg" exact="$ship_yaw_deg" />
@@ -165,7 +164,7 @@
 			<do_if value="not this.$kAAIT_data.$skill_distance_withdraw?">
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 			</do_if>
-			<set_value name="$distAvoid" exact="[this.$kAAIT_data.$skill_distance_withdraw, $distToTarget].max" />
+			<set_value name="$distAvoid" exact="[this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange].min].max" />
 			<debug_text text="this.assignedcontrolled.idcode + ' $distAvoid: ' + @$distAvoid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
 				x="$posTarget.x + $distAvoid * sin ($yaw) * cos ($pitch)"
@@ -180,6 +179,9 @@
 				<param name="kAAITParam_iskAAITOrder" value="true" />
 			</run_script> -->
 			<set_value name="$dist_targetToWithdrawDest" exact="$target.distanceto.[$orderLocation_space, $orderLocation_pos]" />
+			<do_if value="$distToTarget gt this.assignedcontrolled.maxradarrange">
+				<resume label="finish" />
+			</do_if>
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
 				uselocalhighways="false"
@@ -195,8 +197,13 @@
 							<event_object_changed_zone object="this.assignedcontrolled" />
 							<event_object_changed_zone object="$target" />
 						</check_any>
-						<check_value value="this.assignedcontrolled.distanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
-						<check_value value="$target.distanceto.[$orderLocation_space, $orderLocation_pos] gt $dist_targetToWithdrawDest" comment="enemy ship must have moved away to not be in the way" />
+						<check_any>
+							<check_all>
+								<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
+								<check_value value="$target.distanceto.[$orderLocation_space, $orderLocation_pos] gt $dist_targetToWithdrawDest" comment="enemy ship must have moved away to not be in the way" />
+							</check_all>
+							<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange" />
+						</check_any>
 						<set_value name="$kAAIT_isCancelAvoidance" exact="true" />
 					</conditions>
 					<actions>
@@ -207,6 +214,7 @@
 			<resume label="finish" />
 
 			<label name="flee" />
+			<set_value name="this.$kAAIT_data.$avoidEnemy" exact="$target" />
 			<include_interrupt_actions ref="kAAIT_Order_Flee" />
 			<wait min="1s" max="3s" />
 
