@@ -5,7 +5,7 @@
 -->
 	<add sel="//params">
 		<param name="kAAITParam_iskAAITOrder" required="false" default="false" type="internal" />
-		<!-- <param name="kAAITParam_tacticalOrderTarget" required="false" default="null" type="internal" /> -->
+		<param name="kAAITParam_tacticalOrderTarget" required="false" default="null" type="internal" />
 		<param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal"/>
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
 		  if this.$kAAIT_isAvoidHighRisk_user? then 
@@ -76,33 +76,30 @@
 	<label name="cleanup"/>
 -->
 	<add pos="after" sel="//label[@name=&quot;start&quot;]">
-		<debug_text text="this.assignedcontrolled.idcode + ' start $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-		<debug_text text="this.assignedcontrolled.idcode + ' ====='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL start $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;check&quot;]">
-		<debug_text text="this.assignedcontrolled.idcode + ' check $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-		<debug_text text="this.assignedcontrolled.idcode + ' ====='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL check $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;move&quot;]">
-		<debug_text text="this.assignedcontrolled.idcode + ' move $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-		<debug_text text="this.assignedcontrolled.idcode + ' ===='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL move $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;cleanup&quot;]">
-		<debug_text text="this.assignedcontrolled.idcode + ' cleanup $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-		<debug_text text="this.assignedcontrolled.idcode + ' ======='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL cleanup $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
 	</add>
 <!-- add. purpose: withdraw handler.
 	<interrupts>
 -->
 	<add sel="//interrupts">
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+		<handler ref="kAAIT_Handler_TacticalJustAttack" />
+		<handler ref="kAAIT_Handler_MoveCheckAhead" />
 	</add>
 <!-- add. purpose: debug.
 	<init>
 -->
 	<add sel="//init">
-		<debug_text text="this.assignedcontrolled.idcode + ' init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<debug_text text="this.assignedcontrolled.idcode + ' ===='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 	</add>
 <!-- add after. purpose: avoid or not.
 	<label name="check" />
@@ -110,25 +107,21 @@
 -->
 	<add pos="after" sel="//label[@name=&quot;check&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<debug_text text="this.assignedcontrolled.idcode + ' check $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="//do_if[@value=&quot;not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<debug_text text="this.assignedcontrolled.idcode + ' wait for subordinates'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="(//do_if[@value=&quot;$position&quot;])[2]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<debug_text text="this.assignedcontrolled.idcode + ' not $intersector'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>
 	<add pos="before" sel="//do_if[@value=&quot;not @$rotation&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @$kAAITParam_iskAAITOrder) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<debug_text text="this.assignedcontrolled.idcode + ' before final move'" chance="this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and @global.$kAAIT_Config.$debugChance" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
 		</do_if>
 	</add>

@@ -55,9 +55,8 @@
 <!-- add. purpose: debug.
   <init>
 -->
-  <add sel="//init">
-    <debug_text text="this.assignedcontrolled.idcode + ' init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-    <debug_text text="this.assignedcontrolled.idcode + ' ===='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+  <add pos="prepend" sel="//init">
+    <debug_text text="this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
   </add>
 <!-- add before. purpose: prevent attacks.
   <do_if value="@$target.order.id == 'Attack' and ((this.ship.hullpercentage) le $thresholdbreak)">
@@ -67,12 +66,13 @@
   <add pos="before" sel="//do_if[@value=&quot;@$target.order.id == 'Attack' and ((this.ship.hullpercentage) le $thresholdbreak)&quot;]//include_interrupt_actions[@ref=&quot;CreateAttackOrder&quot;]">
     <set_value name="$kAAIT_isSkipAttack" exact="false" />
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <debug_text text="this.assignedcontrolled.idcode + ' CreateAttackOrder (in init) chance = 0'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
       <set_value name="$kAAIT_attacker_onAttackEvent" exact="$enemy" />
       <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+      <remove_value name="$kAAIT_attacker_onAttackEvent" />
       <do_if value="@this.$kAAIT_data.$avoidEnemy.isoperational">
         <set_value name="$kAAIT_isSkipAttack" exact="true" />
       </do_if>
+      <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isSkipAttack (init): ' + $kAAIT_isSkipAttack" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
     </do_if>
   </add>
   <add sel="//do_if[@value=&quot;@$target.order.id == 'Attack' and ((this.ship.hullpercentage) le $thresholdbreak)&quot;]//include_interrupt_actions[@ref=&quot;CreateAttackOrder&quot;]" type="@chance">if @$kAAIT_isSkipAttack then 0 else 100</add>
@@ -135,7 +135,7 @@
   </add>
   <add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;finish&quot;]">
     <debug_text text="this.assignedcontrolled.idcode + ' VISIBLE finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-  </add>
+  </add> -->
   <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;start&quot;]">
     <debug_text text="this.assignedcontrolled.idcode + ' UNKNOWN start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
   </add>
@@ -150,196 +150,13 @@
   </add>
   <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
     <debug_text text="this.assignedcontrolled.idcode + ' UNKNOWN finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
-  </add> -->
+  </add>
 <!--
   Yb    dP 88 .dP"Y8 88 88""Yb 88     888888
    Yb  dP  88 `Ybo." 88 88__dP 88     88__
     YbdP   88 o.`Y8b 88 88""Yb 88  .o 88""
      YP    88 8bodP' 88 88oodP 88ood8 888888
  -->
-<!-- add prepend. purpose: move away on attacks.
-  <do_if value="player.age lt @$time_rejoinformation">
-    <wait exact="player.age - $time_rejoinformation" sinceversion="14"/>
--->
-  <!-- <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;player.age lt @$time_rejoinformation&quot;]/wait[@exact=&quot;player.age - $time_rejoinformation&quot;]">
-    <interrupt>
-      <conditions>
-        <check_any>
-          <event_object_attacked object="this.assignedcontrolled" />
-          <event_object_attacked_object object="this.assignedcontrolled" />
-          <event_object_attacked object="$target" />
-          <event_object_attacked_object object="$target" />
-        </check_any>
-        <check_value value="not @this.$kAAIT_data.$isIgnoreKAAIT" />
-        <check_value value="@$kAAITParam_isAvoidHighRisk" />
-        <check_any comment="is event.param high-risk">
-          <check_all comment="this ship is xssm">
-            <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]" />
-            <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" comment="potentail high-risk" />
-            <check_any>
-              <check_all comment="target is ship">
-                <check_value value="event.param.isclass.ship" />
-                <check_any>
-                  <check_all comment="this ship is xss">
-                    <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
-                    <check_value value="
-                      [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                      @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
-                    " />
-                  </check_all>
-                  <check_all comment="this ship is m">
-                    <check_value value="this.assignedcontrolled.isclass.ship_m" />
-                    <check_value value="
-                      [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                      @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVShips / 100.0
-                    " />
-                  </check_all>
-                </check_any>
-              </check_all>
-              <check_all comment="target is station">
-                <check_value value="event.param.isclass.station" />
-                <check_any>
-                  <check_all comment="this ship is xss">
-                    <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
-                    <check_value value="
-                      [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                      @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
-                    " />
-                  </check_all>
-                  <check_all comment="this ship is m">
-                    <check_value value="this.assignedcontrolled.isclass.ship_m" />
-                    <check_value value="
-                      [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                      @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVStations / 100.0
-                    " />
-                  </check_all>
-                </check_any>
-              </check_all>
-            </check_any>
-            <check_any comment="not a bomber">
-              <check_value value="not this.assignedcontrolled.dps.missiles.all" />
-              <check_value value="not this.assignedcontrolled.ammostorage.missile.count" />
-            </check_any>
-            <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
-          </check_all>
-          <check_all comment="this ship is lxl">
-            <check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
-            <check_any>
-              <check_value value="event.param.isclass.station" />
-              <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" comment="potential high-risk" />
-              <check_all>
-                <check_value value="event.param.isclass.[class.ship_l, class.ship_xl]" />
-                <check_value value="event.param.dps.all gt this.assignedcontrolled.dps.all * 1.25" />
-              </check_all>
-            </check_any>
-            <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
-          </check_all>
-        </check_any>
-      </conditions>
-      <actions>
-        <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-          <debug_text text="this.assignedcontrolled.idcode + ' event.name (player.age lt @$time_rejoinformation): ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
-          <do_if value="@$kAAIT_isHighRiskEvent">
-            <remove_value name="$kAAIT_isHighRiskEvent" />
-            <set_value name="$kAAIT_attacker_onAttackEvent" exact="event.param" />
-            <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-          </do_if>
-        </do_if>
-      </actions>
-    </interrupt>
-  </add> -->
-<!-- add prepend. purpose: move away on attacks.
-  <do_while value="$target.isoperational and (($target.owner == faction.player) or $leaderpilot)">
-    <wait>
-      <conditions>
-        <check_any>
-      <actions>
--->
-  <!-- <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.isoperational and (($target.owner == faction.player) or $leaderpilot)&quot;]//wait//conditions/check_any">
-    <check_all>
-      <check_any>
-        <event_object_attacked object="this.assignedcontrolled" />
-        <event_object_attacked_object object="this.assignedcontrolled" />
-        <event_object_attacked object="$target" />
-        <event_object_attacked_object object="$target" />
-      </check_any>
-      <check_value value="not @this.$kAAIT_data.$isIgnoreKAAIT" />
-      <check_value value="@$kAAITParam_isAvoidHighRisk" />
-      <check_any comment="is event.param high-risk">
-        <check_all comment="this ship is xssm">
-          <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]" />
-          <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" comment="potentail high-risk" />
-          <check_any>
-            <check_all comment="target is ship">
-              <check_value value="event.param.isclass.ship" />
-              <check_any>
-                <check_all comment="this ship is xss">
-                  <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
-                  " />
-                </check_all>
-                <check_all comment="this ship is m">
-                  <check_value value="this.assignedcontrolled.isclass.ship_m" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVShips / 100.0
-                  " />
-                </check_all>
-              </check_any>
-            </check_all>
-            <check_all comment="target is station">
-              <check_value value="event.param.isclass.station" />
-              <check_any>
-                <check_all comment="this ship is xss">
-                  <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
-                  " />
-                </check_all>
-                <check_all comment="this ship is m">
-                  <check_value value="this.assignedcontrolled.isclass.ship_m" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVStations / 100.0
-                  " />
-                </check_all>
-              </check_any>
-            </check_all>
-          </check_any>
-          <check_any comment="not a bomber">
-            <check_value value="not this.assignedcontrolled.dps.missiles.all" />
-            <check_value value="not this.assignedcontrolled.ammostorage.missile.count" />
-          </check_any>
-          <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
-        </check_all>
-        <check_all comment="this ship is lxl">
-          <check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
-          <check_any>
-            <check_value value="event.param.isclass.station" />
-            <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" comment="potential high-risk" />
-            <check_all>
-              <check_value value="event.param.isclass.[class.ship_l, class.ship_xl]" />
-              <check_value value="event.param.dps.all gt this.assignedcontrolled.dps.all * 1.25" />
-            </check_all>
-          </check_any>
-          <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
-        </check_all>
-      </check_any>
-    </check_all>
-  </add>
-  <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.isoperational and (($target.owner == faction.player) or $leaderpilot)&quot;]//wait//actions">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <debug_text text="this.assignedcontrolled.idcode + ' event.name (do_while $target.isoperational): ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
-      <do_if value="@$kAAIT_isHighRiskEvent">
-        <remove_value name="$kAAIT_isHighRiskEvent" />
-        <set_value name="$kAAIT_attacker_onAttackEvent" exact="event.param" />
-        <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      </do_if>
-    </do_if>
-  </add> -->
 <!-- add before. purpose: prevent attacks.
   <do_if value="$target.isoperational and $enemy.canbeattacked">
     ...
@@ -348,13 +165,13 @@
   <add pos="before" sel="//do_if[@value=&quot;$target.isoperational and $enemy.canbeattacked&quot;]//include_interrupt_actions[@ref=&quot;CreateAttackOrder&quot;]">
     <set_value name="$kAAIT_isSkipAttack" exact="false" />
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <debug_text text="this.assignedcontrolled.idcode + ' CreateAttackOrder (visible) chance = 0'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
       <set_value name="$kAAIT_attacker_onAttackEvent" exact="$enemy" />
       <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
       <remove_value name="$kAAIT_attacker_onAttackEvent" />
       <do_if value="@this.$kAAIT_data.$avoidEnemy.isoperational">
         <set_value name="$kAAIT_isSkipAttack" exact="true" />
       </do_if>
+      <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isSkipAttack (CreateAttackOrder): ' + $kAAIT_isSkipAttack" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
     </do_if>
   </add>
   <add sel="//do_if[@value=&quot;$target.isoperational and $enemy.canbeattacked&quot;]//include_interrupt_actions[@ref=&quot;CreateAttackOrder&quot;]" type="@chance">if @$kAAIT_isSkipAttack then 0 else 100</add>
@@ -365,7 +182,6 @@
     <set_value name="$kAAIT_isSkipAttack" exact="false" />
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
       <do_if value="$locattacker == this.assignedcontrolled">
-        <debug_text text="this.assignedcontrolled.idcode + ' create_order Attack (visible) chance = 0'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
         <do_if value="@$squadorder.$primarytarget.isoperational">
           <set_value name="$kAAIT_attacker_onAttackEvent" exact="$squadorder.$primarytarget" />
           <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
@@ -375,6 +191,7 @@
           </do_if>
         </do_if>
       </do_if>
+      <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isSkipAttack (create_order): ' + $kAAIT_isSkipAttack" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
     </do_if>
   </add>
   <add sel="//attention[@min=&quot;visible&quot;]//create_order[@id=&quot;'Attack'&quot;][@object=&quot;$locattacker&quot;][@immediate=&quot;true&quot;]" type="@chance">if @$kAAIT_isSkipAttack then 0 else 100</add>
@@ -384,108 +201,16 @@
   Y8   8P 88 Y88 88"Yb  88 Y88 Yb   dP   YbdPYbdP   88 Y88
   `YbodP' 88  Y8 88  Yb 88  Y8  YbodP     YP  YP    88  Y8
  -->
-<!-- add prepend. purpose: move away on attacks.
-  <wait exact="$waittime">
-    <conditions>
-      <check_any>
-    <actions>
+<!-- add prepend. purpose: avoid target if high-risk
+  <do_if value="@$target.isoperational">
 -->
-  <!-- <add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;$waittime&quot;]//conditions/check_any">
-    <check_all>
-      <check_any>
-        <event_object_attacked object="this.assignedcontrolled" />
-        <event_object_attacked_object object="this.assignedcontrolled" />
-        <event_object_attacked object="$target" />
-        <event_object_attacked_object object="$target" />
-      </check_any>
-      <check_value value="not @this.$kAAIT_data.$isIgnoreKAAIT" />
-      <check_value value="@$kAAITParam_isAvoidHighRisk" />
-      <check_any comment="is event.param high-risk">
-        <check_all comment="this ship is xssm">
-          <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]" />
-          <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" comment="potentail high-risk" />
-          <check_any>
-            <check_all comment="target is ship">
-              <check_value value="event.param.isclass.ship" />
-              <check_any>
-                <check_all comment="this ship is xss">
-                  <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
-                  " />
-                </check_all>
-                <check_all comment="this ship is m">
-                  <check_value value="this.assignedcontrolled.isclass.ship_m" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVShips / 100.0
-                  " />
-                </check_all>
-              </check_any>
-            </check_all>
-            <check_all comment="target is station">
-              <check_value value="event.param.isclass.station" />
-              <check_any>
-                <check_all comment="this ship is xss">
-                  <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
-                  " />
-                </check_all>
-                <check_all comment="this ship is m">
-                  <check_value value="this.assignedcontrolled.isclass.ship_m" />
-                  <check_value value="
-                    [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
-                    @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVStations / 100.0
-                  " />
-                </check_all>
-              </check_any>
-            </check_all>
-          </check_any>
-          <check_any comment="not a bomber">
-            <check_value value="not this.assignedcontrolled.dps.missiles.all" />
-            <check_value value="not this.assignedcontrolled.ammostorage.missile.count" />
-          </check_any>
-          <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
-        </check_all>
-        <check_all comment="this ship is lxl">
-          <check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
-          <check_any>
-            <check_value value="event.param.isclass.station" />
-            <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" comment="potential high-risk" />
-            <check_all>
-              <check_value value="event.param.isclass.[class.ship_l, class.ship_xl]" />
-              <check_value value="event.param.dps.all gt this.assignedcontrolled.dps.all * 1.25" />
-            </check_all>
-          </check_any>
-          <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
-        </check_all>
-      </check_any>
-    </check_all>
-  </add>
-  <add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;$waittime&quot;]//actions">
+  <add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;@$target.isoperational&quot;]">
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <do_if value="@$kAAIT_isHighRiskEvent">
-        <remove_value name="$kAAIT_isHighRiskEvent" />
-        <debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
-        <set_value name="$kAAIT_attacker_onAttackEvent" exact="event.param" />
-        <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-        <remove_value name="$kAAIT_attacker_onAttackEvent" />
-        <do_if value="@this.$kAAIT_data.$avoidEnemy.isoperational">
-          <resume label="finish" />
-        </do_if>
-      </do_if>
-    </do_if>
-  </add> -->
-<!-- add before. purpose: avoid.
-  <move_to object="this.ship" destination="$target.zone" uselocalhighways="false" travel="true" sinceversion="2">
--->
-  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;][@uselocalhighways=&quot;false&quot;][@travel=&quot;true&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <debug_text text="this.assignedcontrolled.idcode + ' move_to $target.zone'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
+      <set_value name="$kAAIT_avoidTest_space" exact="$target.zone" />
+      <set_value name="$kAAIT_avoidTest_position" exact="$target.position" />
       <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+      <remove_value name="$kAAIT_avoidTest_space" />
+      <remove_value name="$kAAIT_avoidTest_position" />
       <do_if value="@this.$kAAIT_data.$avoidEnemy.isoperational">
         <resume label="finish" />
       </do_if>
@@ -499,7 +224,6 @@
   <add pos="before" sel="//do_if[@value=&quot;(event.name == 'event_object_signalled' or event.name == 'event_object_attacked' or event.name == 'event_object_enemy_found') and (@this.assignedcontrolled.order.id != 'SupplyFleet')&quot;]//include_interrupt_actions[@ref=&quot;CreateAttackOrder&quot;]">
     <set_value name="$kAAIT_isSkipAttack" exact="false" />
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <debug_text text="this.assignedcontrolled.idcode + ' CreateAttackOrder (unknown) chance = 0'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
       <set_value name="$kAAIT_attacker_onAttackEvent" exact="$enemy" />
       <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
       <remove_value name="$kAAIT_attacker_onAttackEvent" />
@@ -508,8 +232,24 @@
         <resume label="finish" />
       </do_if>
     </do_if>
+    <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isSkipAttack (CreateAttackOrder): ' + $kAAIT_isSkipAttack" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
   </add>
   <add sel="//do_if[@value=&quot;(event.name == 'event_object_signalled' or event.name == 'event_object_attacked' or event.name == 'event_object_enemy_found') and (@this.assignedcontrolled.order.id != 'SupplyFleet')&quot;]//include_interrupt_actions[@ref=&quot;CreateAttackOrder&quot;]" type="@chance">if @$kAAIT_isSkipAttack then 0 else 100</add>
+<!-- add before. purpose: avoid.
+  <move_to object="this.ship" destination="$target.zone" uselocalhighways="false" travel="true" sinceversion="2">
+-->
+  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;][@uselocalhighways=&quot;false&quot;][@travel=&quot;true&quot;]">
+    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+      <set_value name="$kAAIT_avoidTest_space" exact="$target.zone" />
+      <set_value name="$kAAIT_avoidTest_position" exact="$target.position" />
+      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+      <remove_value name="$kAAIT_avoidTest_space" />
+      <remove_value name="$kAAIT_avoidTest_position" />
+      <do_if value="@this.$kAAIT_data.$avoidEnemy.isoperational">
+        <resume label="finish" />
+      </do_if>
+    </do_if>
+  </add>
 <!-- add before. purpose: prevent attack.
   <create_order id="'Attack'" object="$locattacker" immediate="true">
 -->
@@ -517,7 +257,6 @@
     <set_value name="$kAAIT_isSkipAttack" exact="false" />
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
       <do_if value="$locattacker == this.assignedcontrolled">
-        <debug_text text="this.assignedcontrolled.idcode + ' create_order Attack (unknown) chance = 0'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
         <do_if value="@$squadorder.$primarytarget.isoperational">
           <set_value name="$kAAIT_attacker_onAttackEvent" exact="$squadorder.$primarytarget" />
           <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
@@ -528,6 +267,7 @@
           </do_if>
         </do_if>
       </do_if>
+      <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isSkipAttack (create_order): ' + $kAAIT_isSkipAttack" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>" />
     </do_if>
   </add>
   <add sel="//attention[@min=&quot;unknown&quot;]//create_order[@id=&quot;'Attack'&quot;][@object=&quot;$locattacker&quot;][@immediate=&quot;true&quot;]" type="@chance">if @$kAAIT_isSkipAttack then 0 else 100</add>

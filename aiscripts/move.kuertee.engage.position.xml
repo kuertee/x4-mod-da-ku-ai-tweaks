@@ -104,9 +104,20 @@
 	<interrupts>
 		<handler ref="DisengageHandler"/>
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
-		<handler ref="kAAIT_Handler_TargetDestroyed" />
+		<handler comment="target destroyed">
+			<conditions>
+				<check_any>
+					<event_object_destroyed object="$target" check="false" />
+					<event_object_destroyed object="@this.$kAAIT_data.$defensibleTarget" check="false" />
+				</check_any>
+			</conditions>
+			<actions>
+				<abort_called_scripts resume="finish" />
+			</actions>
+		</handler>
 	</interrupts>
 	<init>
+		<set_value name="$kAAIT_detailedDebugChance" exact="0" />
 		<!-- required for disengage handler -->
 		<set_value name="$pursuetargets" exact="false" />
 		<set_value name="$pursuedistance" exact="this.assignedcontrolled.maxradarrange" />
@@ -117,9 +128,10 @@
 			<include_interrupt_actions ref="kAAIT_Init" />
 
 			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just restart." />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 
 			<label name="start" />
-			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveEngagePosition start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			<set_value name="this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="this.$kAAIT_data.$defensibleTarget" />
 			<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
@@ -142,7 +154,7 @@
 			</do_else>
 
 			<label name="move_to_target" />
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to_target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL move_to_target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<run_script name="'move.generic'" result="$movesuccess">
 				<param name="destination" value="$target" />
 				<param name="stopondetect" value="$target"/>
@@ -151,7 +163,7 @@
 			<resume label="start" />
 
 			<label name="move_to_engage_position" />
-			<debug_text text="this.assignedcontrolled.idcode + ' move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<set_value name="$isMovedToEngagePosition" exact="true" />
 			<set_value name="$orderLocation_space" exact="this.assignedcontrolled.sector" />
 			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
@@ -184,7 +196,7 @@
 			<do_else>
 				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5 * this.$kAAIT_data.$skill_distance_engagePosition_mult" />
 			</do_else>
-			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
 				x="$posTarget.x + this.$kAAIT_data.$distance_attackFrom * sin ($yaw) * cos ($rotFromTarget.pitch)"
 				y="$posTarget.y + this.$kAAIT_data.$distance_attackFrom * sin ($rotFromTarget.pitch) + [-5m, -2.5m, 0, 2.5m, 5m].random"
@@ -205,7 +217,7 @@
 			</move_to>
 
 			<label name="finish" />
-			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveEngagePosition finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />

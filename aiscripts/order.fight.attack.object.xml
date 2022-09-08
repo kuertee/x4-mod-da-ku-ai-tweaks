@@ -172,9 +172,9 @@
 <!-- add. purpose: debug
 	<init>
 -->
-	<add sel="//init">
-		<debug_text text="this.assignedcontrolled.idcode + ' init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<debug_text text="this.assignedcontrolled.idcode + ' ===='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+	<add pos="prepend" sel="//init">
+		<set_value name="$kAAIT_detail_debugChance" exact="0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_CleanOrders" />
 	</add>
 <!-- add after.
@@ -184,13 +184,12 @@
 -->
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<debug_text text="this.assignedcontrolled.idcode + ' fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<debug_text text="this.assignedcontrolled.idcode + ' ====='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_Init" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 		</do_if>
-		<debug_text text="this.assignedcontrolled.idcode + ' @this.$escortgroup.count: ' + @this.$escortgroup.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' @this.$escortgroup.count: ' + @this.$escortgroup.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detail_debugChance then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@this.$escortgroup.count">
 			<set_value name="$loctarget" exact="$target"/>
 			<do_if value="not $loctarget">
@@ -199,10 +198,9 @@
 			<do_if value="$loctarget.defensible">
 				<set_value name="$loctarget" exact="$loctarget.defensible"/>
 			</do_if>
-			<debug_text text="this.assignedcontrolled.idcode + ' @$loctarget: ' + @$loctarget.knownname + ', ' + @$loctarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' @$loctarget: ' + @$loctarget.knownname + ', ' + @$loctarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detail_debugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<do_for_each name="$locsub" in="this.$escortgroup" reverse="true">
 				<do_if value="($locsub.assignment == assignment.attack) and not $locsub.subordinategroupdockoverride">
-					<debug_text text="'%s %s %s ordering attack subordinate %s %s %s to attack %s %s %s.'.[@this.assignedcontrolled.idcode, @this.assignedcontrolled.knownname, this.assignedcontrolled, @$locsub.idcode, @$locsub.knownname, $locsub, @$loctarget.idcode, @$loctarget.knownname, $loctarget]" chance="$debugchance"/>
 					<create_order object="$locsub" id="'Attack'">
 						<param name="primarytarget" value="$loctarget"/>
 						<param name="secondarytargets" value="@$secondarytargetgroup.list"/>
@@ -224,25 +222,6 @@
 			<remove_value name="$loctarget"/>
 		</do_if>
 	</add>
-<!-- add after. purpose: move to engage position.
-	<set_value name="$Defensible" exact="this.defensible"/>
--->
-	<!-- <add pos="after" sel="//set_value[@name=&quot;$Defensible&quot;][@exact=&quot;this.defensible&quot;]">
-		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
-			<do_if value="$kAAIT_isMovetoEngage">
-				<debug_text text="this.assignedcontrolled.idcode + ' move_to_engage_position_order'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<debug_text text="this.assignedcontrolled.idcode + ' ============================='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<create_order object="this.assignedcontrolled" id="'kAAIT_MoveEngagePosition'" immediate="true">
-					<param name="target" value="$primarytarget"/>
-					<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk"/>
-					<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw"/>
-				</create_order>
-				<wait min="5s" max="10s" />
-				<debug_text text="this.assignedcontrolled.idcode + ' shouldnt be here because kAAIT_MoveEngagePosition should have been activated'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			</do_if>
-		</do_if>
-	</add> -->
 <!-- add before. purpose: debug.
 	<run_script name="'move.generic'" result="$movesuccess">
 -->
@@ -262,8 +241,6 @@
 	<run_script name="$DefensibleScript">
 -->
 	<add pos="before" sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
-		<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user: ' + @this.assignedcontrolled.$kAAIT_isAvoidHighRisk_user" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<debug_text text="this.assignedcontrolled.idcode + ' run_script ' + $DefensibleScript" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 	</add>
 	<add sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
@@ -275,8 +252,7 @@
 -->
 	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<debug_text text="this.assignedcontrolled.idcode + ' finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<debug_text text="this.assignedcontrolled.idcode + ' ======'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</do_if>
 	</add>
@@ -285,8 +261,7 @@
 -->
 	<add sel="//on_abort">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<debug_text text="this.assignedcontrolled.idcode + ' on_abort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<debug_text text="this.assignedcontrolled.idcode + ' ========'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' EVENT on_abort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</do_if>
 	</add>

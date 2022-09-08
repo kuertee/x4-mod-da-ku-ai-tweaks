@@ -104,9 +104,20 @@
 	<interrupts>
 		<handler ref="DisengageHandler"/>
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
-		<handler ref="kAAIT_Handler_TargetDestroyed" />
+		<handler comment="target destroyed">
+			<conditions>
+				<check_any>
+					<event_object_destroyed object="$target" check="false" />
+					<event_object_destroyed object="@this.$kAAIT_data.$defensibleTarget" check="false" />
+				</check_any>
+			</conditions>
+			<actions>
+				<abort_called_scripts resume="finish" />
+			</actions>
+		</handler>
 	</interrupts>
 	<init>
+		<set_value name="$kAAIT_detailedDebugChance" exact="0" />
 		<!-- required for disengage handler -->
 		<set_value name="$pursuetargets" exact="false" />
 		<set_value name="$pursuedistance" exact="this.assignedcontrolled.maxradarrange" />
@@ -117,7 +128,7 @@
 			<include_interrupt_actions ref="kAAIT_Init" />
 
 			<label name="start"/>
-			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveStepForward start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			<set_value name="this.$kAAIT_data.$time_lastStepForward" exact="player.age" />
 			<do_if value="not @this.$kAAIT_data.$count_stepForward">
@@ -141,7 +152,7 @@
 				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.$kAAIT_data.$combatRange_min" />
 				<set_value operation="subtract" name="this.$kAAIT_data.$count_stepForward" exact="1" />
 			</do_if>
-			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
 				x="$posTarget.x + this.$kAAIT_data.$distance_attackFrom * sin ($rotFromTarget.yaw) * cos ($rotFromTarget.pitch)"
 				y="$posTarget.y + this.$kAAIT_data.$distance_attackFrom * sin ($rotFromTarget.pitch)"
@@ -162,9 +173,10 @@
 			</move_to>
 
 			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just finish." />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 
 			<label name="finish" />
-			<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_MoveStepForward finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />
