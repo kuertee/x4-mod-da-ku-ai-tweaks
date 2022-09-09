@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <diff>
+<!-- replace and add. purpose: recall subordinates only if gatedistance is 2 or more.
+	<param name="recallsubordinates" default="true" type="internal" comment="recall subordinates and cancel the recall of subordinates. disabled in the move.generic call from move.gate"/>
+-->
+	<replace sel="//params/param[@name=&quot;recallsubordinates&quot;]/@default">if this.assignedcontrolled.gatedistance.{$destination} ge 2 then true else false</replace>
 <!-- add. purpose: params.
 	<params>
 -->
@@ -8,21 +12,27 @@
 		<param name="kAAITParam_tacticalOrderTarget" required="false" default="null" type="internal" />
 		<param name="kAAITParam_enemyAvoid" required="false" default="null" type="internal"/>
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
-		  if this.$kAAIT_isAvoidHighRisk_user? then 
+		  if this.$kAAIT_isAvoidHighRisk_user? then
 		    this.$kAAIT_isAvoidHighRisk_user
 		  else (
 		    if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
 		    (
-			  this.assignedcontrolled.primarypurpose != purpose.fight or
-			  this.assignedcontrolled.type == shiptype.carrier or
 		      (
 		        this.assignedcontrolled.isplayerowned and
-		        this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+		        (
+		        	this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+					this.assignedcontrolled.primarypurpose != purpose.fight or
+					this.assignedcontrolled.type == shiptype.carrier
+		        ) and
 		        @global.$kAAIT_Config.$xssm_isAvoidHighRisk
 		      ) or
 		      (
 		        (not this.assignedcontrolled.isplayerowned) and
-		        this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+		        (
+		        	this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+					this.assignedcontrolled.primarypurpose != purpose.fight or
+					this.assignedcontrolled.type == shiptype.carrier
+		        ) and
 		        @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
 		      ) or
 		      (
