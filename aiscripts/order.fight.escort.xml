@@ -53,6 +53,7 @@
 -->
   <add sel="//interrupts">
     <handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+    <handler ref="kAAIT_Handler_AvoidHighRisk" />
   </add>
 <!-- add. purpose: debug.
   <init>
@@ -135,125 +136,20 @@
   <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
     <debug_text text="this.assignedcontrolled.idcode + ' UNKNOWN finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
   </add>
-<!--
-  Yb    dP 88 .dP"Y8 88 88""Yb 88     888888
-   Yb  dP  88 `Ybo." 88 88__dP 88     88__
-    YbdP   88 o.`Y8b 88 88""Yb 88  .o 88""
-     YP    88 8bodP' 88 88oodP 88ood8 888888
- -->
-<!-- add. purpose: avoid?
-  <do_if value="@$target.pilot">
-    ...
-    <do_elseif value="@this.assignedcontrolled.dock.container != $target and not this.assignedcontrolled.isformationwingman and not this.assignedcontrolled.dock and not $target.dock and (@$target.order.id != 'DockAndWait') and (@$target.order.id != 'DockAt') and (player.age ge @$time_rejoinformation)">
-      <create_formation leader="$target" follower="this.assignedcontrolled" formation="$currentformation" param="$formationparam" maxshipsperline="$maxshipsperline" rollmembers="$rollmembers" rollformation="$rollformation"/>
+<!-- add after. purpose: finish.
+  <label name="finish" />
 -->
-  <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//create_formation[@leader=&quot;$target&quot;][@follower=&quot;this.assignedcontrolled&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
+  <add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;finish&quot;]">
+    <include_interrupt_actions ref="kAAIT_Deinit" />
   </add>
-<!-- add. purpose: avoid?
-  <do_if value="@$target.pilot">
-  <do_elseif value="not $target.isownerless">
-    <wait/>
--->
-  <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;@$target.pilot&quot;]/following-sibling::do_elseif[@value=&quot;not $target.isownerless&quot;]//wait">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
+  <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
+    <include_interrupt_actions ref="kAAIT_Deinit" />
   </add>
-<!-- add. purpose: avoid?
-  <do_while value="$target.isoperational and (($target.owner == faction.player) or $leaderpilot)">
+<!-- add. purpose: clean-up.
+  <on_abort>
 -->
-  <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.isoperational and (($target.owner == faction.player) or $leaderpilot)&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
-  </add>
-<!--
-  88   88 88b 88 88  dP 88b 88  dP"Yb  Yb        dP 88b 88
-  88   88 88Yb88 88odP  88Yb88 dP   Yb  Yb  db  dP  88Yb88
-  Y8   8P 88 Y88 88"Yb  88 Y88 Yb   dP   YbdPYbdP   88 Y88
-  `YbodP' 88  Y8 88  Yb 88  Y8  YbodP     YP  YP    88  Y8
- -->
-<!-- add before. purpose: avoid
-  <do_if value="@$target.pilot">
-    ...
-    <do_if value="@this.assignedcontrolled.dock.container != $target">
-      <create_formation leader="$target" follower="this.assignedcontrolled" formation="$currentformation" param="$formationparam" maxshipsperline="$maxshipsperline" rollmembers="$rollmembers" rollformation="$rollformation"/>
--->
-  <add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//create_formation[@leader=&quot;$target&quot;][@follower=&quot;this.assignedcontrolled&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
-  </add>
-<!-- add before. purpose: avoid
-  <do_if value="@$target.pilot">
-  <do_else>
-    <wait/>
--->
-  <add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;@$target.pilot&quot;]/following-sibling::do_else//wait">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
-  </add>
-<!-- add before. purpose: avoid
-  <do_if value="@$target.isoperational">
-    <do_if value="($iscarrierbased and @this.assignedcontrolled.dock.container == $target) or ($in_formation? and not $objectinhighway?)">
-      <wait exact="$waittime">
--->
-  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;$waittime&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
-  </add>
-<!-- add before. purpose: avoid
-  <do_if value="@$target.isoperational">
-    <do_if value="($iscarrierbased and @this.assignedcontrolled.dock.container == $target) or ($in_formation? and not $objectinhighway?)">
-      <do_else>
-        <do_if value="$objectinhighway?">
-          <do_else>
-            <move_to object="this.ship" destination="$target.zone" uselocalhighways="false" travel="true" sinceversion="2">
--->
-  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;][@uselocalhighways=&quot;false&quot;][@travel=&quot;true&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
+  <add sel="//on_abort">
+    <include_interrupt_actions ref="kAAIT_Deinit" />
   </add>
   <!-- DeadAir Diffs -->
   <replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='@$target.pilot.$attacktarget.canbeattacked']/shoot_at[@tolerance='12deg']/@tolerance">4.0deg</replace>

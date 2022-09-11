@@ -25,6 +25,26 @@
 	    VVV      MM  L.   I8   MM  MM.   ,M9 MM YM.    ,
 	     W     .JMML.M9mmmP' .JMML.P^YbmdP'.JMML.`Mbmmd'
  -->
+<!-- add before. purpose: behaviours.
+	<label name="fight" />
+-->
+	<add pos="before" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;fight&quot;]">
+		<resume label="fight" />
+
+		<label name="kAAIT_label_avoid" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
+		<do_if value="@$kAAIT_target_found.isoperational">
+			<set_value name="$kAAIT_target_attack" exact="$kAAIT_target_found" />
+			<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+		</do_if>
+		<do_else>
+			<set_value name="this.$kAAIT_data.$target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
+			<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+		</do_else>
+		<wait min="5s" max="10s" />
+		<resume label="fight" />
+	</add>
 <!-- add after. purpose: add attacker to target
 	<label name="fight" />
 -->
@@ -42,7 +62,9 @@
 -->
 	<add pos="before" sel="//do_while[@value=&quot;$target.isoperational&quot;]//do_if[@value=&quot;$target.isoperational&quot;][1]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+			<do_if value="@$kAAIT_isTargetHighRisk">
+				<resume label="kAAIT_label_avoid" />
+			</do_if>
 		</do_if>
 	</add>
 <!-- add after. purpose: clean-up.
@@ -64,6 +86,18 @@
 	  MM    MM    MM    MM    MM `Mb.   MM    MM YA.   ,A9   VVV    VVV      MM    MM
 	  `Mbod"YML..JMML  JMML..JMML. YA..JMML  JMML.`Ybmd9'     W      W     .JMML  JMML.
  -->
+<!-- add before. purpose: behaviours.
+	<label name="fight" />
+-->
+	<add pos="before" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;fight&quot;]">
+		<resume label="fight" />
+
+		<label name="kAAIT_label_avoid" />
+		<set_value name="this.$kAAIT_data.$target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
+		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+		<wait min="5s" max="10s" />
+		<resume label="fight" />
+	</add>
 <!-- add after. purpose: add attacker to target
 	<label name="fight" />
 -->
@@ -81,7 +115,9 @@
 -->
 	<add pos="before" sel="//do_while[@value=&quot;$target.isoperational and not $isdead&quot;]//do_if[@value=&quot;$target.isoperational&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+			<do_if value="@$kAAIT_isTargetHighRisk">
+				<resume label="kAAIT_label_avoid" />
+			</do_if>
 		</do_if>
 	</add>
 <!-- add after. purpose: clean-up.

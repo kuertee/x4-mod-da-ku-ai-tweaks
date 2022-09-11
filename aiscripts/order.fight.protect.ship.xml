@@ -59,6 +59,7 @@
 -->
   <add sel="//interrupts">
     <handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+    <handler ref="kAAIT_Handler_AvoidHighRisk" />
   </add>
 <!-- add. purpose: debug.
   <init>
@@ -66,30 +67,19 @@
   <add sel="//init">
     <debug_text text="this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
   </add>
-<!-- add. purpose: move or avoid.
-  <move_to object="this.ship" destination="$target.zone" uselocalhighways="false" forceposition="false" finishonapproach="true" commandaction="false" >
+<!-- add after. purpose: finish.
+  <label name="finish" />
 -->
-  <add pos="before" sel="(//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;])[1]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
+  <add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;finish&quot;]">
+    <include_interrupt_actions ref="kAAIT_Deinit" />
   </add>
-<!-- add. purpose: move or avoid.
-  <move_to object="this.ship" destination="$target.zone" uselocalhighways="false">
+  <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
+    <include_interrupt_actions ref="kAAIT_Deinit" />
+  </add>
+<!-- add. purpose: clean-up.
+  <on_abort>
 -->
-  <add pos="before" sel="(//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;])[2]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-      <remove_value name="$kAAIT_test_space_isAvoid" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
+  <add sel="//on_abort">
+    <include_interrupt_actions ref="kAAIT_Deinit" />
   </add>
 </diff>

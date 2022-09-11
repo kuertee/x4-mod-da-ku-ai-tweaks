@@ -86,18 +86,30 @@
 			</create_orientation>
 			<set_value name="$ship_yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
 			<set_value name="$ship_pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
+			<set_value name="$isMoveBehindCommander" exact="false" />
 			<do_if value="
+				(
+					this.assignedcontrolled.primarypurpose != purpose.fight or
+					this.assignedcontrolled.type == shiptype.carrier
+				) and
 				@this.assignedcontrolled.commander.isoperational and
-				this.assignedcontrolled.bboxdistanceto.{this.assignedcontrolled.commander} le this.assignedcontrolled.maxradarrange and
-				@this.assignedcontrolled.commander.order.$primarytarget == $target
-			">
+				(
+					@this.assignedcontrolled.commander.order.$primarytarget == $target or
+					(
+						@this.assignedcontrolled.commander.order.$primarytarget.defensible.isoperational and
+						@this.assignedcontrolled.commander.order.$primarytarget.defensible == $target.defensible
+					) or
+					@this.assignedcontrolled.commander.order.$kAAITParam_iskAAITOrder
+				)">
 				<debug_text text="this.assignedcontrolled.idcode + ' MOVING BEHIND COMMANDER'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
+				<set_value name="$isMoveBehindCommander" exact="true" />
 				<do_if value="@this.assignedcontrolled.commander.order.$primarytarget.isoperational" comment="get position from commander at their target's orientation">
 					<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled.commander" />
 					<create_position name="$posTarget_commander" space="$orderLocation_space" object="this.assignedcontrolled.commander.order.$primarytarget" />
 					<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
 						<position value="$posTarget_commander" />
 					</create_orientation>
+					<create_position name="$posTarget" value="$posTarget_commander" />
 					<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
 					<set_value name="$pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
 				</do_if>
@@ -125,19 +137,21 @@
 			<do_if value="not this.$kAAIT_data.$skill_distance_withdraw?">
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 			</do_if>
-			<do_if value="
-				@this.assignedcontrolled.commander.isoperational and
-				@this.assignedcontrolled.commander.order.$primarytarget == $target">
-				<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 0.25 + this.assignedcontrolled.commander.bboxdistanceto.{$target}" />
+			<do_if value="$isMoveBehindCommander">
+				<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 0.5" />
 			</do_if>
-			<do_elseif value="
-				this.assignedcontrolled.primarypurpose != purpose.fight or
-				this.assignedcontrolled.type == shiptype.carrier
-			">
-				<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 2" />
-			</do_elseif>
 			<do_elseif value="@this.$kAAIT_data.$defensibleTarget == $target">
 				<set_value name="$distAvoid" exact="[this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" />
+			</do_elseif>
+			<do_elseif value="
+				this.assignedcontrolled.primarypurpose != purpose.fight or
+				this.assignedcontrolled.type == shiptype.carrier">
+				<do_if value="this.assignedcontrolled.bboxdistanceto.{@this.assignedcontrolled.nextorder.$destination} gt this.assignedcontrolled.maxradarrange">
+					<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 2" />
+				</do_if>
+				<do_else>
+					<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange" />
+				</do_else>
 			</do_elseif>
 			<do_else>
 				<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange" />

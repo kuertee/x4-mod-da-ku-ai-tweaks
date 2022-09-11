@@ -59,23 +59,26 @@
 -->
   <add sel="//interrupts">
     <handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+    <handler ref="kAAIT_Handler_AvoidHighRisk" />
   </add>
-<!-- add before. purpose: avoid.
-  <move_to object="this.ship" destination="this.ship.zone" forceposition="false" forcerotation="true" commandaction="false">
+<!-- add. purpose: debug.
+  <init>
 -->
-  <add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;this.ship.zone&quot;][@forceposition=&quot;false&quot;][@forcerotation=&quot;true&quot;][@commandaction=&quot;false&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-    </do_if>
+  <add sel="//init">
+    <debug_text text="this.assignedcontrolled.idcode + ' LABEL init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
   </add>
-<!-- add before. purpose: avoid.
-  <move_to object="this.ship" destination="$target.zone" uselocalhighways="not $bigship" forceposition="false" finishonapproach="true" commandaction="false" >
+<!-- add after. purpose: finish.
+  <label name="finish" />
 -->
-  <add pos="before" sel="//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;][@uselocalhighways=&quot;not $bigship&quot;][@forceposition=&quot;false&quot;][@finishonapproach=&quot;true&quot;][@commandaction=&quot;false&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <set_value name="$kAAIT_test_space_isAvoid" exact="$target" />
-      <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-    </do_if>
+  <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
+    <include_interrupt_actions ref="kAAIT_Deinit" />
+  </add>
+<!-- add. purpose: clean-up.
+  <on_abort>
+-->
+  <add sel="//attention">
+    <on_abort>
+      <include_interrupt_actions ref="kAAIT_Deinit" />
+    </on_abort>
   </add>
 </diff>
