@@ -162,6 +162,7 @@
 	<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
 -->
 	<add pos="after" sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[1]">
+		<set_value name="$kAAIT_rallyPointOwner" exact="$subordinate" />
 		<include_interrupt_actions ref="kAAIT_AdjustRallyPoint" />
 	</add>
 <!-- add. purpose: tag movewait as coordinated attack.
@@ -198,7 +199,16 @@
 			<create_orientation name="$kAAIT_rotFromTarget" orientation="look_at" refposition="$kAAIT_pos">
 				<position value="$enemypos" />
 			</create_orientation>
-			<set_value name="$kAAIT_yaw_deg" exact="$kAAIT_rotFromTarget.yaw * 180 / pi + [-15, -11.25, -7.5, -3.25, 0, 3.25, 7.5, 11.25, 15].random" />
+			<!-- <set_value name="$kAAIT_yaw_deg" exact="$kAAIT_rotFromTarget.yaw * 180 / pi + [-15, -11.25, -7.5, -3.25, 0, 3.25, 7.5, 11.25, 15].random" /> -->
+			<do_if value="$kAAIT_rallyPointOwner == this.assignedcontrolled">
+				<set_value name="$kAAIT_yaw_deg" exact="0" />
+			</do_if>
+			<do_else>
+				<set_value name="$kAAIT_shipNo" exact="this.assignedcontrolled.allsubordinates.indexof.{$kAAIT_rallyPointOwner}" />
+				<set_value name="$kAAIT_maxAngle" exact="60" />
+				<set_value name="$kAAIT_angleForOneShip" exact="$kAAIT_maxAngle * 2 / (this.assignedcontrolled.allsubordinates.count - 1)f" />
+				<set_value name="$kAAIT_yaw_deg" exact="($kAAIT_maxAngle * -1) + (($kAAIT_shipNo - 1) * $kAAIT_angleForOneShip)" />
+			</do_else>
 			<set_value name="$kAAIT_yaw" exact="$kAAIT_yaw_deg * pi / 180" />
 			<do_if value="$primarytarget.isclass.ship">
 				<do_if value="$primarytarget.isoperational and $primarytarget.travel.active">
@@ -211,6 +221,9 @@
 			<do_else>
 				<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 0.75, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
 			</do_else>
+			<do_if value="$kAAIT_rallyPointOwner == this.assignedcontrolled">
+				<set_value name="$kAAIT_tacticalDistance" operation="add" exact="5km" />
+			</do_if>
 			<create_position name="$initialpos"
 				x="$enemypos.x + $kAAIT_tacticalDistance * sin ($kAAIT_yaw) * cos ($kAAIT_rotFromTarget.pitch)"
 				y="$enemypos.y + $kAAIT_tacticalDistance * sin ($kAAIT_rotFromTarget.pitch)"
@@ -542,12 +555,6 @@
 			<include_interrupt_actions ref="create_orders" />
 		</do_if>
 	</replace>
-<!-- add. purpose: move rally point 40km from target. move to engage position that is applied AFTER this will be closer to the target.
-	<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
--->
-	<add pos="after" sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[1]">
-		<include_interrupt_actions ref="kAAIT_AdjustRallyPoint" />
-	</add>
 <!-- add. purpose: do not get initialpos again unless required.
 	<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
 -->
@@ -564,6 +571,7 @@
 -->
 	<add pos="after" sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[2]">
 		<do_if value="$kAAIT_isGetInitialPos">
+			<set_value name="$kAAIT_rallyPointOwner" exact="this.assignedcontrolled" />
 			<include_interrupt_actions ref="kAAIT_AdjustRallyPoint" />
 		</do_if>
 		<set_value name="this.$kAAIT_tacticalPosition" exact="$initialpos" />

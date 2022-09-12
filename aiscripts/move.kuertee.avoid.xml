@@ -78,7 +78,7 @@
 				<set_value name="this.$kAAIT_data.$aroundDir" exact="this.$kAAIT_data.$aroundDir * [-1, 1, 1, 1].random" comment="chance of reversal" />
 			</do_elseif>
 
-			<set_value name="$orderLocation_space" exact="this.assignedcontrolled.sector" />
+			<set_value name="$orderLocation_space" exact="this.assignedcontrolled.zone" />
 			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
 			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
 			<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
@@ -94,36 +94,33 @@
 				) and
 				@this.assignedcontrolled.commander.isoperational and
 				(
+					@this.assignedcontrolled.commander.assignedaipilot.$kAAIT_data.$defensibleTarget == $target or
 					@this.assignedcontrolled.commander.order.$primarytarget == $target or
-					(
-						@this.assignedcontrolled.commander.order.$primarytarget.defensible.isoperational and
-						@this.assignedcontrolled.commander.order.$primarytarget.defensible == $target.defensible
-					) or
-					@this.assignedcontrolled.commander.order.$kAAITParam_iskAAITOrder
+					@this.assignedcontrolled.commander.order.$primarytarget.defensible == $target.defensible or
+					@this.assignedcontrolled.commander.nextorder.$primarytarget == $target or
+					@this.assignedcontrolled.commander.nextorder.$primarytarget.defensible == $target.defensible
 				)">
 				<debug_text text="this.assignedcontrolled.idcode + ' MOVING BEHIND COMMANDER'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 				<set_value name="$isMoveBehindCommander" exact="true" />
-				<do_if value="@this.assignedcontrolled.commander.order.$primarytarget.isoperational" comment="get position from commander at their target's orientation">
-					<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled.commander" />
-					<create_position name="$posTarget_commander" space="$orderLocation_space" object="this.assignedcontrolled.commander.order.$primarytarget" />
-					<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
-						<position value="$posTarget_commander" />
-					</create_orientation>
-					<create_position name="$posTarget" value="$posTarget_commander" />
-					<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
-					<set_value name="$pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
-				</do_if>
-				<do_else>
-					<set_value name="$yaw_deg" exact="$ship_yaw_deg" />
-					<set_value name="$pitch_deg" exact="$ship_pitch_deg" />
-				</do_else>
+				<!-- <create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled.commander" />
+				<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
+					<position value="$posTarget" />
+				</create_orientation>
+				<create_position name="$posTarget" value="$posShip" />
+				<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
+				<set_value name="$pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
 				<debug_text text="this.assignedcontrolled.idcode + ' $yaw_deg: ' + $yaw_deg" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 				<set_value name="$shipNo" exact="this.assignedcontrolled.commander.subordinates.indexof.{this.assignedcontrolled}" />
 				<debug_text text="this.assignedcontrolled.idcode + ' $shipNo: ' + $shipNo" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 				<set_value name="$yaw_adj" exact="($shipNo * 10) - 90 / 2.0" comment="spread out from -45 to 45 behind commander" />
 				<debug_text text="this.assignedcontrolled.idcode + ' $yaw_adj: ' + $yaw_adj" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 				<set_value name="$yaw_deg" operation="add" exact="$yaw_adj" />
-				<debug_text text="this.assignedcontrolled.idcode + ' $yaw_deg: ' + $yaw_deg" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' $yaw_deg: ' + $yaw_deg" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" /> -->
+				<set_value name="$kAAIT_target_escort" exact="this.assignedcontrolled.commander" />
+				<include_interrupt_actions ref="kAAIT_GetEscortPos" />
+				<create_position name="$posTarget" space="$orderLocation_space" object="$kAAIT_target_escort" />
+				<set_value name="$yaw_deg" exact="$kAAIT_yaw_new" />
+				<set_value name="$pitch_deg" exact="$kAAIT_pitch_new" />
 			</do_if>
 			<do_else>
 				<debug_text text="this.assignedcontrolled.idcode + ' MOVING AROUND'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
@@ -138,10 +135,12 @@
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 			</do_if>
 			<do_if value="$isMoveBehindCommander">
-				<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 0.5" />
+				<!-- <set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 0.5" /> -->
+				<set_value name="$distAvoid" exact="10km" />
 			</do_if>
 			<do_elseif value="@this.$kAAIT_data.$defensibleTarget == $target">
-				<set_value name="$distAvoid" exact="[this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" />
+				<!-- <set_value name="$distAvoid" exact="[this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" /> -->
+				<set_value name="$distAvoid" exact="[10km + this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" />
 			</do_elseif>
 			<do_elseif value="
 				this.assignedcontrolled.primarypurpose != purpose.fight or
