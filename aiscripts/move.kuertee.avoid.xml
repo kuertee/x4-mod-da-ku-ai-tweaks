@@ -79,7 +79,7 @@
 				<set_value name="this.$kAAIT_data.$aroundDir" exact="this.$kAAIT_data.$aroundDir * [-1, 1, 1, 1].random" comment="chance of reversal" />
 			</do_elseif>
 
-			<set_value name="$orderLocation_space" exact="this.assignedcontrolled.zone" />
+			<set_value name="$orderLocation_space" exact="this.assignedcontrolled.sector" />
 			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
 			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
 			<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
@@ -88,12 +88,15 @@
 			<set_value name="$ship_yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
 			<set_value name="$ship_pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
 			<set_value name="$isMoveBehindCommander" exact="false" />
+			<set_value name="$distToCommander" exact="0" />
 			<do_if value="
 				(
 					this.assignedcontrolled.primarypurpose != purpose.fight or
 					this.assignedcontrolled.type == shiptype.carrier
 				) and
 				@this.assignedcontrolled.commander.isoperational and
+				this.assignedcontrolled.commander.isclass.ship and
+				this.assignedcontrolled.distanceto.{this.assignedcontrolled.commander} le this.assignedcontrolled.maxradarrange and
 				(
 					@this.assignedcontrolled.commander.assignedaipilot.$kAAIT_data.$defensibleTarget == $target or
 					@this.assignedcontrolled.commander.order.$primarytarget == $target or
@@ -102,6 +105,7 @@
 					@this.assignedcontrolled.commander.nextorder.$primarytarget.defensible == $target.defensible
 				)">
 				<debug_text text="this.assignedcontrolled.idcode + ' MOVING BEHIND COMMANDER'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
+				<set_value name="$distToCommander" exact="this.assignedcontrolled.bboxdistanceto.{this.assignedcontrolled.commander}" />
 				<set_value name="$isMoveBehindCommander" exact="true" />
 				<!-- <create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled.commander" />
 				<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
@@ -139,19 +143,18 @@
 				<!-- <set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 0.5" /> -->
 				<set_value name="$distAvoid" exact="10km" />
 			</do_if>
-			<do_elseif value="@this.$kAAIT_data.$defensibleTarget == $target">
-				<!-- <set_value name="$distAvoid" exact="[this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" /> -->
-				<set_value name="$distAvoid" exact="[10km + this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" />
-			</do_elseif>
 			<do_elseif value="
 				this.assignedcontrolled.primarypurpose != purpose.fight or
 				this.assignedcontrolled.type == shiptype.carrier">
-				<do_if value="this.assignedcontrolled.bboxdistanceto.{@this.assignedcontrolled.nextorder.$destination} gt this.assignedcontrolled.maxradarrange">
+				<do_if value="$target.isclass.ship">
 					<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 2" />
 				</do_if>
 				<do_else>
 					<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange" />
 				</do_else>
+			</do_elseif>
+			<do_elseif value="@this.$kAAIT_data.$defensibleTarget == $target">
+				<set_value name="$distAvoid" exact="[10km + this.$kAAIT_data.$skill_distance_withdraw, [$distToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" />
 			</do_elseif>
 			<do_else>
 				<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange" />
@@ -165,7 +168,9 @@
 			<set_value name="this.$kAAIT_data.$orderLocation_space" exact="$orderLocation_space" />
 			<set_value name="this.$kAAIT_data.$orderLocation_pos" exact="$orderLocation_pos" />
 			<set_value name="$dist_targetToWithdrawDest" exact="$target.distanceto.[$orderLocation_space, $orderLocation_pos]" />
-			<do_if value="$distToTarget gt this.assignedcontrolled.maxradarrange">
+			<do_if value="
+				$distToTarget gt this.assignedcontrolled.maxradarrange and
+				($isMoveBehindCommander and $distToCommander le this.maxradarrange * 0.5)">
 				<resume label="finish" />
 			</do_if>
 			<move_to object="this.assignedcontrolled"
