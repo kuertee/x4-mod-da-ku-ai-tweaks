@@ -60,7 +60,7 @@
 -->
   <add sel="//interrupts/library">
     <actions name="kAAIT_Actions_AvoidOrNot_Escort">
-        <debug_text text="this.assignedcontrolled.idcode + ' EVENT kAAIT_Actions_AvoidOrNot_Escort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+      <debug_text text="this.assignedcontrolled.idcode + ' EVENT kAAIT_Actions_AvoidOrNot_Escort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
       <do_if value="@$target.assignedaipilot.$kAAIT_data.$defensibleTarget.isoperational or @$target.order.$primarytarget.isoperational or @$target.nextorder.$primarytarget.isoperational">
         <do_if value="@$target.assignedaipilot.$kAAIT_data.$defensibleTarget">
           <set_value name="$kAAIT_enemy" exact="$target.assignedaipilot.$kAAIT_data.$defensibleTarget" />
@@ -75,34 +75,30 @@
         <set_value name="$kAAIT_test_target_isHighRisk" exact="$kAAIT_enemy" />
         <include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
         <remove_value name="$kAAIT_test_target_isHighRisk" />
-        <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetHighRisk: ' + $kAAIT_isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+        <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_isTargetHighRisk: ' + $kAAIT_result_isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
         <set_value name="$kAAIT_distToEnemy" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_enemy}" />
         <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_distToEnemy: ' + $kAAIT_distToEnemy" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
         <do_if value="
           (
-            $kAAIT_isTargetHighRisk and
-            $kAAIT_distToEnemy le this.assignedcontrolled.maxradarrange * 0.25
+            $kAAIT_result_isTargetHighRisk and
+            $kAAIT_distToEnemy le this.assignedcontrolled.maxradarrange * 0.5
           ) or
           this.assignedcontrolled.primarypurpose != purpose.fight or
           this.assignedcontrolled.type == shiptype.carrier">
-          <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_enemy" />
-          <include_interrupt_actions ref="kAAIT_Order_Avoid" />
-        </do_if>
-        <do_else>
           <debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.order.$kAAITParam_iskAAITOrder: ' + @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
           <do_if value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
             <set_value name="$kAAIT_bigEnemy" exact="$kAAIT_enemy" />
             <include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
           </do_if>
-          <do_if value="@$kAAIT_target_found.isoperational">
-            <set_value name="$kAAIT_target_attack" exact="$kAAIT_target_found" />
+          <do_if value="@$kAAIT_result_target_found.isoperational">
+            <set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
             <include_interrupt_actions ref="kAAIT_Order_AttackOther" />
           </do_if>
           <do_else>
             <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_enemy" />
             <include_interrupt_actions ref="kAAIT_Order_Avoid" />
           </do_else>
-        </do_else>
+        </do_if>
       </do_if>
     </actions>
   </add>
@@ -123,7 +119,7 @@
   <do_if value="(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)">
     <run_script name="'move.generic'" result="$movesuccess">
 -->
-  <replace sel="(//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)&quot;])[1]/@value">(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and (($target.order.id != 'Attack' and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km) or this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 2))</replace>
+  <replace sel="(//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)&quot;])[1]/@value">(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and ((@$target.order.id != 'Attack' and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km) or this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 2))</replace>
 <!-- add. purpose: avoid?
   <do_if value="@$target.pilot">
   <do_elseif value="not $target.isownerless">
@@ -188,7 +184,7 @@
   <do_if value="(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)">
     <run_script name="'move.generic'" result="$movesuccess">
 -->
-  <replace sel="(//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)&quot;])[1]/@value">(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and (($target.order.id != 'Attack' and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km) or this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 2))</replace>
+  <replace sel="(//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)&quot;])[1]/@value">(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and ((@$target.order.id != 'Attack' and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km) or this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 2))</replace>
 <!-- add before. purpose: avoid
   <do_if value="@$target.isoperational">
     <do_if value="@$target.pilot">

@@ -30,6 +30,49 @@
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to (3) short attack move'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		</do_if>
 	</add>
+<!-- add.
+-->
+	<add pos="prepend" sel="//interrupts">
+		<library>
+			<actions name="kAAIT_GetIsMoveToEngage">
+				<set_value name="$kAAIT_result_isMovetoEngage" exact="false" />
+				<do_if value="
+					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+					(@this.$kAAIT_data.$isTargetHighRisk or @this.$kAAIT_data.$isTargetPotentialHighRisk) and
+					(not @$primarytarget.travel.active) and
+					(not @$target.travel.active)
+				">
+					<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+					<do_if value="
+						this.$kAAIT_data.$defensibleTarget != @this.$kAAIT_data.$defensibleTarget_stoppedKamikaze and
+						(
+							(
+								this.$kAAIT_data.$defensibleTarget.isclass.station and
+								$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange * 0.5
+							) or
+							(
+								this.$kAAIT_data.$defensibleTarget.isclass.ship and
+								(not @this.$kAAIT_data.$defensibleTarget.isclass.ship.travel.active) and
+								$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange
+							)
+						)
+					">
+						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
+						<set_value name="this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="this.$kAAIT_data.$defensibleTarget" />
+						<debug_text text="this.assignedcontrolled.idcode + ' $defensibleTarget_stoppedKamikaze: ' + this.$kAAIT_data.$defensibleTarget_stoppedKamikaze" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<do_if value="
+							@$primarytarget.isclass.module or
+							@$target.isclass.module
+						">
+							<set_value name="this.$kAAIT_data.$moduleTarget" exact="if @$primarytarget.isclass.module then $primarytarget else $target" />
+							<debug_text text="this.assignedcontrolled.idcode + ' FIRST $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						</do_if>
+					</do_if>
+				</do_if>
+				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $kAAIT_result_isMovetoEngage: ' + $kAAIT_result_isMovetoEngage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			</actions>
+		</library>
+	</add>
 <!-- add. purpose: add handlers.
 	<interrupts>
 -->
@@ -92,8 +135,8 @@
 			<set_value name="$kAAIT_bigEnemy" exact="this.$kAAIT_data.$defensibleTarget" />
 			<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
 		</do_if>
-		<do_if value="@$kAAIT_target_found.isoperational">
-			<set_value name="$kAAIT_target_attack" exact="$kAAIT_target_found" />
+		<do_if value="@$kAAIT_result_target_found.isoperational">
+			<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
 			<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
 		</do_if>
 		<do_else>
@@ -118,7 +161,7 @@
 			</do_if>
 			<do_else>
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
-				<do_if value="$kAAIT_isMovetoEngage">
+				<do_if value="$kAAIT_result_isMovetoEngage">
 					<do_if value="this.assignedcontrolled.order.id == 'Attack'">
 						<resume label="kAAIT_label_move_to_engage_position_order" />
 					</do_if>
@@ -218,8 +261,8 @@
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
 			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-			<do_if value="@$kAAIT_bigEnemy">
-				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_bigEnemy (too near): ' + @$kAAIT_bigEnemy.knownname + ' ' + @$kAAIT_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<do_if value="@$kAAIT_result_bigEnemy">
+				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy (too near): ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<resume label="kAAITLabel_withdraw" />
 			</do_if>
 		</do_if>
