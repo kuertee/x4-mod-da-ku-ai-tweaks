@@ -648,10 +648,8 @@
 							<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_just_attack'" param2="table[$eventName = event.name, $eventObject = this.assignedcontrolled, $eventParam = event.param]" />
 						</do_if>
 						<do_else comment="release self from tactical order and attack new">
-							<do_if value="not @this.$kAAIT_data.$attackOrder" comment="already has another attack">
-								<set_value name="$kAAIT_target_attack" exact="event.param" />
-								<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-							</do_if>
+							<set_value name="$kAAIT_target_attack" exact="event.param" />
+							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
 						</do_else>
 					</do_elseif>
 					<do_elseif value="@$kAAIT_isTacticalTargetNear" comment="release all from tactical order and just attack">
@@ -946,7 +944,8 @@
 			</actions>
 
 			<actions name="kAAIT_GetIsTargetInTheWay">
-				<do_if value="not @$kAAIT_space_getGlobalPath or this.assignedcontrolled.distanceto.[$kAAIT_space_getGlobalPath, $kAAIT_position_getGlobalPath] gt this.assignedcontrolled.maxradarrange">
+				<!-- <do_if value="not @$kAAIT_space_getGlobalPath or this.assignedcontrolled.distanceto.[$kAAIT_space_getGlobalPath, $kAAIT_position_getGlobalPath] gt this.assignedcontrolled.maxradarrange"> -->
+				<do_if value="not @$kAAIT_space_getGlobalPath or this.sector != $kAAIT_space_getGlobalPath">
 					<set_value name="$kAAIT_space_getGlobalPath" exact="this.sector" />
 					<create_position name="$kAAIT_position_getGlobalPath" object="this.assignedcontrolled" />
 					<set_value name="$kAAIT_dist_toTarget" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isInTheWay}" />
@@ -954,6 +953,8 @@
 						<start object="this.assignedcontrolled" />
 						<end object="$kAAIT_test_target_isInTheWayOf" />
 					</get_global_path>
+				</do_if>
+				<do_if value="$kAAIT_pathComponents.count">
 					<set_value name="$kAAIT_pathComponent" exact="$kAAIT_pathComponents.{1}" />
 					<do_if value="$kAAIT_pathComponent == this.assignedcontrolled">
 						<set_value name="$kAAIT_pathComponent" exact="$kAAIT_pathComponents.{2}" />
@@ -981,6 +982,9 @@
 					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_dist_toTarget: ' + @$kAAIT_dist_toTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_result_isTargetInTheWay: ' + @$kAAIT_result_isTargetInTheWay" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				</do_if>
+				<do_else comment="can't determine if in the way, assume in the way if nearby">
+					<set_value name="$kAAIT_result_isTargetInTheWay" exact="$kAAIT_dist_toTarget le this.assignedcontrolled.maxradarrange * 0.25" />
+				</do_else>
 			</actions>
 
 			<!--
