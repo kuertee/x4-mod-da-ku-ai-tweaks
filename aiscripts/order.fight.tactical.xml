@@ -219,14 +219,15 @@
 	<add sel="//interrupts/library">
 		<actions name="kAAIT_AdjustRallyPoint" comment="move rally point further from target and with a random yaw">
 			<do_if value="$kAAIT_rallyPointOwner == this.assignedcontrolled"
-				comment="the leader is set last, so set these vars to 0 will put the pos in the middle">
+				comment="the leader is set last, so set these vars to 0 will put the pos in the middle of the arc">
 				<set_value name="$kAAIT_yaw_deg_attack" exact="0" />
 				<set_value name="$kAAIT_sign_attack" exact="0" />
 				<set_value name="$kAAIT_shipNo_attack" exact="0" />
 				<remove_value name="$kAAIT_shipNo_defence" comment="remove this var, so that defence distribution starts at 0 deg" />
 			</do_if>
+			<!-- start: set distribution of positions in an arc -->
 			<do_elseif value="$forcedassignment != assignment.defence"
-				comment="setting ship no and sign so that distribution alternates between either side of the vector. i.e. -1 and 1">
+				comment="setting ship no and sign so that distribution alternates between either side of the arc. i.e. -1 and 1">
 				<set_value name="$kAAIT_shipNo_attack" exact="1" operation="add" />
 				<do_if value="not @$kAAIT_sign_attack">
 					<set_value name="$kAAIT_sign_attack" exact="1" />
@@ -236,7 +237,7 @@
 				</do_else>
 			</do_elseif>
 			<do_else>
-				<do_if value="not $kAAIT_shipNo_defence?" comment="defence's leader is same as attack. set vars to 0 to so that distribution starts in the middle. otherwise, the middle will be empty.">
+				<do_if value="not $kAAIT_shipNo_defence?" comment="defence's leader is same as attack. set vars to 0 to so that distribution starts in the middle of the arc. otherwise, the middle will be empty.">
 					<set_value name="$kAAIT_yaw_deg_defence" exact="0" />
 					<set_value name="$kAAIT_sign_defence" exact="0" />
 					<set_value name="$kAAIT_shipNo_defence" exact="0" />
@@ -251,7 +252,8 @@
 					</do_else>
 				</do_else>
 			</do_else>
-			<create_position name="$kAAIT_pos" space="this.assignedcontrolled.sector" object="this.assignedcontrolled" />
+			<!-- end: set distribution of positions in an arc -->
+			<create_position name="$kAAIT_pos" space="this.sector" object="this.assignedcontrolled" />
 			<create_orientation name="$kAAIT_rotFromTarget" orientation="look_at" refposition="$kAAIT_pos">
 				<position value="$enemypos" />
 			</create_orientation>
@@ -275,7 +277,7 @@
 			<do_else>
 				<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 0.75, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
 			</do_else>
-			<do_if value="$forcedassignment == assignment.defence and $kAAIT_rallyPointOwner != this.assignedcontrolled">
+			<do_if value="$forcedassignment == assignment.defence and $kAAIT_rallyPointOwner != this.assignedcontrolled" comment="defense position is at tha back - not in the line of attackers">
 				<set_value name="$kAAIT_tacticalDistance" operation="add" exact="10km" />
 			</do_if>
 			<create_position name="$initialpos"
@@ -301,6 +303,24 @@
 	</add>
 	<add sel="//interrupts">
 		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+		<handler comment="subordinate removes themself from attack">
+			<conditions>
+				<event_object_signalled object="this.assignedcontrolled" param="'kAAIT_tactical_remove_subordinate'" />
+			</conditions>
+			<actions>
+				<set_value name="$kAAIT_subordinate" exact="event.param2" />
+				<do_for_each name="$ordergroup" in="$ORDERS" reverse="true">
+					<do_for_each valuename="$kAAIT_orders" in="$ORDERS.{$ordergroup}" reverse="true">
+						<do_for_each name="$kAAIT_order" in="$kAAIT_orders" reverse="true">
+							<do_if value="$kAAIT_order.exists and $kAAIT_order.object == $kAAIT_subordinate">
+								<unassign_order_syncpoint_from_order order="$kAAIT_order" />
+								<cancel_order order="$kAAIT_order" />
+							</do_if>
+						</do_for_each>
+					</do_for_each>
+				</do_for_each>
+			</actions>
+		</handler>
 		<handler comment="reset rally points or just fight">
 			<conditions>
 				<check_any>
@@ -325,6 +345,7 @@
 								<set_value name="$kAAIT_isResetRallyPoints" exact="true" />
 							</check_all>
 							<check_all>
+								<check_value value="$primarytarget.sector == this.sector" />
 								<check_value value="@$initialpos" />
 								<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$primarytarget}" />
 								<set_value name="$kAAIT_distToRallyPoint" exact="this.assignedcontrolled.bboxdistanceto.[$primarytarget.sector, $initialpos]" />
@@ -497,7 +518,7 @@
 									<check_all>
 										<check_value value="$destination?" />
 										<check_value value="$kAAIT_gravidarTarget != $destination" />
-										<check_value value="$position?" />
+										<check_value value="@$position" />
 										<check_value value="this.assignedcontrolled.bboxdistanceto.{$kAAIT_gravidarTarget} le this.assignedcontrolled.distanceto.[$destination, $position]" />
 									</check_all>
 								</check_any>
@@ -718,7 +739,7 @@
 		<do_if value="this.$kAAIT_tacticalPosition?">
 			<set_value name="$kAAIT_isGetInitialPos" exact="false" />
 		</do_if>
-		<debug_text text="'$kAAIT_isGetInitialPos: ' + $kAAIT_isGetInitialPos" />
+		<debug_text text="'$kAAIT_isGetInitialPos: ' + $kAAIT_isGetInitialPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 	</add>
 	<add sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[2]" type="@chance">if $kAAIT_isGetInitialPos? then 100 else 0</add>
 <!-- add. purpose: move rally point 40km from target. move to engage position that is applied AFTER this will be closer to the target.

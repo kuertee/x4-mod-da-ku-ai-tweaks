@@ -43,7 +43,7 @@
 			<debug_text text="this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			<set_value name="this.$kAAIT_data.$count_stepForward" exact="0" />
-			<set_value name="$orderLocation_space" exact="this.assignedcontrolled.sector" />
+			<set_value name="$orderLocation_space" exact="this.sector" />
 			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
 			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
 			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
@@ -76,11 +76,13 @@
 				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.assignedcontrolled.maxradarrange" />
 			</do_if>
 			<do_elseif value="
-				$target.isclass.ship or
-				this.assignedcontrolled.primarypurpose != purpose.fight or
-				this.assignedcontrolled.type == shiptype.carrier
+				$target.isclass.ship and
+				(
+					this.assignedcontrolled.primarypurpose != purpose.fight or
+					this.assignedcontrolled.type == shiptype.carrier
+				)
 			">
-				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.$kAAIT_data.$skill_distance_withdraw" />
+				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.assignedcontrolled.maxradarrange" />
 			</do_elseif>
 			<do_else>
 				<set_value name="$combatRange_mid" exact="this.$kAAIT_data.$combatRange_min + (this.$kAAIT_data.$combatRange_max - this.$kAAIT_data.$combatRange_min) * 0.5" />
@@ -117,28 +119,31 @@
 							<event_object_changed_zone object="this.assignedcontrolled" />
 							<event_object_changed_zone object="$target" />
 						</check_any>
+						<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 						<check_value value="this.assignedcontrolled.primarypurpose == purpose.fight" />
 						<check_value value="this.assignedcontrolled.type != shiptype.carrier" />
 						<check_value value="this.assignedcontrolled.weapons.all.count" />
 						<check_value value="this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25" />
+						<check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" />
 						<check_any>
 							<check_all>
-								<check_value value="this.$kAAIT_data.$defensibleTarget.isclass.ship" />
+								<check_value value="$target.isclass.ship" />
 								<check_any>
-									<check_value value="this.$kAAIT_data.$defensibleTarget.shieldpercentage le 25" />
+									<check_value value="$target.shieldpercentage le 25" comment="target has low shields, just fight it" />
+									<check_value value="this.assignedcontrolled.hullpercentage le 25" />
 									<check_all>
 										<check_value value="this.assignedcontrolled.hullpercentage le 50" />
-										<check_value value="this.assignedcontrolled.bboxdistanceto.{this.$kAAIT_data.$defensibleTarget} gt this.assignedcontrolled.maxradarrange * 0.25" comment="just fight if there's room" />
+										<check_value value="$kAAIT_distToTarget gt 5km" comment="keep withdrawing until a short distnace, then just fight" />
 									</check_all>
 								</check_any>
 								<set_value name="$kAAIT_isJustFight" exact="true" />
 							</check_all>
 							<check_all>
 								<check_any>
-									<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange" />
-									<check_all>
-										<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
-										<check_value value="$target.distanceto.[$orderLocation_space, $orderLocation_pos] gt $dist_targetToWithdrawDest" comment="enemy ship must have stopped chasing" />
+									<check_value value="$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange" comment="withdraw successful" />
+									<check_all comment="withdrew a short distance and target has stopped its chase (i.e. distance of target to intended withdraw point has increased">
+										<check_value value="$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange * 0.25" />
+										<check_value value="$target.distanceto.[$orderLocation_space, $orderLocation_pos] gt $dist_targetToWithdrawDest" />
 									</check_all>
 								</check_any>
 								<set_value name="$kAAIT_isCancelWithdrawal" exact="true" />

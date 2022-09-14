@@ -175,6 +175,7 @@
 					<check_value value="not this.assignedcontrolled.islasertower" />
 					<check_value value="not @this.$kAAIT_data.$isWithdrawing" />
 					<check_value value="not @this.$kAAIT_data.$isIgnoreKAAIT" />
+					<check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" />
 					<check_all>
 						<check_any comment="is avoid high-risk. ensure that these parameters are set-up in the orders that use this handler.">
 							<check_value value="@$kAAITParam_iskAAITOrder" />
@@ -286,7 +287,7 @@
 					<do_if value="event.param != @this.$kAAIT_data.$defensibleTarget" comment="new target">
 						<do_if value="
 							@this.assignedcontrolled.commander.isclass.[class.ship_l, class.ship_xl] and
-							this.assignedcontrolled.commander.sector == this.assignedcontrolled.sector
+							this.assignedcontrolled.commander.sector == this.sector
 						">
 							<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_new_big_target'" param2="event.param" />
 						</do_if>
@@ -490,7 +491,7 @@
 								<check_all>
 									<check_value value="$destination?" />
 									<check_value value="$kAAIT_gravidarTarget != $destination" />
-									<check_value value="$position?" />
+									<check_value value="@$position" />
 									<check_value value="this.assignedcontrolled.bboxdistanceto.{$kAAIT_gravidarTarget} le this.assignedcontrolled.distanceto.[$destination, $position]" />
 									<set_value name="$kAAIT_pathComponent_final" exact="$destination" />
 								</check_all>
@@ -542,7 +543,7 @@
 					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidHighRisk $kAAIT_isInFront: ' + @$kAAIT_isInFront" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<do_if value="$kAAIT_isInFront">
 						<set_value name="$kAAIT_isInTheWay" exact="false" />
-						<do_if value="$kAAIT_pathComponent_final">
+						<do_if value="@$kAAIT_pathComponent_final">
 							<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_gravidarTarget" />
 							<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$kAAIT_pathComponent_final" />
 							<include_interrupt_actions ref="kAAIT_GetIsTargetInTheWay" />
@@ -593,6 +594,10 @@
 							<check_value value="@this.assignedcontrolled.orders.{3}.id != 'Attack'" comment="too many attack orders if there's already a 3rd attack order" />
 						</check_all>
 					</check_all>
+					<check_any>
+						<check_value value="not @this.$kAAIT_data.$attackOrder" />
+						<check_value value="event.param2.size gt @this.$kAAIT_data.$defensibleTarget.size" />
+					</check_any>
 				</conditions>
 				<actions>
 					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -619,7 +624,7 @@
 								</check_all>
 								<check_all>
 									<check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" />
-									<set_value name="$kAAAIT_isBigEnemyAttacked" exact="true" />
+									<set_value name="$kAAAIT_isNewBigEnemyAttacked" exact="true" />
 								</check_all>
 							</check_any>
 						</check_all>
@@ -637,14 +642,16 @@
 					<do_if value="@$kAAIT_isTacticalTargetAttacked" comment="release all from tactical order and just attack">
 						<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_just_attack'" param2="table[$eventName = event.name, $eventObject = this.assignedcontrolled, $eventParam = event.param]" />
 					</do_if>
-					<do_elseif value="@$kAAAIT_isBigEnemyAttacked">
+					<do_elseif value="@$kAAAIT_isNewBigEnemyAttacked">
 						<do_if value="@$kAAITParam_tacticalOrderTarget.isoperational and @$kAAITParam_tacticalOrderTarget.bboxdistanceto.{event.param} le this.assignedcontrolled.maxradarrange * 0.5"
 							comment="other big enemy nearby, release all from tactical order and just attack">
 							<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_just_attack'" param2="table[$eventName = event.name, $eventObject = this.assignedcontrolled, $eventParam = event.param]" />
 						</do_if>
 						<do_else comment="release self from tactical order and attack new">
-							<set_value name="$kAAIT_target_attack" exact="event.param" />
-							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+							<do_if value="not @this.$kAAIT_data.$attackOrder" comment="already has another attack">
+								<set_value name="$kAAIT_target_attack" exact="event.param" />
+								<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+							</do_if>
 						</do_else>
 					</do_elseif>
 					<do_elseif value="@$kAAIT_isTacticalTargetNear" comment="release all from tactical order and just attack">
@@ -652,7 +659,7 @@
 					</do_elseif>
 					<remove_value name="$kAAIT_isTacticalTargetAttacked" />
 					<remove_value name="$kAAIT_isPrimaryTargetAttacked" />
-					<remove_value name="$kAAAIT_isBigEnemyAttacked" />
+					<remove_value name="$kAAAIT_isNewBigEnemyAttacked" />
 					<remove_value name="$kAAIT_isTacticalTargetNear" />
 				</actions>
 			</handler>
@@ -786,8 +793,8 @@
 			<actions name="kAAIT_GetBigEnemies">
 				<do_if value="not @$kAAIT_bigEnemies.count or @$kAAIT_bigEnemies.{$kAAIT_bigEnemies.count}.bboxdistanceto.{this.assignedcontrolled} gt this.assignedcontrolled.maxradarrange">
 					<create_group groupname="$kAAIT_bigEnemies" />
-					<find_gravidar_contact groupname="$kAAIT_bigEnemies" object="this.assignedcontrolled" class="[class.ship_l, class.ship_xl, class.station]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" multiple="true" chance="if @this.assignedcontrolled.sector.macro then 100 else 0">
-						<match_context macro="this.assignedcontrolled.sector.macro"/>
+					<find_gravidar_contact groupname="$kAAIT_bigEnemies" object="this.assignedcontrolled" class="[class.ship_l, class.ship_xl, class.station]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" multiple="true" chance="if @this.sector.macro then 100 else 0">
+						<match_context macro="this.sector.macro"/>
 						<match class="class.buildstorage" negate="true"/>
 						<match state="componentstate.wreck" negate="true"/>
 						<!-- <match_distance max="this.assignedcontrolled.maxradarrange * 0.5" object="this.assignedcontrolled" /> -->
@@ -839,9 +846,10 @@
 				<set_value name="$kAAIT_result_target_found" exact="null" />
 				<do_if value="
 					this.assignedcontrolled.primarypurpose == purpose.fight and
-					this.assignedcontrolled.type != shiptype.carrier">
+					this.assignedcontrolled.type != shiptype.carrier and
+					(not @this.$kAAIT_data.$attackOrder.exists)">
 					<find_gravidar_contact name="$kAAIT_smallTargets" object="this.assignedcontrolled" class="[class.ship_xs, class.ship_s, class.ship_m]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" sortbydistanceto="this.assignedcontrolled" multiple="true">
-						<match_context macro="this.assignedcontrolled.sector.macro"/>
+						<match_context macro="this.sector.macro"/>
 						<match class="class.buildstorage" negate="true"/>
 						<match state="componentstate.wreck" negate="true"/>
 						<match_distance min="this.assignedcontrolled.maxradarrange * 0.25" max="this.assignedcontrolled.maxradarrange" object="$kAAIT_bigEnemy" />
@@ -881,8 +889,8 @@
 
 			<actions name="kAAIT_GetEscortPos">
 				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetEscortPos'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<create_position name="$kAAIT_pos_self" space="this.assignedcontrolled.sector" object="this.assignedcontrolled" />
-				<create_position name="$kAAIT_pos_escort" space="this.assignedcontrolled.sector" object="$kAAIT_target_escort" />
+				<create_position name="$kAAIT_pos_self" space="this.sector" object="this.assignedcontrolled" />
+				<create_position name="$kAAIT_pos_escort" space="this.sector" object="$kAAIT_target_escort" />
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_target_escort: ' + $kAAIT_target_escort.knownname + ' ' + $kAAIT_target_escort.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<create_orientation name="$kAAIT_rot_fromEscort" orientation="look_at" refposition="$kAAIT_pos_self">
 					<position value="$kAAIT_pos_escort" />
@@ -905,7 +913,7 @@
 				</do_elseif>
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_escortEnemy: ' + @$kAAIT_escortEnemy.knownname + ' ' + @$kAAIT_escortEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<do_if value="$kAAIT_escortEnemy">
-					<create_position name="$kAAIT_pos_escortEnemy" space="this.assignedcontrolled.sector" object="$kAAIT_escortEnemy" />
+					<create_position name="$kAAIT_pos_escortEnemy" space="this.sector" object="$kAAIT_escortEnemy" />
 					<create_orientation name="$kAAIT_rot_fromEnemyToEscort" orientation="look_at" refposition="$kAAIT_pos_escort">
 						<position value="$kAAIT_pos_escortEnemy" />
 					</create_orientation>
@@ -938,37 +946,41 @@
 			</actions>
 
 			<actions name="kAAIT_GetIsTargetInTheWay">
-				<set_value name="$kAAIT_dist_toTarget" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isInTheWay}" />
-				<get_global_path component="$kAAIT_pathComponents" uselocalhighways="true" multiple="true">
-					<start object="this.assignedcontrolled" />
-					<end object="$kAAIT_test_target_isInTheWayOf" />
-				</get_global_path>
-				<set_value name="$kAAIT_pathComponent" exact="$kAAIT_pathComponents.{1}" />
-				<do_if value="$kAAIT_pathComponent == this.assignedcontrolled">
-					<set_value name="$kAAIT_pathComponent" exact="$kAAIT_pathComponents.{2}" />
-				</do_if>
-				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_pathComponent: ' + @$kAAIT_pathComponent.knownname + ' ' + @$kAAIT_pathComponent.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<do_if value="$kAAIT_pathComponent == this.sector or @$kAAIT_pathComponent.sector == this.sector">
-					<do_if value="$kAAIT_pathComponent.isclass.sector or $kAAIT_pathComponent.isclass.zone">
-						<do_if value="@$position" comment="generally in MoveGeneric">
-							<set_value name="$kAAIT_dist_toDest" exact="this.assignedcontrolled.distanceto.[$kAAIT_pathComponent, $position]" />
-							<set_value name="$kAAIT_result_isTargetInTheWay" exact="$kAAIT_dist_toDest gt $kAAIT_dist_toTarget" />
+				<do_if value="not @$kAAIT_space_getGlobalPath or this.assignedcontrolled.distanceto.[$kAAIT_space_getGlobalPath, $kAAIT_position_getGlobalPath] gt this.assignedcontrolled.maxradarrange">
+					<set_value name="$kAAIT_space_getGlobalPath" exact="this.sector" />
+					<create_position name="$kAAIT_position_getGlobalPath" object="this.assignedcontrolled" />
+					<set_value name="$kAAIT_dist_toTarget" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isInTheWay}" />
+					<get_global_path component="$kAAIT_pathComponents" uselocalhighways="true" multiple="true">
+						<start object="this.assignedcontrolled" />
+						<end object="$kAAIT_test_target_isInTheWayOf" />
+					</get_global_path>
+					<set_value name="$kAAIT_pathComponent" exact="$kAAIT_pathComponents.{1}" />
+					<do_if value="$kAAIT_pathComponent == this.assignedcontrolled">
+						<set_value name="$kAAIT_pathComponent" exact="$kAAIT_pathComponents.{2}" />
+					</do_if>
+					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_pathComponent: ' + @$kAAIT_pathComponent.knownname + ' ' + @$kAAIT_pathComponent.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<do_if value="$kAAIT_pathComponent == this.sector or @$kAAIT_pathComponent.sector == this.sector">
+						<do_if value="$kAAIT_pathComponent.isclass.sector or $kAAIT_pathComponent.isclass.zone">
+							<do_if value="@$position" comment="generally in MoveGeneric">
+								<set_value name="$kAAIT_dist_toDest" exact="this.assignedcontrolled.distanceto.[$kAAIT_pathComponent, $position]" />
+								<set_value name="$kAAIT_result_isTargetInTheWay" exact="$kAAIT_dist_toDest gt $kAAIT_dist_toTarget" />
+							</do_if>
+							<do_else comment="can't determine if in the way, assume in the way if nearby">
+								<set_value name="$kAAIT_result_isTargetInTheWay" exact="$kAAIT_dist_toTarget le this.assignedcontrolled.maxradarrange * 0.25" />
+							</do_else>
 						</do_if>
-						<do_else comment="can't determine if in the way, assume in the way if nearby">
-							<set_value name="$kAAIT_result_isTargetInTheWay" exact="$kAAIT_dist_toTarget le this.assignedcontrolled.maxradarrange * 0.25" />
+						<do_else>
+							<set_value name="$kAAIT_dist_toDest" exact="this.assignedcontrolled.distanceto.{$kAAIT_pathComponent}" />
+							<set_value name="$kAAIT_result_isTargetInTheWay" exact="$kAAIT_dist_toDest gt $kAAIT_dist_toTarget" />
 						</do_else>
 					</do_if>
 					<do_else>
-						<set_value name="$kAAIT_dist_toDest" exact="this.assignedcontrolled.distanceto.{$kAAIT_pathComponent}" />
-						<set_value name="$kAAIT_result_isTargetInTheWay" exact="$kAAIT_dist_toDest gt $kAAIT_dist_toTarget" />
+						<set_value name="$kAAIT_result_isTargetInTheWay" exact="true" />
 					</do_else>
+					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_dist_toDest: ' + @$kAAIT_dist_toDest" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_dist_toTarget: ' + @$kAAIT_dist_toTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_result_isTargetInTheWay: ' + @$kAAIT_result_isTargetInTheWay" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				</do_if>
-				<do_else>
-					<set_value name="$kAAIT_result_isTargetInTheWay" exact="true" />
-				</do_else>
-				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_dist_toDest: ' + @$kAAIT_dist_toDest" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_dist_toTarget: ' + @$kAAIT_dist_toTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay $kAAIT_result_isTargetInTheWay: ' + @$kAAIT_result_isTargetInTheWay" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			</actions>
 
 			<!--
@@ -994,16 +1006,18 @@
 				<include_interrupt_actions ref="kAAIT_CleanOrders" />
 				<do_if value="this.assignedcontrolled.order">
 					<unassign_order_syncpoint_from_order order="this.assignedcontrolled.order" />
+					<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_remove_subordinate'" param2="this.assignedcontrolled" />
 				</do_if>
 				<create_order name="$kAAIT_order_attack" object="this.assignedcontrolled" id="'Attack'" immediate="true">
 					<param name="primarytarget" value="$kAAIT_target_attack" />
 					<param name="pursuedistance" value="this.assignedcontrolled.maxradarrange" />
 					<param name="pursuetargets" value="false" />
-					<param name="kAAITParam_iskAAITOrder" value="true" />
+					<!-- <param name="kAAITParam_iskAAITOrder" value="true" /> -->
 					<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 					<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
 					<param name="debugchance" value="$debugchance"/>
 				</create_order>
+				<set_value name="this.$kAAIT_data.$attackOrder" exact="$kAAIT_order_attack" />
 			</actions>
 
 			<actions name="kAAIT_Order_Avoid">
@@ -1013,6 +1027,7 @@
 				<include_interrupt_actions ref="kAAIT_CleanOrders" />
 				<do_if value="this.assignedcontrolled.order">
 					<unassign_order_syncpoint_from_order order="this.assignedcontrolled.order" />
+					<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_remove_subordinate'" param2="this.assignedcontrolled" />
 				</do_if>
 				<set_value name="$kAAIT_isImmediate" exact="true" />
 				<do_if value="@this.assignedcontrolled.order.id == 'TacticalOrder'">
@@ -1047,6 +1062,7 @@
 				<include_interrupt_actions ref="kAAIT_CleanOrders" />
 				<do_if value="this.assignedcontrolled.order">
 					<unassign_order_syncpoint_from_order order="this.assignedcontrolled.order" />
+					<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_remove_subordinate'" param2="this.assignedcontrolled" />
 				</do_if>
 				<create_order object="this.assignedcontrolled" id="'Flee'" immediate="true">
 					<param name="method" value="'boost'"/>
@@ -1066,6 +1082,7 @@
 				<include_interrupt_actions ref="kAAIT_CleanOrders" />
 				<do_if value="this.assignedcontrolled.order">
 					<unassign_order_syncpoint_from_order order="this.assignedcontrolled.order" />
+					<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_remove_subordinate'" param2="this.assignedcontrolled" />
 				</do_if>
 				<create_order object="event.object" id="'kAAIT_MoveWithdraw'" immediate="true">
 					<param name="target" value="this.$kAAIT_data.$target_avoid"/>
