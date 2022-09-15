@@ -15,6 +15,49 @@
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
 	</add>
+<!-- add.
+	<interrupts>
+-->
+	<add sel="//interrupts">
+		<library>
+			<actions name="kAAIT_Actions_AvoidOrNot_AttackBigTarget">
+				<set_value name="$kAAIT_isAvoid" exact="false" />
+				<do_if value="
+					this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt and
+					this.assignedcontrolled.distanceto.{this.$kAAIT_data.$defensibleTarget} le this.$kAAIT_data.$skill_distance_withdraw">
+					<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$isTargetHighRisk: ' + @this.$kAAIT_data.$isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<set_value name="$kAAIT_target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
+					<set_value name="$kAAIT_isAvoid" exact="true" />
+				</do_if>
+				<do_else>
+					<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+					<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+					<do_if value="@$kAAIT_result_bigEnemy">
+						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<set_value name="$kAAIT_target_avoid" exact="$kAAIT_result_bigEnemy" />
+						<set_value name="$kAAIT_isAvoid" exact="true" />
+					</do_if>
+				</do_else>
+				<do_if value="$kAAIT_isAvoid">
+					<do_if value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
+						<set_value name="$kAAIT_bigEnemy" exact="this.$kAAIT_data.$defensibleTarget" />
+						<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
+					</do_if>
+					<do_if value="@$kAAIT_result_target_found.isoperational">
+						<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
+						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+					</do_if>
+				</do_if>
+			</actions>
+		</library>
+	</add>
+<!-- add. purpose: add handlers.
+	<interrupts>
+-->
+	<add pos="prepend" sel="//interrupts">
+		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+		<handler ref="kAAIT_Handler_NewBigTarget" />
+	</add>
 	<!--
 		Yb    dP 88 .dP"Y8 88 88""Yb 88     888888
 		 Yb  dP  88 `Ybo." 88 88__dP 88     88__
@@ -29,18 +72,8 @@
 
 		<label name="kAAIT_label_avoid" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<do_if value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
-			<set_value name="$kAAIT_bigEnemy" exact="this.$kAAIT_data.$defensibleTarget" />
-			<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
-		</do_if>
-		<do_if value="@$kAAIT_result_target_found.isoperational">
-			<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
-			<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-		</do_if>
-		<do_else>
-			<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_target_avoid" />
-			<include_interrupt_actions ref="kAAIT_Order_Avoid" />
-		</do_else>
+		<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_target_avoid" />
+		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
 		<resume label="fight" />
 	</add>
@@ -60,22 +93,12 @@
 -->
 	<add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.canbeattacked&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<do_if value="
-				@this.$kAAIT_data.$isTargetHighRisk and
-				this.assignedcontrolled.distanceto.{this.$kAAIT_data.$defensibleTarget} le this.$kAAIT_data.$skill_distance_withdraw">
-				<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$isTargetHighRisk: ' + @this.$kAAIT_data.$isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<set_value name="$kAAIT_target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
-				<resume label="kAAIT_label_avoid" />
-			</do_if>
-			<do_else>
-				<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-				<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-				<do_if value="@$kAAIT_result_bigEnemy">
-					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-					<set_value name="$kAAIT_target_avoid" exact="$kAAIT_result_bigEnemy" />
+			<do_if value="@this.$kAAIT_data.$isTargetHighRisk">
+				<include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_AttackFighter" />
+				<do_if value="$kAAIT_isAvoid">
 					<resume label="kAAIT_label_avoid" />
 				</do_if>
-			</do_else>
+			</do_if>
 		</do_if>
 	</add>
 <!-- add after. purpose: clean-up.
@@ -101,18 +124,9 @@
 		<resume label="fight" />
 
 		<label name="kAAIT_label_avoid" />
-		<do_if value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
-			<set_value name="$kAAIT_bigEnemy" exact="this.$kAAIT_data.$defensibleTarget" />
-			<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
-		</do_if>
-		<do_if value="@$kAAIT_result_target_found.isoperational">
-			<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
-			<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-		</do_if>
-		<do_else>
-			<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_target_avoid" />
-			<include_interrupt_actions ref="kAAIT_Order_Avoid" />
-		</do_else>
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_target_avoid" />
+		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
 		<resume label="fight" />
 	</add>
@@ -132,22 +146,12 @@
 -->
 	<add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//do_while[@value=&quot;$bigtarget.canbeattacked and not $isdead&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<do_if value="
-				@this.$kAAIT_data.$isTargetHighRisk and
-				this.assignedcontrolled.distanceto.{this.$kAAIT_data.$defensibleTarget} le this.$kAAIT_data.$skill_distance_withdraw">
-				<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$isTargetHighRisk: ' + @this.$kAAIT_data.$isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<set_value name="$kAAIT_target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
-				<resume label="kAAIT_label_avoid" />
-			</do_if>
-			<do_else>
-				<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-				<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-				<do_if value="@$kAAIT_result_bigEnemy">
-					<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-					<set_value name="$kAAIT_target_avoid" exact="$kAAIT_result_bigEnemy" />
+			<do_if value="@this.$kAAIT_data.$isTargetHighRisk">
+				<include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_AttackFighter" />
+				<do_if value="$kAAIT_isAvoid">
 					<resume label="kAAIT_label_avoid" />
 				</do_if>
-			</do_else>
+			</do_if>
 		</do_if>
 	</add>
 <!-- add after. purpose: clean-up.

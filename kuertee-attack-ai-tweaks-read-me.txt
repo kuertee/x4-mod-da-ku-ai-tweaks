@@ -9,23 +9,28 @@ Dead Air AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-t
 
 Updates
 =======
-v5.1.0305, 10 Sep 2022:
+v5.1.0305, 15 Sep 2022:
+-Bug-fix: Ships were moving WAY out of sector. This occured only once during my tests/modding. But there was definitely a bug-fix required in my avoidance code. This bug shouldn't happen again.
 -Bug-fix: Escorting non-fighters (e.g. supply ships and carriers) were still drifting towards high-risk enemies. They now stay a certain distance behind their commander during attacks.
+-New feature: Small-sized and medium-sized ships harass their high-risk ship targets. With full shields, they attack. With 90% or more shields they avoid their target at half their avoidance distance. With less shields, they avoid them at their full avoidance distance - as they did in previous versions.
 -New feature: The recall subordinates feature of the generic move order defaults to false unless the destination is more than 2 gates away. Note that this is the Recall Subordinates order that is initiated automatically from the general move order. Ships will still recall subordinates at other times.
 -New feature: Fleets can now disengage from their small attack targets to prioritise new high-risk targets. This occurs when one in the fleet first engages a new high-risk target. Addresses the problem with large ships continuing to engage with smaller ships when there's higher-risk enemy.
 -Tweak: Avoid AI now knows whether to either (1) move around a high-risk enemy while keeping it as a target (i.e. combat-appropriate avoid distance) or (2) actually avoid a high-risk enemy during general flights (i.e. longer avoid distances).
+-Tweak: A lot of the tests for avoidance and withdraw are now in event conditions. This allows for smoother operation of the AIs.
 -Many Coordinated Attack fixes. I think this order was meant to be: (1) used from a short distance to the target and (2) managed manually. My changes (from the last update and this update) is to allow it to be used like other orders - fire and forget.
 	The Coordinated Attack changes from this update are:
 	1. Bug-fix of original order: subordinate orders getting initialised twice.
 	2. New feature: Allow the leader to receive my custom avoid behaviour. E.g. if there's a big enemy station between it and Coordinated Attack target.
 	3. New feature: Subordinates respond properly to attacks on them while they wait at their rally point. I.e. small harassing enemies will not release them but high-risk enemies will.
-	4. Bug-fix of Kuda's addition: Rally point of subordinates were at the original distance - instead of my intended longer distance, which the lead ship had. I.e. the lead ship's rally point was well behind its subordinate's rally points.
-	5. Bug-fix of Kuda's addition: Lead ship wasn't showing its rally point.
-	6. Bug-fix of Kuda's addition: Ships engage properly if the target attacks them or moves closer to the rally points.
-	7. Bug-fix of Kuda's addition: Rally point now gets reset properly if the target moves elsewhere.
-	8. New feature: Cancel the order properly when the target moves to a new sector.
+	4. New feature: Coordinated Attacks start to attack once their target attacks or is attacked by another ship of the same faction as the attackers. Note that Coordinated Attacks are only applied by the player to their ships. But if ever it is applied by another faction, this will work.
+	5. New feature: Rally points are now in an organised arc. Ships with the Attack order are the front. Ships with the Protect Ship order are at the back.
+	6. Bug-fix of Kuda's addition: Rally point of subordinates were at the original distances - instead of my intended longer distance, which the lead ship had. I.e. the lead ship's rally point was well behind its subordinate's rally points.
+	7. Bug-fix of Kuda's addition: Lead ship wasn't showing its rally point.
+	8. Bug-fix of Kuda's addition: Ships engage properly if the target attacks them or moves closer to the rally points.
+	9. Bug-fix of Kuda's addition: Rally point now gets reset properly if the target moves elsewhere.
 	Read all the changes to this order in the Coordinated Attack section below.
--Tweaks (many): Cleaned up more of the code. Moved testing of avoidance and withdrawl determination into event conditions. This allows for smoother operation of the AIs. Added vars to clearly define intent of code. Removed unnecessary blocks of code, unnecessary debug outputs, variables. Etc.
+-Bug-fix of Protect Ship AI: Add event listeners so that ships in low-attention function like in visible attention.
+-Tweaks (many): Cleaned up more of the code. Moved testing of avoidance and withdrawl determination into event conditions. Added vars to clearly define intent of code - e.g. instead of repeating test conditions. Removed unnecessary blocks of code, unnecessary debug outputs, variables. Etc.
 
 Attack AI Tweaks:
 =================
@@ -38,11 +43,26 @@ Requirements
 ============
 -SirNukes Mod Support APIs mod (https://www.nexusmods.com/x4foundations/mods/503)
 
+Notes about this mod and my ideas behind it:
+============================================
+1. Read DeadAir's notes. This read-me is for my portion (Attack AI Tweaks) of our combined mod.
+2. Stations are for delaying attackers until reinforcements arrive. They're not ship destroyers - unless only a few ships or small ships attack them. No changes to station behaviours are in this mod.
+3. Survivability is the reason behind the changes to the ship behaviours.
+4. Re: Skill adjustments to behaviours: Low-ranked pilots are impulsive and overly-confident. High-ranked pilots are careful and patient.
+5. There are very few random chances in the mod. The only random chances are their avoidance direction (clockwise/counter-clockwise) and angle adjustments to their withdraw vectors.
+6. Situations (e.g pilot skill, shield strength, direction of enemy, etc.) and events dictate the ships' actions. They are easily guessable (when you learn their behaviours, of course).
+7. When they are not avoiding, withdrawing, moving to engage position, the ships attack as their AI from the base game dictates. I.e. This mod doesn't actually change their actual attack behaviours (e.g. lauch drones, what their turrets do, etc.).
+8. Read the "What this mod doesn't do" section below.
+
 Avoid high-risk enemies
 =======================
 All ships move around high-risk enemies that are in their flight path. (https://youtu.be/mWBef0_mrmE)
 
-XS (except for drones), S, and M class ships will circle high-risk station targets until they outnumber 75% of their targets' turrets, and 50% for high-risk ship targets. Ships with missile and torpedo loadouts do not acquire this behaviour until their missiles and torpedoes are depleted. (https://youtu.be/DFVtwZxSKes)
+XS (except for drones), S, and M class ships with less than 100% shields will circle high-risk station targets until they outnumber 75% of their targets' turrets.
+Ships with missile and torpedo loadouts do not acquire this behaviour until their missiles and torpedoes are depleted. (https://youtu.be/DFVtwZxSKes)
+Ships will attack their high-risk ship targets when they have full shields or they outnumber 50% of their targets' weapons.
+At 90% shields or more they avoid their high-risk targets at half their pilots' skills avoidance distance.
+At less than 90% shields they avoid their high-risk targets at their pilots' skills avoidance distance.
 
 L, and XL class ships, enroute to their targets, will stop short of their targets to prevent accidental kamikaze attacks.
 
@@ -64,7 +84,7 @@ Withdrawing ships cancel their withdrawal when their ship target stop chasing th
 
 High-risk enemies
 =================
-Potentially high-risk enemies are 1.5x larger physically than the ship.
+Potentially high-risk enemies are 1.5x physically larger than the ship.
 For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers.
 For L, and XL ships, high-risk enemies have more DPS than the ship.
 
@@ -76,9 +96,6 @@ The NPC pilot's piloting skills and morale affect these behaviours:
 3. Step forward distance: Pilots of lower skills and morale step forward 3 km at a time instead of 1 km at a time.
 4. Shield percentage for withdrawal: Pilots of lower skills and morale will withdraw when their shields are at 50% instead of at 90%.
 5. Withdrwal and avoidance distance: Pilots of lower skills and morale withdraw to 25% their max radar range (approximately, 10 km) instead of to 50% their max radar range (approximately 20 km).
-
-As an overall guide for these settings, I set low-skilled pilots with low morale to be more impulsive and overly-confident.
-And high-skilled pilots with high morale to be more careful and patient.
 
 Disable all these skill-based features in the Extension Options so that all ships operate at perfect skills and high morale.
 
