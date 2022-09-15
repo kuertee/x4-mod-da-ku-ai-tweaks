@@ -258,32 +258,45 @@
 				<position value="$enemypos" />
 			</create_orientation>
 			<do_if value="$forcedassignment != assignment.defence or $kAAIT_rallyPointOwner == this.assignedcontrolled">
-				<set_value name="$kAAIT_yaw_deg_attack" exact="@$kAAIT_yaw_deg_attack + $kAAIT_shipNo_attack * $kAAIT_sign_attack * 10" />
+				<!-- <do_if value="$kAAIT_rallyPointOwner.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
+					<set_value name="$kAAIT_yaw_deg_attack" exact="@$kAAIT_yaw_deg_attack + $kAAIT_shipNo_attack * $kAAIT_sign_attack * 5" />
+				</do_if>
+				<do_else> -->
+					<set_value name="$kAAIT_yaw_deg_attack" exact="@$kAAIT_yaw_deg_attack + $kAAIT_shipNo_attack * $kAAIT_sign_attack * 10" />
+				<!-- </do_else> -->
 				<set_value name="$kAAIT_yaw_deg" exact="$kAAIT_yaw_deg_attack" />
 			</do_if>
 			<do_else>
-				<set_value name="$kAAIT_yaw_deg_defence" exact="@$kAAIT_yaw_deg_defence + $kAAIT_shipNo_defence * $kAAIT_sign_defence * 5" />
+				<!-- <do_if value="$kAAIT_rallyPointOwner.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
+					<set_value name="$kAAIT_yaw_deg_attack" exact="@$kAAIT_yaw_deg_attack + $kAAIT_shipNo_attack * $kAAIT_sign_attack * 2.5" />
+				</do_if>
+				<do_else> -->
+					<set_value name="$kAAIT_yaw_deg_defence" exact="@$kAAIT_yaw_deg_defence + $kAAIT_shipNo_defence * $kAAIT_sign_defence * 5" />
+				<!-- </do_else> -->
 				<set_value name="$kAAIT_yaw_deg" exact="$kAAIT_yaw_deg_defence" />
 			</do_else>
 			<set_value name="$kAAIT_yaw" exact="$kAAIT_rotFromTarget.yaw + $kAAIT_yaw_deg * pi / 180" />
 			<do_if value="$primarytarget.isclass.ship">
 				<do_if value="$primarytarget.isoperational and $primarytarget.travel.active">
-					<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 0.25, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
+					<set_value name="$kAAIT_tacticalDistance_rallyPointOwner" exact="[this.assignedcontrolled.maxradarrange * 0.25, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
+					<set_value name="$kAAIT_tacticalDistance" exact="$kAAIT_tacticalDistance_rallyPointOwner" />
 				</do_if>
 				<do_else>
-					<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 1.25, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
+					<set_value name="$kAAIT_tacticalDistance_rallyPointOwner" exact="[this.assignedcontrolled.maxradarrange * 1.25, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
+					<set_value name="$kAAIT_tacticalDistance" exact="$kAAIT_tacticalDistance_rallyPointOwner" />
 				</do_else>
 			</do_if>
 			<do_else>
-				<set_value name="$kAAIT_tacticalDistance" exact="[this.assignedcontrolled.maxradarrange * 0.75, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
+				<set_value name="$kAAIT_tacticalDistance_rallyPointOwner" exact="[this.assignedcontrolled.maxradarrange * 0.75, this.assignedcontrolled.bboxdistanceto.{$primarytarget}].min" />
+				<set_value name="$kAAIT_tacticalDistance" exact="$kAAIT_tacticalDistance_rallyPointOwner" />
 			</do_else>
 			<do_if value="$forcedassignment == assignment.defence and $kAAIT_rallyPointOwner != this.assignedcontrolled" comment="defense position is at tha back - not in the line of attackers">
-				<set_value name="$kAAIT_tacticalDistance" operation="add" exact="10km" />
+				<set_value name="$kAAIT_tacticalDistance_rallyPointOwner" operation="add" exact="10km" />
 			</do_if>
 			<create_position name="$initialpos"
-				x="$enemypos.x + $kAAIT_tacticalDistance * sin ($kAAIT_yaw) * cos ($kAAIT_rotFromTarget.pitch)"
-				y="$enemypos.y + $kAAIT_tacticalDistance * sin ($kAAIT_rotFromTarget.pitch)"
-				z="$enemypos.z + $kAAIT_tacticalDistance * cos ($kAAIT_yaw) * cos ($kAAIT_rotFromTarget.pitch)"
+				x="$enemypos.x + $kAAIT_tacticalDistance_rallyPointOwner * sin ($kAAIT_yaw) * cos ($kAAIT_rotFromTarget.pitch)"
+				y="$enemypos.y + $kAAIT_tacticalDistance_rallyPointOwner * sin ($kAAIT_rotFromTarget.pitch)"
+				z="$enemypos.z + $kAAIT_tacticalDistance_rallyPointOwner * cos ($kAAIT_yaw) * cos ($kAAIT_rotFromTarget.pitch)"
 			/>
 		</actions>
 		<actions name="kAAIT_RemoveWaitsAndJustFight" comment="cancel all wait point and just fight">
@@ -359,7 +372,13 @@
 								<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$primarytarget}" />
 								<set_value name="$kAAIT_distToRallyPoint" exact="this.assignedcontrolled.bboxdistanceto.[$primarytarget.sector, $initialpos]" />
 								<set_value name="$kAAIT_distFromTargetToRallyPoint" exact="$primarytarget.bboxdistanceto.[$primarytarget.sector, $initialpos]" />
-								<check_value value="$kAAIT_distToTarget le this.assignedcontrolled.maxradarrange" />
+								<check_any>
+									<check_all>
+										<check_value value="@$kAAIT_tacticalDistance" />
+										<check_value value="$kAAIT_distToTarget le $kAAIT_tacticalDistance" />
+									</check_all>
+									<check_value value="$kAAIT_distToTarget le this.assignedcontrolled.maxradarrange" />
+								</check_any>
 								<check_all>
 									<check_any>
 										<check_value value="$kAAIT_distFromTargetToRallyPoint le this.assignedcontrolled.maxradarrange * 0.25" comment="target is too near the rally point" />
@@ -376,7 +395,13 @@
 					</check_all>
 					<check_any comment="attack events">
 						<check_all>
-							<event_object_attacked object="this.assignedcontrolled" param="$primarytarget" />
+							<check_all>
+								<event_object_attacked object="this.assignedcontrolled" />
+								<check_any>
+									<check_value value="event.param == $primarytarget" />
+									<check_value value="@$primarytarget.allsubordinates.indexof.{event.param}" />
+								</check_any>
+							</check_all>
 							<set_value name="$kAAIT_isJustFight" exact="true" />
 						</check_all>
 						<check_all>
@@ -385,9 +410,15 @@
 								<event_object_attacked_object object="$primarytarget" />
 							</check_any>
 							<check_any>
-								<check_value value="event.param.owner == this.assignedcontrolled.owner" />
+								<check_all>
+									<check_value value="event.param.isclass.ship" />
+									<check_value value="event.param.owner == this.assignedcontrolled.owner" />
+									<check_value value="not event.param.isunit" />
+									<check_value value="not event.param.islasertower" />
+									<check_value value="event.param != player.occupiedship" />
+								</check_all>
 								<check_value value="event.param == this.assignedcontrolled" />
-								<check_value value="@this.assignedcontrolled.commander.allsubordinates.indexof.{event.param}" />
+								<check_value value="@this.assignedcontrolled.allsubordinates.indexof.{event.param}" />
 							</check_any>
 							<check_any>
 								<check_value value="event.param.owner == this.assignedcontrolled.owner" />
@@ -467,10 +498,10 @@
 												<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidHighRisk IS high-risk v station'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 											</check_all>
 										</check_any>
-										<check_any comment="not a bomber">
+										<!-- <check_any comment="not a bomber">
 											<check_value value="not this.assignedcontrolled.dps.missiles.all" />
 											<check_value value="not this.assignedcontrolled.ammostorage.missile.count" />
-										</check_any>
+										</check_any> -->
 										<set_value name="$kAAIT_isHighRiskEvent" exact="true" />
 									</check_all>
 									<check_all comment="this ship is lxl">
@@ -812,6 +843,16 @@
 -->
 	<replace sel="//run_script[@name=&quot;'order.fight.attack.object'&quot;]">
 		<label name="kAAITLabel_just_fight" />
+		<set_value name="this.$kAAIT_tacticalOrdersToCancel" exact="[]" />
+		<do_for_each name="$ordergroup" in="$ORDERS" reverse="true">
+			<do_for_each valuename="$kAAIT_orders" in="$ORDERS.{$ordergroup}" reverse="true">
+				<do_for_each name="$kAAIT_order" in="$kAAIT_orders" reverse="true">
+					<do_if value="$kAAIT_order.exists">
+						<append_to_list name="this.$kAAIT_tacticalOrdersToCancel" exact="$kAAIT_order" />
+					</do_if>
+				</do_for_each>
+			</do_for_each>
+		</do_for_each>
 		<create_order object="this.assignedcontrolled" id="'Attack'">
 	        <param name="primarytarget" value="$primarytarget"/>
 			<param name="pursuedistance" value="this.assignedcontrolled.maxradarrange" />

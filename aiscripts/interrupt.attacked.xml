@@ -1,5 +1,161 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
+<!-- add. purpose: use withdraw conditions for kuda-controlled ships while in attack.
+  <check_all comment="flee">
+-->
+  <add pos="prepend" sel="//check_all[@comment=&quot;flee&quot;]">
+    <check_all comment="use kuda withdraw conditions if kuda-controlled ship. otherwise, pass this check_all test.">
+      <check_any>
+        <check_value value="this.assignedcontrolled.order.id != 'Attack'" />
+        <check_all comment="not kuda-controlled ship">
+          <check_value value="not @$kAAITParam_iskAAITOrder" />
+          <check_value value="not @$kAAITParam_isAvoidHighRisk" />
+          <check_value value="not @$kAAITParam_isStepForwardWithdraw" />
+        </check_all>
+        <check_all comment="kuda-controlled ship">
+          <check_all comment="is allowed to actually flee. when changed, also change others with the 'is allowed to actually flee' comment.">
+            <check_value value="not this.assignedcontrolled.isunit" />
+            <check_value value="not this.assignedcontrolled.islasertower" />
+            <check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" />
+          </check_all>
+          <check_all>
+            <check_any comment="is event.param high-risk. when changed, also change others with the 'is event.param high-risk' comment.">
+              <check_all comment="this ship is xssm">
+                <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]" />
+                <check_all comment="potential high-risk">
+                  <check_any>
+                    <check_all>
+                      <check_value value="@event.param.defensible" />
+                      <check_value value="event.param.defensible.size gt this.assignedcontrolled.size * 1.5" />
+                      <check_value value="event.param.defensible.primarypurpose == purpose.fight" />
+                      <check_value value="@event.param.defensible.type != shiptype.carrier" />
+                    </check_all>
+                    <check_all>
+                      <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" />
+                      <check_value value="event.param.primarypurpose == purpose.fight" />
+                      <check_value value="@event.param.type != shiptype.carrier" />
+                    </check_all>
+                  </check_any>
+                </check_all>
+                <check_any>
+                  <check_all comment="target is ship">
+                    <check_value value="event.param.isclass.ship" />
+                    <check_any>
+                      <check_all comment="this ship is xss">
+                        <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
+                        <check_value value="
+                          [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
+                          @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
+                        " />
+                      </check_all>
+                      <check_all comment="this ship is m">
+                        <check_value value="this.assignedcontrolled.isclass.ship_m" />
+                        <check_value value="
+                          [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
+                          @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVShips / 100.0
+                        " />
+                      </check_all>
+                    </check_any>
+                  </check_all>
+                  <check_all comment="target is station">
+                    <check_value value="event.param.isclass.station" />
+                    <check_any>
+                      <check_all comment="this ship is xss">
+                        <check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
+                        <check_value value="
+                          [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
+                          @event.param.weapons.operational.count * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
+                        " />
+                      </check_all>
+                      <check_all comment="this ship is m">
+                        <check_value value="this.assignedcontrolled.isclass.ship_m" />
+                        <check_value value="
+                          [@event.param.assignedaipilot.$kAAIT_attackers.count, @event.param.defencenpc.$kAAIT_attackers.count, 1].max * (2 - (this.skill.piloting + this.skill.morale) / 30.0 * 1) le
+                          @event.param.weapons.operational.count * global.$kAAIT_Config.$m_outnumberVStations / 100.0
+                        " />
+                      </check_all>
+                    </check_any>
+                  </check_all>
+                </check_any>
+                <!-- <check_any comment="not a bomber">
+                  <check_value value="not this.assignedcontrolled.dps.missiles.all" />
+                  <check_value value="not this.assignedcontrolled.ammostorage.missile.count" />
+                </check_any> -->
+                <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
+              </check_all>
+              <check_all comment="this ship is lxl">
+                <check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
+                <check_any>
+                  <check_value value="event.param.isclass.station" />
+                  <check_any>
+                    <check_all>
+                      <check_value value="@event.param.defensible" />
+                      <check_value value="event.param.defensible.size gt this.assignedcontrolled.size * 1.5" />
+                      <check_value value="event.param.defensible.primarypurpose == purpose.fight" />
+                      <check_value value="@event.param.defensible.type != shiptype.carrier" />
+                    </check_all>
+                    <check_all>
+                      <check_value value="event.param.size gt this.assignedcontrolled.size * 1.5" />
+                      <check_value value="event.param.primarypurpose == purpose.fight" />
+                      <check_value value="@event.param.type != shiptype.carrier" />
+                    </check_all>
+                  </check_any>
+                  <check_all>
+                    <check_value value="event.param.isclass.[class.ship_l, class.ship_xl]" />
+                    <check_value value="event.param.dps.all gt this.assignedcontrolled.dps.all * 1.25" />
+                  </check_all>
+                </check_any>
+                <set_value name="$kAAIT_isHighRiskEvent" exact="true" />
+              </check_all>
+            </check_any>
+            <check_all comment="withdraw now?">
+              <check_any>
+                <check_value value="not this.assignedcontrolled.weapons.all.count" />
+                <check_value value="this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25" comment="withdraw if 25% operational weapons" />
+                <check_value value="this.assignedcontrolled.shieldpercentage le (75 + (this.skill.piloting + this.skill.morale) / 30.0 * 15)" comment="withdraw if less than withdraw threshold" />
+              </check_any>
+              <set_value name="$kAAIT_isWithdrawFromTarget" exact="true" />
+              <set_value name="$fleerespond" exact="$kAAIT_isWithdrawFromTarget" />
+            </check_all>
+          </check_all>
+        </check_all>
+      </check_any>
+    </check_all>
+  </add>
+<!-- add before. purpose: ensure the rest of flee conditions are only those not controlled by kuda. e.g. non-player ships.
+  <check_all comment="flee">
+    <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
+    <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
+-->
+  <replace sel="//check_all[@comment=&quot;flee&quot;]//check_value[@value=&quot;event.object.signal.{'attacked'}.response.id == 'flee'&quot;]">
+    <check_all>
+      <check_all comment="not kuda-controlled ship">
+        <check_value value="not @$kAAITParam_iskAAITOrder" />
+        <check_value value="not @$kAAITParam_isAvoidHighRisk" />
+        <check_value value="not @$kAAITParam_isStepForwardWithdraw" />
+      </check_all>
+      <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
+    </check_all>
+  </replace>
+  <replace sel="//check_all[@comment=&quot;flee&quot;]//check_value[@value=&quot;event.object.signal.{'attacked'}.response.id == 'auto'&quot;]">
+    <check_all>
+      <check_all comment="not kuda-controlled ship">
+        <check_value value="not @$kAAITParam_iskAAITOrder" />
+        <check_value value="not @$kAAITParam_isAvoidHighRisk" />
+        <check_value value="not @$kAAITParam_isStepForwardWithdraw" />
+      </check_all>
+      <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
+    </check_all>
+  </replace>
+<!-- add. purpose: clean-up kuda vars
+  <handler name="AttackHandler">
+    <actions>
+-->
+  <add sel="//handler[@name=&quot;AttackHandler&quot;]/actions">
+    <remove_value name="$kAAIT_isHighRiskEvent" />
+    <remove_value name="$kAAIT_isWithdrawFromTarget" />
+  </add>
+  <!-- DeadAir Diffs -->
   <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[1]">
     <check_value value="event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine"/>
   </add>

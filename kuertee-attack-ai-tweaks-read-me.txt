@@ -10,13 +10,16 @@ Dead Air AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-t
 Updates
 =======
 v5.1.0305, 15 Sep 2022:
+-Note: I added notes about my ideas behind this mod. Read them as a starter for this mod - if you wish. But I always suggest to "just" use the mod after skimming through the read-me. If you have question about the mod AFTER experiencing it, THEN read the read-me.
 -Bug-fix: Ships were moving WAY out of sector. This occured only once during my tests/modding. But there was definitely a bug-fix required in my avoidance code. This bug shouldn't happen again.
 -Bug-fix: Escorting non-fighters (e.g. supply ships and carriers) were still drifting towards high-risk enemies. They now stay a certain distance behind their commander during attacks.
--New feature: Small-sized and medium-sized ships harass their high-risk ship targets. With full shields, they attack. With 90% or more shields they avoid their target at half their avoidance distance. With less shields, they avoid them at their full avoidance distance - as they did in previous versions.
+-New feature: Small-sized and medium-sized ships harass their high-risk ship targets. With full shields, they attack. With shields at their skill-based withdrawal percentage or more, they avoid their target at half their avoidance distance. With less shields, they avoid them at their full avoidance distance - as they did in previous versions.
 -New feature: The recall subordinates feature of the generic move order defaults to false unless the destination is more than 2 gates away. Note that this is the Recall Subordinates order that is initiated automatically from the general move order. Ships will still recall subordinates at other times.
 -New feature: Fleets can now disengage from their small attack targets to prioritise new high-risk targets. This occurs when one in the fleet first engages a new high-risk target. Addresses the problem with large ships continuing to engage with smaller ships when there's higher-risk enemy.
--Tweak: Avoid AI now knows whether to either (1) move around a high-risk enemy while keeping it as a target (i.e. combat-appropriate avoid distance) or (2) actually avoid a high-risk enemy during general flights (i.e. longer avoid distances).
 -Tweak: A lot of the tests for avoidance and withdraw are now in event conditions. This allows for smoother operation of the AIs.
+-Tweak: Added tests to engine's capabilities to capital ship's withdraw tests. If less than 25%, they stop to withdraw and just fight.
+-Tweak: Avoid AI now knows whether to either (1) move around a high-risk enemy while keeping it as a target (i.e. combat-appropriate avoid distance) or (2) actually avoid a high-risk enemy during general flights (i.e. longer avoid distances).
+-Tweak: Made small craft with missiles/torpedoes to follow fighter avoidance rules. Now that fighters harass their targets, limiting these ships' attack runs will increase their surviviability, especially against station targets. Previous versions made these ships ignore the rules until their missiles/torpedoes are expended.
 -Many Coordinated Attack fixes. I think this order was meant to be: (1) used from a short distance to the target and (2) managed manually. My changes (from the last update and this update) is to allow it to be used like other orders - fire and forget.
 	The Coordinated Attack changes from this update are:
 	1. Bug-fix of original order: subordinate orders getting initialised twice.
@@ -37,7 +40,7 @@ Attack AI Tweaks:
 
 Mod effects
 ===========
-(1) All ships avoid high-risk enemies. (2) L, and XL ships inch forward against high-risk targets. (3) L, and XL ships withdraw from high-risk targets when their shields fall below 90%.
+(1) All ships avoid high-risk enemies. (2) L, and XL ships inch forward against high-risk targets. (3) L, and XL ships withdraw from high-risk targets when their shields fall below their skill-based withdrawal percentage (i.e. between 75% and 90%).
 
 Requirements
 ============
@@ -45,13 +48,13 @@ Requirements
 
 Notes about this mod and my ideas behind it:
 ============================================
-1. Read DeadAir's notes. This read-me is for my portion (Attack AI Tweaks) of our combined mod.
+1. This read-me is for my portion (Attack AI Tweaks) of our this combined mod. DeadAir's read me is linked at the top of this read-me.
 2. Stations are for delaying attackers until reinforcements arrive. They're not ship destroyers - unless only a few ships or small ships attack them. No changes to station behaviours are in this mod.
-3. Survivability is the reason behind the changes to the ship behaviours.
+3. Survivability is the reason behind the changes to the ship behaviours: avoid high-risk enemies, attack slowly, withdraw when necessary.
 4. Re: Skill adjustments to behaviours: Low-ranked pilots are impulsive and overly-confident. High-ranked pilots are careful and patient.
-5. There are very few random chances in the mod. The only random chances are their avoidance direction (clockwise/counter-clockwise) and angle adjustments to their withdraw vectors.
+5. There are no actions that are random in the mod (in all my mods, actually). The only actions that are random are the ship's avoidance direction (clockwise/counter-clockwise) and angle adjustments to their withdraw vectors.
 6. Situations (e.g pilot skill, shield strength, direction of enemy, etc.) and events dictate the ships' actions. They are easily guessable (when you learn their behaviours, of course).
-7. When they are not avoiding, withdrawing, moving to engage position, the ships attack as their AI from the base game dictates. I.e. This mod doesn't actually change their actual attack behaviours (e.g. lauch drones, what their turrets do, etc.).
+7. When they are not avoiding, withdrawing, moving to engage position, the ships attack with the base game AI. I.e. This mod doesn't actually change their actual attack behaviours (e.g. lauch drones, what their turrets do, etc.).
 8. Read the "What this mod doesn't do" section below.
 
 Avoid high-risk enemies
@@ -59,10 +62,10 @@ Avoid high-risk enemies
 All ships move around high-risk enemies that are in their flight path. (https://youtu.be/mWBef0_mrmE)
 
 XS (except for drones), S, and M class ships with less than 100% shields will circle high-risk station targets until they outnumber 75% of their targets' turrets.
-Ships with missile and torpedo loadouts do not acquire this behaviour until their missiles and torpedoes are depleted. (https://youtu.be/DFVtwZxSKes)
+REMOVED since v5.1.0305: Ships with missile and torpedo loadouts do not acquire this behaviour until their missiles and torpedoes are depleted. (https://youtu.be/DFVtwZxSKes)
 Ships will attack their high-risk ship targets when they have full shields or they outnumber 50% of their targets' weapons.
-At 90% shields or more they avoid their high-risk targets at half their pilots' skills avoidance distance.
-At less than 90% shields they avoid their high-risk targets at their pilots' skills avoidance distance.
+At shields of more than their skills-based withdrawal levels (i.e. between 75% to 90%) or more they avoid their high-risk targets at half their pilots' skills avoidance distance.
+With less shields they avoid their high-risk targets at their pilots' skills-based avoidance distance.
 
 L, and XL class ships, enroute to their targets, will stop short of their targets to prevent accidental kamikaze attacks.
 
@@ -76,7 +79,7 @@ Previous versions start at their optimal range based on their DPS, their target 
 
 The current version makes use of long-range weapons earlier and for a longer time - softening up their target. The previous version used all weapons sooner (because they get closer sooner) but put the ship in danger sooner - causing some ships to withdraw sooner and more often.
 
-Withdraw out of range: When shields drop below 90% or operational weapon count is low, L and XL ships will withdraw out of range of high-risk enemies at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge. Against high-risk ships, L, and XL attackers will not withdraw unless there are other L, and XL attackers.
+Withdraw out of range: When shields drop below their skills-based withdraw levels or operational weapon count is low, L and XL ships will withdraw out of range of high-risk enemies at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge. Against high-risk ships, L, and XL attackers will not withdraw unless there are other L, and XL attackers.
 
 Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw or cancel their withdrawals.
 

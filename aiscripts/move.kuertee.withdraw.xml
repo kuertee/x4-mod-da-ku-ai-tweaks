@@ -48,7 +48,7 @@
 			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
 			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
 			<remove_from_group group="$kAAIT_bigEnemies" object="$target" />
-			<do_if value="$kAAIT_bigEnemies.count gt 1" comment="add positions all big enemies to pos to withdraw from">
+			<do_if value="$kAAIT_bigEnemies.count" comment="add positions all big enemies to pos to withdraw from">
 				<do_for_each name="$kAAIT_bigEnemy" in="$kAAIT_bigEnemies">
 					<create_position name="$posEnemy" space="$orderLocation_space" object="$kAAIT_bigEnemy" />
 					<create_position name="$posTarget"
@@ -61,11 +61,38 @@
 				<position value="$posTarget" />
 			</create_orientation>
 			<set_value name="$ship_yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
-			<do_if value="$target.isclass.ship and (not $kAAIT_bigEnemies.count)">
-				<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-45, 45].random" />
+			<do_if value="
+				this.assignedcontrolled.order.id != 'Attack' or
+				$target.isclass.station or
+				(
+					this.assignedcontrolled.primarypurpose != purpose.fight or
+					this.assignedcontrolled.type == shiptype.carrier
+				)">
+				<set_value name="$yaw_deg" exact="$ship_yaw_deg" />
 			</do_if>
 			<do_else>
-				<set_value name="$yaw_deg" exact="$ship_yaw_deg" />
+				<set_value name="$yaw_deg" exact="null" />
+				<do_if value="$target == @this.$kAAIT_data.$defensibleTarget and this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count" comment="withdraw angle at 90 deg of closest other attacker to enemy">
+					<sort_group group="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" />
+					<set_value name="$ally" exact="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{1}" />
+					<do_if value="$ally.isoperational and $target.bboxdistanceto.{$ally} gt this.assignedcontrolled.maxradarrange * 0.5" comment="target too far from nearest ally">
+						<create_position name="$pos_toAlly" space="$orderLocation_space" object="$ally" />
+						<create_orientation name="$rot_toAlly" orientation="look_at" refposition="$pos_toAlly">
+							<position value="$posTarget" />
+						</create_orientation>
+						<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi" />
+						<set_value name="$ship_yaw_deg" exact="$ship_yaw_deg + ($yaw_toAlly - $ship_yaw_deg) * 0.5" />
+						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-90, 90].random" />
+					</do_if>
+				</do_if>
+				<do_if value="$yaw_deg != null">
+					<do_if value="$kAAIT_bigEnemies.count" comment="more than one high-risk enemy">
+						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-30, 30].random" comment="smaller angles allow ship to withdraw quicker" />
+					</do_if>
+					<do_else>
+						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-90, -45, 45, 90].random" comment="larger angles allow other attackers to catch-up" />
+					</do_else>
+				</do_if>
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
 			<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.primarypurpose: ' + @this.assignedcontrolled.primarypurpose" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
@@ -89,9 +116,9 @@
 				<set_value name="$dist_adjByShields" exact="(100 - this.assignedcontrolled.shieldpercentage) / 100 * this.$kAAIT_data.$skill_distance_withdraw" />
 				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$combatRange_mid + $dist_adjByShields" />
 			</do_else>
-			<do_if value="$target.isclass.ship">
+			<!-- <do_if value="$target.isclass.ship">
 				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="[this.$kAAIT_data.$distance_attackFrom * 1.5, this.assignedcontrolled.maxradarrange].min" />
-			</do_if>
+			</do_if> -->
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
 				x="$posTarget.x + this.$kAAIT_data.$distance_attackFrom * sin ($yaw) * cos ($rotFromTarget.pitch)"
@@ -133,11 +160,7 @@
 								<check_value value="$target.isclass.ship" />
 								<check_any>
 									<check_value value="$target.shieldpercentage le 25" comment="target has low shields, just fight it" />
-									<check_value value="this.assignedcontrolled.hullpercentage le 25" />
-									<check_all>
-										<check_value value="this.assignedcontrolled.hullpercentage le 50" />
-										<check_value value="$kAAIT_distToTarget gt 5km" comment="keep withdrawing until a short distnace, then just fight" />
-									</check_all>
+									<check_value value="this.assignedcontrolled.hullpercentage le 50" />
 								</check_any>
 								<set_value name="$kAAIT_isJustFight" exact="true" />
 							</check_all>

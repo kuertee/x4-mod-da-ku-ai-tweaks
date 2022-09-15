@@ -78,33 +78,35 @@
         <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_isTargetHighRisk: ' + $kAAIT_result_isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
         <set_value name="$kAAIT_distToEnemy" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_enemy}" />
         <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_distToEnemy: ' + $kAAIT_distToEnemy" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-        <do_if value="
-          (
-            $kAAIT_result_isTargetHighRisk and
-            $kAAIT_distToEnemy le this.assignedcontrolled.maxradarrange * 0.5
-          ) or
-          this.assignedcontrolled.primarypurpose != purpose.fight or
-          this.assignedcontrolled.type == shiptype.carrier">
-          <set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_enemy" />
-          <set_value name="$kAAIT_test_target_isInTheWayOf" exact="$target" />
-          <include_interrupt_actions ref="kAAIT_GetIsTargetInTheWay" />
-          <remove_value name="$kAAIT_test_target_isInTheWay" />
-          <remove_value name="$kAAIT_test_target_isInTheWayOf" />
-          <do_if value="$kAAIT_result_isTargetInTheWay">
-            <debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.order.$kAAITParam_iskAAITOrder: ' + @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-            <do_if value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
-              <set_value name="$kAAIT_bigEnemy" exact="$kAAIT_enemy" />
-              <include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
-            </do_if>
-            <do_if value="@$kAAIT_result_target_found.isoperational">
-              <set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
-              <include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-            </do_if>
-            <do_else>
-              <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_enemy" />
-              <include_interrupt_actions ref="kAAIT_Order_Avoid" />
-            </do_else>
+        <do_if value="$kAAIT_result_isTargetHighRisk">
+          <do_if value="
+            this.assignedcontrolled.primarypurpose != purpose.fight or
+            this.assignedcontrolled.type == shiptype.carrier">
+            <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_enemy" />
+            <include_interrupt_actions ref="kAAIT_Order_Avoid" />
           </do_if>
+          <do_elseif value="$kAAIT_distToEnemy le this.assignedcontrolled.maxradarrange">
+            <set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_enemy" />
+            <set_value name="$kAAIT_test_target_isInTheWayOf" exact="$target" />
+            <include_interrupt_actions ref="kAAIT_GetIsTargetInTheWay" />
+            <remove_value name="$kAAIT_test_target_isInTheWay" />
+            <remove_value name="$kAAIT_test_target_isInTheWayOf" />
+            <do_if value="$kAAIT_result_isTargetInTheWay">
+              <debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.order.$kAAITParam_iskAAITOrder: ' + @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+              <do_if value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder and this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange * 1.25">
+                <set_value name="$kAAIT_bigEnemy" exact="$kAAIT_enemy" />
+                <include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
+              </do_if>
+              <do_if value="@$kAAIT_result_target_found.isoperational">
+                <set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
+                <include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+              </do_if>
+              <do_else>
+                <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_enemy" />
+                <include_interrupt_actions ref="kAAIT_Order_Avoid" />
+              </do_else>
+            </do_if>
+          </do_elseif>
         </do_if>
       </do_if>
     </actions>
