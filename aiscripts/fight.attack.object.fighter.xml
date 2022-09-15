@@ -15,16 +15,24 @@
 			<actions name="kAAIT_Actions_AvoidOrNot_AttackFighter">
 				<set_value name="$kAAIT_isAvoid" exact="false" />
 				<do_if value="
-					this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt and
+					(
+						this.$kAAIT_data.$defensibleTarget.isclass.station or
+						this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt
+					) and
 					this.assignedcontrolled.distanceto.{this.$kAAIT_data.$defensibleTarget} le this.$kAAIT_data.$skill_distance_withdraw">
-					<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$isTargetHighRisk: ' + @this.$kAAIT_data.$isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<set_value name="$kAAIT_target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
 					<set_value name="$kAAIT_isAvoid" exact="true" />
 				</do_if>
 				<do_else>
 					<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
 					<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-					<do_if value="@$kAAIT_result_bigEnemy.isclass.station">
+					<do_if value="
+						@$kAAIT_result_bigEnemy.isoperational and
+						(
+							$kAAIT_result_bigEnemy.isclass.station or
+							this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt
+						) and
+						this.assignedcontrolled.distanceto.{$kAAIT_result_bigEnemy} le this.$kAAIT_data.$skill_distance_withdraw">
 						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<set_value name="$kAAIT_target_avoid" exact="$kAAIT_result_bigEnemy" />
 						<set_value name="$kAAIT_isAvoid" exact="true" />
