@@ -6,11 +6,53 @@
 	<add sel="//params">
 		<param name="kAAITParam_tacticalOrderTarget" required="false" default="null" type="internal" />
 	</add>
+<!-- replace and add. purpose: recall subordinates only if gatedistance is 2 or more. or in the case of non-fighters 1 or more.
+	<param name="recallsubordinates" default="true" type="internal" comment="recall subordinates and cancel the recall of subordinates. disabled in the move.generic call from move.gate"/>
+-->
+	<replace sel="//params/param[@name=&quot;recallsubordinates&quot;]">
+		<param name="recallsubordinates" default="
+			if this.assignedcontrolled.primarypurpose == purpose.mine then true
+			else (
+				if this.assignedcontrolled.primarypurpose != purpose.fight then
+					if this.assignedcontrolled.jobmainsector and this.assignedcontrolled.gatedistance.{this.assignedcontrolled.jobmainsector} ge 1 then true
+					else (
+						if @$destination.count then
+							if this.assignedcontrolled.gatedistance.{$destination.{1}} ge 1 then true
+							else false
+						else (
+							if this.assignedcontrolled.gatedistance.{$destination} ge 1 then true
+							else false
+						)
+					)
+				else (
+					if this.assignedcontrolled.jobmainsector and this.assignedcontrolled.gatedistance.{this.assignedcontrolled.jobmainsector} ge 2 then true
+					else (
+						if @$destination.count then
+							if this.assignedcontrolled.gatedistance.{$destination.{1}} ge 2 then true
+							else false
+						else (
+							if this.assignedcontrolled.gatedistance.{$destination} ge 2 then true
+							else false
+						)
+					)
+				)
+			)
+		" type="internal" />
+	</replace>
 <!-- add. purpose: withdraw handler.
 	<interrupts>
 -->
 	<add sel="//interrupts">
 		<handler ref="kAAIT_Handler_TacticalSubordinateAttack" />
+	</add>
+<!-- add.
+	<init>
+-->
+	<add sel="//init">
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<do_if value="@$kAAITParam_tacticalOrderTarget.isoperational">
+			<create_position name="$kAAIT_pos_tacticatTarget" space="$kAAITParam_tacticalOrderTarget.zone" value="$kAAITParam_tacticalOrderTarget.position" />
+		</do_if>
 	</add>
 <!-- add. purpose: tag move.generic as tactical.
 	<run_script name="'move.generic'" result="$movesuccess">

@@ -67,6 +67,23 @@
   <add sel="//init">
     <debug_text text="this.assignedcontrolled.idcode + ' LABEL init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
   </add>
+<!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
+  <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
+-->
+  <add pos="before" sel="//signal_objects[@param=&quot;'resupply'&quot;]">
+    <set_value name="$kAAIT_restockChance" exact="100" />
+    <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+    <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+    <do_if value="
+      @$kAAIT_bigEnemy.isoperational or
+      @this.assignedcontrolled.commaner.order.id == 'Attack' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'Attack' or
+      @this.assignedcontrolled.commaner.order.id == 'TacticalOrder' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'TacticalOrder'">
+      <set_value name="$kAAIT_restockChance" exact="0" />
+    </do_if>
+  </add>
+  <add sel="//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
 <!-- add after. purpose: finish.
   <label name="finish" />
 -->

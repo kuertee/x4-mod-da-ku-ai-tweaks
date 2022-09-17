@@ -118,6 +118,23 @@
     <handler ref="kAAIT_Handler_WithdrawOrJustFight" />
     <handler ref="kAAIT_Handler_AvoidHighRisk" />
   </add>
+<!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
+  <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
+-->
+  <add pos="before" sel="//signal_objects[@param=&quot;'resupply'&quot;]">
+    <set_value name="$kAAIT_restockChance" exact="100" />
+    <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+    <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+    <do_if value="
+      @$kAAIT_bigEnemy.isoperational or
+      @this.assignedcontrolled.commaner.order.id == 'Attack' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'Attack' or
+      @this.assignedcontrolled.commaner.order.id == 'TacticalOrder' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'TacticalOrder'">
+      <set_value name="$kAAIT_restockChance" exact="0" />
+    </do_if>
+  </add>
+  <add sel="//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
 <!--
   Yb    dP 88 .dP"Y8 88 88""Yb 88     888888
    Yb  dP  88 `Ybo." 88 88__dP 88     88__

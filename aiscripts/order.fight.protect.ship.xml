@@ -247,6 +247,23 @@
     YbdP   88 o.`Y8b 88 88""Yb 88  .o 88""
      YP    88 8bodP' 88 88oodP 88ood8 888888
  -->
+<!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
+  <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
+-->
+  <add pos="before" sel="//attention[@min=&quot;visible&quot;]//signal_objects[@param=&quot;'resupply'&quot;]">
+    <set_value name="$kAAIT_restockChance" exact="100" />
+    <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+    <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+    <do_if value="
+      @$kAAIT_bigEnemy.isoperational or
+      @this.assignedcontrolled.commaner.order.id == 'Attack' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'Attack' or
+      @this.assignedcontrolled.commaner.order.id == 'TacticalOrder' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'TacticalOrder'">
+      <set_value name="$kAAIT_restockChance" exact="0" />
+    </do_if>
+  </add>
+  <add sel="//attention[@min=&quot;visible&quot;]//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
 <!-- add prepend. purpose avoid or not
   <do_while value="$target.isoperational">
 -->
@@ -300,6 +317,23 @@
   Y8   8P 88 Y88 88"Yb  88 Y88 Yb   dP   YbdPYbdP   88 Y88
   `YbodP' 88  Y8 88  Yb 88  Y8  YbodP     YP  YP    88  Y8
  -->
+<!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
+  <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
+-->
+  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//signal_objects[@param=&quot;'resupply'&quot;]">
+    <set_value name="$kAAIT_restockChance" exact="100" />
+    <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+    <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+    <do_if value="
+      @$kAAIT_bigEnemy.isoperational or
+      @this.assignedcontrolled.commaner.order.id == 'Attack' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'Attack' or
+      @this.assignedcontrolled.commaner.order.id == 'TacticalOrder' or
+      @this.assignedcontrolled.commaner.nextoder.id == 'TacticalOrder'">
+      <set_value name="$kAAIT_restockChance" exact="0" />
+    </do_if>
+  </add>
+  <add sel="//attention[@min=&quot;unknown&quot;]//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
 <!-- remove. purpose: will be re-added in the correct location.
   <label name="fight" />
 -->
@@ -340,6 +374,7 @@
 -->
   <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;][@uselocalhighways=&quot;false&quot;]">
     <debug_text text="this.assignedcontrolled.idcode + ' move_to'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    <create_position name="$kAAIT_pos" object="$target" min="this.ship.size + $target.size" max="$radius" />
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
       <set_value name="$kAAIT_target_escort" exact="$target" />
       <include_interrupt_actions ref="kAAIT_GetEscortPos" />
