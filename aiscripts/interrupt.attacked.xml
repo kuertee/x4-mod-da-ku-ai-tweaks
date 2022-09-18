@@ -6,8 +6,29 @@
           <event_object_attacked object="this.defensible"/>
           ...
           <check_all comment="flee">
-            ...
-            <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
+            <check_value value="not event.object.isunit"/>
+            <check_any>
+              <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
+-->
+  <replace pos="after" sel="//check_all[@comment=&quot;flee&quot;]//check_value[@value=&quot;event.object.signal.{'attacked'}.response.id == 'flee'&quot;]">
+    <check_all>
+        <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
+        <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" />
+        <check_value value="not @this.assignedcontrolled.order.$kAAITParam_isAvoidHighRisk" />
+        <check_value value="not @this.assignedcontrolled.order.$kAAITParam_isStepForwardWithdraw" />
+    </check_all>
+  </replace>
+<!-- add. purpose: block event.
+      <handler name="AttackHandler">
+        <conditions>
+          <event_object_attacked object="this.defensible"/>
+          ...
+          <check_all comment="flee">
+            <check_value value="not event.object.isunit"/>
+            <check_any>
+              <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
+              <check_all>
+                <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
 -->
 	<add pos="after" sel="//check_all[@comment=&quot;flee&quot;]//check_value[@value=&quot;event.object.signal.{'attacked'}.response.id == 'auto'&quot;]">
 		<check_all>
@@ -15,47 +36,54 @@
 			<check_value value="not @this.assignedcontrolled.order.$kAAITParam_isAvoidHighRisk" />
 			<check_value value="not @this.assignedcontrolled.order.$kAAITParam_isStepForwardWithdraw" />
 		</check_all>
-		<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    <!--
+      NOTE: the chance in debug_text IS a TRUE/FALSE condition. when uncommented, CHANCE of 100 will pass as TRUE. best to comment out after debugging.
+    -->
+		<!-- <debug_text text="this.assignedcontrolled.idcode + ' AttackHandler event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 	</add>
 <!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
   <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
 -->
   <add pos="before" sel="//signal_objects[@param=&quot;'resupply'&quot;]">
     <set_value name="$kAAIT_restockChance" exact="100" />
-    <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-    <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-    <do_if value="
-      @$kAAIT_bigEnemy.isoperational or
-      @this.assignedcontrolled.commaner.order.id == 'Attack' or
-      @this.assignedcontrolled.commaner.nextoder.id == 'Attack' or
-      @this.assignedcontrolled.commaner.order.id == 'TacticalOrder' or
-      @this.assignedcontrolled.commaner.nextoder.id == 'TacticalOrder'">
-      <set_value name="$kAAIT_restockChance" exact="0" />
+    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+      <do_if value="this.assignedcontrolled.hullpercentage gt 25">
+        <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+        <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+        <do_if value="
+          @$kAAIT_bigEnemy.isoperational or
+          @this.assignedcontrolled.commaner.order.id == 'Attack' or
+          @this.assignedcontrolled.commaner.nextoder.id == 'Attack' or
+          @this.assignedcontrolled.commaner.order.id == 'TacticalOrder' or
+          @this.assignedcontrolled.commaner.nextoder.id == 'TacticalOrder'">
+          <set_value name="$kAAIT_restockChance" exact="0" />
+        </do_if>
+      </do_if>
     </do_if>
   </add>
   <add sel="//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
   <!-- DeadAir Diffs -->
   <!-- kuertee note: the new <check_all comment="flee"> is:
     <check_all comment="flee">
-    	<check_any>... my stuff ...</check_any>
       <check_value value="not event.object.isunit"/>
       <check_any>
-      	<check_any>... my stuff ...
+      	<check_all>... my stuff ...
 		      <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
-	      </check_any>
+	      </check_all>
         <check_all>
-        	<check_any>... my stuff ...
-	          <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
-	        </check_any>
+          <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
+          <check_all>
+            ... my stuff ...
+          </check_all>
 	        <check_any>
 	        	... egosoft stuff
 	-->
-  <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[1]">
+  <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[1]">
     <check_value value="event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine"/>
   </add>
-  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]/check_value[@value='((this.skill.morale * 6) + ((event.object.primarypurpose == purpose.fight) * 20) + (event.object.shieldpercentage * 2)) lt 120']/@value">(event.object.primarypurpose == purpose.fight) and (event.object.shieldpercentage lt (10 + 10 * event.object.isclass.[class.ship_l, class.ship_xl] + 20 * event.object.isclass.[class.ship_m] + 30 * event.object.isclass.[class.ship_s]))</replace>
-  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]/check_value[@value='((event.object.combinedskill)hp - ((event.object.shield + event.object.hull) / [event.param.dps.all, 1hp].max)) gt 70']/@value">(event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine) and (event.object.shieldpercentage lt 80)</replace>
-  <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]">
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]/check_value[@value='((this.skill.morale * 6) + ((event.object.primarypurpose == purpose.fight) * 20) + (event.object.shieldpercentage * 2)) lt 120']/@value">(event.object.primarypurpose == purpose.fight) and (event.object.shieldpercentage lt (10 + 10 * event.object.isclass.[class.ship_l, class.ship_xl] + 20 * event.object.isclass.[class.ship_m] + 30 * event.object.isclass.[class.ship_s]))</replace>
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]/check_value[@value='((event.object.combinedskill)hp - ((event.object.shield + event.object.hull) / [event.param.dps.all, 1hp].max)) gt 70']/@value">(event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine) and (event.object.shieldpercentage lt 80)</replace>
+  <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]">
     <check_value value="(event.object.primarypurpose != purpose.fight and event.object.primarypurpose != purpose.trade and event.object.primarypurpose != purpose.mine) and (event.object.shieldpercentage lt 60)"/>
   </add>
   <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='fight']/check_any/check_all/check_any/check_value[1]/@value">(@event.object.order.id != 'Attack') and (((this.trueowner == faction.xenon) or (this.trueowner == faction.khaak)) and (not (event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine)))</replace>

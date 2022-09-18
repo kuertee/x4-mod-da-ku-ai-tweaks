@@ -25,12 +25,27 @@
 				<abort_called_scripts resume="finish" />
 			</actions>
 		</handler>
+		<handler comment="cancelled">
+			<conditions>
+				<event_object_order_cancelled object="this.assignedcontrolled" />
+			</conditions>
+			<actions>
+				<debug_text text="this.assignedcontrolled.idcode + ' EVENT event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<set_value name="this.$kAAIT_data.$time_avoidAllowed" exact="player.age + 10s" />
+				<remove_value name="this.$kAAIT_data.$isAvoiding" />
+				<remove_value name="this.$kAAIT_data.$target_avoid" />
+				<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+				<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
+				<abort_called_scripts resume="finish" />
+			</actions>
+		</handler>
 	</interrupts>
 	<init>
-		<set_value name="$kAAIT_detailedDebugChance" exact="100" />
+		<set_value name="$kAAIT_detailedDebugChance" exact="0" />
 		<do_if value="not this.$kAAIT_data?">
 			<set_value name="this.$kAAIT_data" exact="table[]" />
 		</do_if>
+		<remove_value name="this.$kAAIT_data.$time_avoidAllowed" />
 		<set_value name="this.$kAAIT_data.$isAvoiding" exact="true" />
 		<!-- required for disengage handler -->
 		<set_value name="$pursuetargets" exact="false" />
@@ -49,7 +64,7 @@
 			<debug_text text="this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			<debug_text text="this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
-			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$defensibleTarget: ' + @this.$kAAIT_data.$defensibleTarget.knownname + ' ' + @$this.kAAIT_data.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$defensibleTarget: ' + @this.$kAAIT_data.$defensibleTarget.knownname + ' ' + @this.kAAIT_data.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$aroundDir: ' + @this.$kAAIT_data.$aroundDir" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<do_if value="not @this.$kAAIT_data.$aroundDir">

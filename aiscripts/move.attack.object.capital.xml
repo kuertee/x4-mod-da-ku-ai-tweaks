@@ -117,16 +117,22 @@
 
 		<label name="kAAIT_label_move_to_engage_position" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<run_script name="'move.kuertee.engage.position'">
+		<!-- <run_script name="'move.kuertee.engage.position'">
 			<param name="target" value="$target" />
-		</run_script>
+		</run_script> -->
+		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveEngagePosition'" immediate="true">
+			<param name="target" value="$target" />
+		</create_order>
 		<resume label="fight" />
 
 		<label name="kAAIT_label_step_forward" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL step_forward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<run_script name="'move.kuertee.step.forward'">
+		<!-- <run_script name="'move.kuertee.step.forward'">
 			<param name="target" value="$target" />
-		</run_script>
+		</run_script> -->
+		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveStepForward'" immediate="true">
+			<param name="target" value="$target" />
+		</create_order>
 		<resume label="fight" />
 
 		<label name="kAAIT_label_avoid" />
@@ -236,7 +242,8 @@
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<do_if value="
 				(not $target.isclass.ship) and
-				player.age - @this.$kAAIT_data.$time_lastStepForward gt 1min
+				player.age - @this.$kAAIT_data.$time_lastStepForward gt 1min and
+				player.age gt @this.$kAAIT_data.$time_stepForwardAllowed
 			">
 				<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 				<do_if value="$kAAIT_distToTarget gt this.$kAAIT_data.$combatRange_min">
@@ -299,7 +306,8 @@
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<do_if value="
 				(not $target.isclass.ship) and
-				player.age - @this.$kAAIT_data.$time_lastStepForward gt 1min
+				player.age - @this.$kAAIT_data.$time_lastStepForward gt 1min and
+				player.age gt @this.$kAAIT_data.$time_stepForwardAllowed
 			">
 				<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{this.$kAAIT_data.$defensibleTarget}" />
 				<do_if value="$kAAIT_distToTarget gt this.$kAAIT_data.$combatRange_min">
@@ -315,9 +323,12 @@
 		<resume label="finish"/>
 		<label name="kAAITLabel_withdraw" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<run_script name="'move.kuertee.withdraw'">
+		<!-- <run_script name="'move.kuertee.withdraw'">
 			<param name="target" value="this.$kAAIT_data.$defensibleTarget" />
-		</run_script>
+		</run_script> -->
+		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveWithdraw'" immediate="true">
+			<param name="target" value="this.$kAAIT_data.$defensibleTarget" />
+		</create_order>
 		<resume label="finish"/>
 	</add>
 <!-- add after finish. purpose: clean-up.
