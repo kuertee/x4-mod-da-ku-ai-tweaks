@@ -45,7 +45,6 @@
 							)
 						) and
 						this.assignedcontrolled.distanceto.{$kAAIT_result_bigEnemy} le this.$kAAIT_data.$skill_distance_withdraw">
-						<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<set_value name="$kAAIT_target_avoid" exact="$kAAIT_result_bigEnemy" />
 						<set_value name="$kAAIT_isAvoid" exact="true" />
 					</do_if>
@@ -67,13 +66,14 @@
 	<interrupts>
 -->
 	<add pos="prepend" sel="//interrupts">
-		<handler ref="kAAIT_Handler_WithdrawOrJustFight" />
+		<handler ref="kAAIT_Handler_AvoidWithdrawOrJustFight" />
 		<handler ref="kAAIT_Handler_NewBigTarget" />
 	</add>
 <!-- add prepend. purpose: init var.
 	<init>
 -->
 	<add pos="prepend" sel="//init">
+		<debug_text text="this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
@@ -95,7 +95,7 @@
 		<resume label="fight" />
 
 		<label name="kAAIT_label_avoid" />
-		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_target_avoid" />
 		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
@@ -105,6 +105,7 @@
 	<label name="fight" />
 -->
 	<add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;fight&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
@@ -126,10 +127,23 @@
 			</do_if>
 		</do_if>
 	</add>
+<!-- add before. purpose: withdraw.
+	<label name="finish"/>
+-->
+	<add pos="before" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;finish&quot;]">
+		<resume label="finish"/>
+		<label name="kAAITLabel_withdraw" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<run_script name="'move.kuertee.withdraw'">
+			<param name="target" value="this.$kAAIT_data.$defensibleTarget" />
+		</run_script>
+		<resume label="finish"/>
+	</add>
 <!-- add after. purpose: clean-up.
 	<label name="finish" />
 -->
 	<add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;finish&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
 		<do_if value="@this.$kAAIT_data">
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
@@ -152,7 +166,7 @@
 		<resume label="fight" />
 
 		<label name="kAAIT_label_avoid" />
-		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_target_avoid" />
 		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
@@ -162,6 +176,7 @@
 	<label name="fight" />
 -->
 	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;fight&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
@@ -183,10 +198,23 @@
 			</do_if>
 		</do_if>
 	</add>
+<!-- add before. purpose: withdraw.
+	<label name="finish"/>
+-->
+	<add pos="before" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
+		<resume label="finish"/>
+		<label name="kAAITLabel_withdraw" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<run_script name="'move.kuertee.withdraw'">
+			<param name="target" value="this.$kAAIT_data.$defensibleTarget" />
+		</run_script>
+		<resume label="finish"/>
+	</add>
 <!-- add after. purpose: clean-up.
 	<label name="finish" />
 -->
 	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
 		<do_if value="@this.$kAAIT_data">
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />

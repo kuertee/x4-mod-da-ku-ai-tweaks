@@ -69,10 +69,11 @@
 			</do_if>
 			<do_else>
 				<set_value name="$yaw_deg" exact="null" />
-				<do_if value="$target == @this.$kAAIT_data.$defensibleTarget and this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count" comment="withdraw angle at 90 deg of closest other attacker to enemy">
-					<sort_group group="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" />
+				<do_if value="$target == @this.$kAAIT_data.$defensibleTarget and @this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count" comment="withdraw angle at 90 deg of closest other attacker to enemy">
+					<sort_group group="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
 					<set_value name="$ally" exact="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{1}" />
 					<do_if value="$ally.isoperational and $target.bboxdistanceto.{$ally} gt this.assignedcontrolled.maxradarrange * 0.5" comment="target too far from nearest ally">
+						<debug_text text="this.assignedcontrolled.idcode + ' vector at 90 deg from nearest ally: ' + @$ally.knownname + ' ' + @$ally.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 						<create_position name="$pos_toAlly" space="$orderLocation_space" object="$ally" />
 						<create_orientation name="$rot_toAlly" orientation="look_at" refposition="$pos_toAlly">
 							<position value="$posTarget" />
@@ -82,7 +83,8 @@
 						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-90, 90].random" />
 					</do_if>
 				</do_if>
-				<do_if value="$yaw_deg != null">
+				<do_if value="$yaw_deg == null">
+					<debug_text text="this.assignedcontrolled.idcode + ' vector at random vector away from target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 					<do_if value="$kAAIT_bigEnemies.count" comment="more than one high-risk enemy">
 						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-30, 30].random" comment="smaller angles allow ship to withdraw quicker" />
 					</do_if>
@@ -92,7 +94,6 @@
 				</do_if>
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
-			<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.primarypurpose: ' + @this.assignedcontrolled.primarypurpose" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<do_if value="not this.$kAAIT_data.$skill_distance_withdraw?">
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 			</do_if>
@@ -113,9 +114,9 @@
 				<set_value name="$dist_adjByShields" exact="(100 - this.assignedcontrolled.shieldpercentage) / 100 * this.$kAAIT_data.$skill_distance_withdraw" />
 				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="$combatRange_mid + $dist_adjByShields" />
 			</do_else>
-			<!-- <do_if value="$target.isclass.ship">
-				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="[this.$kAAIT_data.$distance_attackFrom * 1.5, this.assignedcontrolled.maxradarrange].min" />
-			</do_if> -->
+			<do_if value="$target.isclass.ship">
+				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="[this.$kAAIT_data.$distance_attackFrom * 1.25, this.assignedcontrolled.maxradarrange].min" />
+			</do_if>
 			<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data.$distance_attackFrom: ' + @this.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 			<create_position name="$orderLocation_pos"
 				x="$posTarget.x + this.$kAAIT_data.$distance_attackFrom * sin ($yaw) * cos ($rotFromTarget.pitch)"
