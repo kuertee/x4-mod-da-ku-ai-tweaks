@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <aiscript name="move.kuertee.withdraw" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="18">
-	<order id="kAAIT_MoveWithdraw" name="{1111920, 108}" description="{1111920, 108}" category="internal">
+	<order id="kAAIT_MoveWithdraw" name="{1111920, 108}" description="{1111920, 128}" category="internal">
 		<params>
 			<param name="target" required="true" type="object" text="{1041, 10126}" comment="target" />
 			<param name="kAAITParam_iskAAITOrder" required="false" default="true" type="internal" />
@@ -23,21 +23,6 @@
 				</check_any>
 			</conditions>
 			<actions>
-				<abort_called_scripts resume="finish" />
-			</actions>
-		</handler>
-		<handler comment="cancelled">
-			<conditions>
-				<event_object_order_cancelled object="this.assignedcontrolled" />
-			</conditions>
-			<actions>
-				<debug_text text="this.assignedcontrolled.idcode + ' EVENT event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				<set_value name="this.$kAAIT_data.$time_withdrawAllowed" exact="player.age + 10s" />
-				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-				<remove_value name="this.$kAAIT_data.$isWithdrawing" />
-				<remove_value name="this.$kAAIT_data.$target_avoid" />
-				<remove_value name="this.$kAAIT_data.$orderLocation_space" />
-				<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 				<abort_called_scripts resume="finish" />
 			</actions>
 		</handler>
@@ -76,40 +61,44 @@
 			<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
 				<position value="$posTarget" />
 			</create_orientation>
-			<set_value name="$ship_yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
+			<set_value name="$yaw_fromTarget" exact="$rotFromTarget.yaw * 180 / pi" />
+			<set_value name="$yaw_toWithdraw_deg" exact="null" />
 			<do_if value="
 				$target.isclass.station or
 				this.assignedcontrolled.primarypurpose != purpose.fight or
 				this.assignedcontrolled.type == shiptype.carrier">
-				<set_value name="$yaw_deg" exact="$ship_yaw_deg" />
+				<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget" />
 			</do_if>
 			<do_else>
-				<set_value name="$yaw_deg" exact="null" />
 				<do_if value="$target == @this.$kAAIT_data.$defensibleTarget and @this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count" comment="withdraw angle at 90 deg of closest other attacker to enemy">
 					<sort_group group="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
 					<set_value name="$ally" exact="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{1}" />
-					<do_if value="$ally.isoperational and $target.bboxdistanceto.{$ally} gt this.assignedcontrolled.maxradarrange * 0.25" comment="target too far from nearest ally">
-						<debug_text text="this.assignedcontrolled.idcode + ' vector at 90 deg from nearest ally: ' + @$ally.knownname + ' ' + @$ally.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
-						<create_position name="$pos_toAlly" space="$orderLocation_space" object="$ally" />
-						<create_orientation name="$rot_toAlly" orientation="look_at" refposition="$pos_toAlly">
-							<position value="$posTarget" />
-						</create_orientation>
-						<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi" />
-						<set_value name="$ship_yaw_deg" exact="$ship_yaw_deg + ($yaw_toAlly - $ship_yaw_deg) * 0.5" />
-						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-90, 90].random" />
+					<do_if value="$ally.isoperational">
+						<set_value name="$dist_targetToAlly" exact="$ally.bboxdistanceto.{$target}" />
+						<do_if value="$dist_targetToAlly gt 5km" comment="withdraw at vector that allows ally to attack target">
+							<create_position name="$pos_ally" space="$orderLocation_space" object="$ally" comment="get vectors based on target because the create_position below will be from the target" />
+							<create_orientation name="$rot_toAlly" orientation="look_at" refposition="$pos_ally">
+								<position value="$posTarget" />
+							</create_orientation>
+							<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi" />
+							<set_value name="$yaw_fromTargetToAlly" exact="$yaw_fromTarget + ($yaw_toAlly - $yaw_fromTarget) * 0.5 + [-5, 5].random" comment="withdraw towards ally" />
+							<do_if value="$dist_targetToAlly le 10km">
+								<set_value name="$yaw_fromTargetToAlly" exact="$yaw_fromTargetToAlly + [-90, 90].random + [-5, 5].random" comment="withdraw at 90 deg from ally" />
+							</do_if>
+							<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTargetToAlly" />
+						</do_if>
 					</do_if>
 				</do_if>
-				<do_if value="$yaw_deg == null">
-					<debug_text text="this.assignedcontrolled.idcode + ' vector at random vector away from target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
+				<do_if value="$yaw_toWithdraw_deg == null" comment="no vector determined, get random vector">
 					<do_if value="$kAAIT_bigEnemies.count" comment="more than one high-risk enemy">
-						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-30, 30].random" comment="smaller angles allow ship to withdraw quicker" />
+						<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget + [-30, 30].random" comment="smaller angles allow ship to withdraw quicker" />
 					</do_if>
 					<do_else>
-						<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-90, -45, 45, 90].random" comment="larger angles allow other attackers to catch-up" />
+						<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget + [-90, -45, 45, 90].random" comment="larger angles allow other attackers to catch-up" />
 					</do_else>
 				</do_if>
 			</do_else>
-			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
+			<set_value name="$yaw" exact="$yaw_toWithdraw_deg * pi / 180" />
 			<do_if value="not this.$kAAIT_data.$skill_distance_withdraw?">
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 			</do_if>
@@ -192,6 +181,7 @@
 						</check_any>
 					</conditions>
 					<actions>
+						<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />
 						<do_if value="@$kAAIT_isJustFight">
 							<set_value name="this.$kAAIT_data.$isIgnoreKAAIT" exact="$kAAIT_isJustFight" />
 							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isJustFight: ' + $kAAIT_isJustFight" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" />

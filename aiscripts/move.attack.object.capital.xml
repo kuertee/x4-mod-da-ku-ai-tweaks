@@ -115,16 +115,6 @@
 		<debug_text text="this.assignedcontrolled.idcode + ' shouldnt be here because kAAIT_MoveEngagePosition should have been activated'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<resume label="fight" />
 
-		<label name="kAAIT_label_move_to_engage_position" />
-		<debug_text text="this.assignedcontrolled.idcode + ' LABEL move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<!-- <run_script name="'move.kuertee.engage.position'">
-			<param name="target" value="$target" />
-		</run_script> -->
-		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveEngagePosition'" immediate="true">
-			<param name="target" value="$target" />
-		</create_order>
-		<resume label="fight" />
-
 		<label name="kAAIT_label_step_forward" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL step_forward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<!-- <run_script name="'move.kuertee.step.forward'">
@@ -137,7 +127,10 @@
 
 		<label name="kAAIT_label_avoid" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<do_if value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
+		<do_if value="
+			(not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder) and
+			@$allowothertargets
+		">
 			<set_value name="$kAAIT_bigEnemy" exact="this.$kAAIT_data.$defensibleTarget" />
 			<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
 		</do_if>
@@ -168,12 +161,7 @@
 			<do_else>
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
-					<do_if value="this.assignedcontrolled.order.id == 'Attack'">
-						<resume label="kAAIT_label_move_to_engage_position_order" />
-					</do_if>
-					<do_elseif value="this.assignedcontrolled.order.id == 'TacticalOrder'">
-						<resume label="kAAIT_label_move_to_engage_position" />
-					</do_elseif>
+					<resume label="kAAIT_label_move_to_engage_position_order" />
 				</do_if>
 				<do_elseif value="$target.isclass.module">
 					<do_if value="this.$kAAIT_data.$moduleTarget?">
@@ -181,7 +169,7 @@
 							comment="only move to engage position AGAIN if there was a previous module target">
 							<debug_text text="this.assignedcontrolled.idcode + ' NEW $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
-							<resume label="kAAIT_label_move_to_engage_position" />
+							<resume label="kAAIT_label_move_to_engage_position_order" />
 						</do_if>
 						<do_else>
 							<debug_text text="this.assignedcontrolled.idcode + ' SAME $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
