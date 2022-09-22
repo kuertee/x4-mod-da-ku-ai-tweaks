@@ -144,20 +144,17 @@
 			<create_position name="$kAAIT_pos_tacticatTarget" space="$kAAITParam_tacticalOrderTarget.zone" value="$kAAITParam_tacticalOrderTarget.position" />
 		</do_if>
 	</add>
-<!-- add. purpose: avoid or not
-	<handler>
-		<conditions>
-			<event_gravidar_has_scanned object="if ($activepatrol or $stopondetect.exists) then this.assignedcontrolled else null" check="false"/>
--->
-	<!-- <add sel="//event_gravidar_has_scanned/anscestor::handler/actions">
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<set_value name="$kAAIT_test_target_isHighRisk" exact="$kAAIT_enemy" />
-			<include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
-			<remove_value name="$kAAIT_test_target_isHighRisk" />
-			<do_if value="$kAAIT_result_isTargetHighRisk">
+<!-- add after. purpose: check start avoid. i.e. gravidar events not soon enough if already near a big enemy -->
+	<add pos="after" sel="//label[@name=&quot;start&quot;]">
+		<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+		<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+			<do_if value="not this.$kAAIT_data?">
+				<set_value name="this.kAAIT_data" exact="table[]" />
 			</do_if>
+			<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+			<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		</do_if>
-	</add> -->
+	</add>
 <!-- add after. purpose: cleanup.
 	<label name="cleanup" />
 -->
