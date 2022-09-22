@@ -117,9 +117,6 @@
 
 		<label name="kAAIT_label_step_forward" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL step_forward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<!-- <run_script name="'move.kuertee.step.forward'">
-			<param name="target" value="$target" />
-		</run_script> -->
 		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveStepForward'" immediate="true">
 			<param name="target" value="$target" />
 		</create_order>
@@ -127,23 +124,8 @@
 
 		<label name="kAAIT_label_avoid" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<do_if value="
-			(not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder) and
-			@$allowothertargets
-		">
-			<set_value name="$kAAIT_bigEnemy" exact="this.$kAAIT_data.$defensibleTarget" />
-			<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
-		</do_if>
-		<do_if value="@$kAAIT_result_target_found.isoperational">
-			<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
-			<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-		</do_if>
-		<do_else>
-			<set_value name="this.$kAAIT_data.$target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
-			<include_interrupt_actions ref="kAAIT_Order_Avoid" />
-		</do_else>
+		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
-		<debug_text text="this.assignedcontrolled.idcode + ' shouldnt be here because kAAIT_Order_Avoid should have been activated'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<resume label="fight" />
 	</add>
 <!-- add after. purpose: determine custom behaviours.
@@ -152,10 +134,17 @@
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+			<set_value name="$kAAIT_test_target_isAvoid" exact="$target" comment="check if target is obstructed by big enemy - e.g. station the module target is attached to" />
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+			<do_if value="$kAAIT_result_isAvoid and @$kAAIT_result_avoidEnemy and $kAAIT_result_avoidEnemy != $target">
+				<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+				<resume label="kAAIT_label_avoid" />
+			</do_if>
 			<do_if value="
 				this.assignedcontrolled.primarypurpose != purpose.fight or
 				this.assignedcontrolled.type == shiptype.carrier
 			">
+				<set_value name="this.$kAAIT_data.$target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
 				<resume label="kAAIT_label_avoid" />
 			</do_if>
 			<do_else>
@@ -311,9 +300,6 @@
 		<resume label="finish"/>
 		<label name="kAAITLabel_withdraw" />
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<!-- <run_script name="'move.kuertee.withdraw'">
-			<param name="target" value="this.$kAAIT_data.$defensibleTarget" />
-		</run_script> -->
 		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveWithdraw'" immediate="true">
 			<param name="target" value="this.$kAAIT_data.$defensibleTarget" />
 		</create_order>

@@ -28,6 +28,24 @@
 				<abort_called_scripts resume="finish" />
 			</actions>
 		</handler>
+		<handler comment="cancelled">
+			<conditions>
+				<event_object_order_cancelled object="this.assignedcontrolled" />
+			</conditions>
+			<actions>
+				<debug_text text="this.assignedcontrolled.idcode + ' EVENT event.name: ' + event.name + ' event.param.id: ' + @event.param.id + ' event.param2: ' + @event.param2" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<debug_text text="this.assignedcontrolled.idcode + ' EVENT this.assignedcontrolled.order.id: ' + @this.assignedcontrolled.order.id" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+				<do_if value="@this.assignedcontrolled.order.id != 'kAAIT_MoveStepForward'">
+					<set_value name="this.$kAAIT_data.$time_stepForwardAllowed" exact="player.age + 10s" />
+					<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+					<remove_value name="this.$kAAIT_data.$time_lastStepForward" />
+					<remove_value name="this.$kAAIT_data.$count_stepForward" />
+					<remove_value name="this.$kAAIT_data.$orderLocation_space" />
+					<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
+					<abort_called_scripts resume="finish" />
+				</do_if>
+			</actions>
+		</handler>
 	</interrupts>
 	<init>
 		<set_value name="$kAAIT_detailedDebugChance" exact="0" />
@@ -43,7 +61,6 @@
 
 			<label name="start"/>
 			<debug_text text="this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<include_interrupt_actions ref="kAAIT_CleanOrders" />
 			<set_value name="this.$kAAIT_data.$time_lastStepForward" exact="player.age" />
 			<do_if value="not @this.$kAAIT_data.$count_stepForward">
 				<set_value name="this.$kAAIT_data.$count_stepForward" exact="1" />
@@ -91,12 +108,14 @@
 
 			<label name="finish" />
 			<debug_text text="this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<stop_moving object="this.assignedcontrolled" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</actions>
 	</attention>
 	<on_abort>
+		<stop_moving object="this.assignedcontrolled" />
 		<do_if value="@this.$kAAIT_data">
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_pos" />

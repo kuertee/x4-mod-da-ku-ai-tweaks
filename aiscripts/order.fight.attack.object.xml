@@ -11,9 +11,10 @@
 	<add sel="//params">
 		<param name="kAAITParam_iskAAITOrder" required="false" default="false" type="internal" />
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
-			if this.$kAAIT_isAvoidHighRisk_user? then 
-				this.$kAAIT_isAvoidHighRisk_user
-			else (
+			if this.$kAAIT_isAvoidHighRisk_user? then (
+				if this.$kAAIT_isAvoidHighRisk_user then true
+				else false
+			) else (
 				if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
 				(
 					(
@@ -185,7 +186,9 @@
 		<!-- <set_value name="$debugchance" exact="100" /> -->
 		<set_value name="$kAAIT_detail_debugChance" exact="100" />
 		<debug_text text="this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<include_interrupt_actions ref="kAAIT_CleanOrders" />
+		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+			<include_interrupt_actions ref="kAAIT_Init" />
+		</do_if>
 	</add>
 <!-- add. purpose: debug
 	<do_if value="not $target">
@@ -243,7 +246,11 @@
 -->
 	<add pos="before" sel="//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<debug_text text="this.assignedcontrolled.idcode + ' target out of range. pursue with move.generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<debug_text text="this.assignedcontrolled.idcode + ' target out of range. move to engage if station. otherwise use move generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<do_if value="$primarytarget.isclass.station">
+				<set_value name="this.$kAAIT_data.$target_avoid" exact="$target" />
+				<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
+			</do_if>
 		</do_if>
 	</add>
 <!-- add. purpose: pass data to first move to target.

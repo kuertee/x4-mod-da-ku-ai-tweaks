@@ -649,12 +649,51 @@
 							$callback = kAAIT_Debug2_RemoveMoveAroundBeacons
 						]" />
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kaait_remove_debug_weapon_ranges',
+							$id = 'kaait_debug_weapon_ranges',
 							$section = 'main',
 							$text = 'debug: log weapon ranges',
 							$icon = null,
 							$callback = kAAIT_Debug2_DebugLogWeaponRanges
 						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kaait_travel_active',
+							$section = 'main',
+							$text = 'debug: travel.active: ' + @$interact_target.travel.active,
+							$icon = null,
+							$callback = null
+						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'kAAIT_Avoid_high_risk_user',
+							$section = 'main',
+							$text = 'debug: avoid vars: ' + @$interact_target.assignedaipilot.$kAAIT_isAvoidHighRisk_user + ' (' + @$interact_target.order.$kAAITParam_isAvoidHighRisk + ', ' + @$interact_target.order.$kAAITParam_isStepForwardWithdraw + ')',
+							$icon = null,
+							$callback = null
+						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'time_withdrawAllowed',
+							$section = 'main',
+							$text = 'debug: time_withdrawAllowed: ' + @$interact_target.assignedaipilot.$kAAIT_data.$time_withdrawAllowed,
+							$icon = null,
+							$callback = null
+						]" />
+						<!-- <do_if value="@$interact_target.asssignedaipilot">
+							<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+								$id = 'kaait_attackers_count',
+								$section = 'main',
+								$text = 'debug: asssignedaipilot attackers: ' + @$interact_target.asssignedaipilot.$kAAIT_attackers.count + '-' + @$interact_target.asssignedaipilot.$kAAIT_attackers_lxl.count,
+								$icon = null,
+								$callback = kAAIT_Debug2_DebugLogWeaponRanges
+							]" />
+						</do_if>
+						<do_elseif value="@$interact_target.defencenpc">
+							<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+								$id = 'kaait_attackers_count',
+								$section = 'main',
+								$text = 'debug: defencenpc attackers: ' + @$interact_target.defencenpc.$kAAIT_attackers.count + '-' + @$interact_target.defencenpc.$kAAIT_attackers_lxl.count,
+								$icon = null,
+								$callback = kAAIT_Debug2_DebugLogWeaponRanges
+							]" />
+						</do_elseif> -->
 					</do_if>
 				</do_if>
 				<!-- <t id="101">Enable 'Attack all enemies'</t>
@@ -689,14 +728,24 @@
 									<set_value name="$isAllow" exact="true" />
 								</do_if>
 							</do_if>
-							<do_if value="$order.$kAAITParam_isAvoidHighRisk? and (not @$order.kAAITParam_iskAAITOrder)">
+							<!-- <do_if value="$order.$kAAITParam_isAvoidHighRisk? and (not @$order.kAAITParam_iskAAITOrder)">
 								<do_if value="$order.$kAAITParam_isAvoidHighRisk">
 									<set_value name="$isDisallow_Avoid" exact="true" />
 								</do_if>
 								<do_if value="not $order.$kAAITParam_isAvoidHighRisk">
 									<set_value name="$isAllow_Avoid" exact="true" />
 								</do_if>
+							</do_if> -->
+							<do_if value="not $order.object.assignedaipilot.$kAAIT_isAvoidHighRisk_user?">
+								<set_value name="$isAllow_Avoid" exact="true" />
+								<set_value name="$isDisallow_Avoid" exact="true" />
 							</do_if>
+							<do_elseif value="@$order.object.assignedaipilot.$kAAIT_isAvoidHighRisk_user">
+								<set_value name="$isDisallow_Avoid" exact="true" />
+							</do_elseif>
+							<do_else>
+								<set_value name="$isAllow_Avoid" exact="true" />
+							</do_else>
 							<do_if value="$isAllow and $isDisallow and $isAllow_Avoid and $isDisallow_Avoid">
 								<break />
 							</do_if>
@@ -816,12 +865,12 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Config.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<set_value name="$ship.assignedaipilot.$kAAIT_isAvoidHighRisk_user" exact="true" />
 						<do_for_each name="$order" in="$ship.orders">
 							<do_if value="$order.$kAAITParam_isAvoidHighRisk?">
 								<edit_order_param order="$order" param="'kAAITParam_isAvoidHighRisk'" value="true" />
 							</do_if>
 						</do_for_each>
+						<set_value name="$ship.assignedaipilot.$kAAIT_isAvoidHighRisk_user" exact="true" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -843,7 +892,6 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Config.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<remove_value name="$ship.assignedaipilot.$kAAIT_isAvoidHighRisk_user" />
 						<do_for_each name="$order" in="$ship.orders">
 							<do_if value="$order.$kAAITParam_isAvoidHighRisk?">
 								<edit_order_param order="$order" param="'kAAITParam_isAvoidHighRisk'" value="false" />
@@ -854,6 +902,7 @@
 								<cancel_order order="$order" />
 							</do_if>
 						</do_for_each>
+						<set_value name="$ship.assignedaipilot.$kAAIT_isAvoidHighRisk_user" exact="false" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />

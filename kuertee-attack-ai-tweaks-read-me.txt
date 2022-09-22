@@ -9,10 +9,15 @@ Dead Air AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-t
 Updates
 =======
 v5.1.0307, 20 Sep 2022:
+-Bug-fix: In general attacks (i.e. not Coordinated Attacks), the ships were not acquiring the move to engage positions behaviour - causing them to run towards their targets at speed. Bug introduced during my work on Coordinated Attack.
 -Bug-fix: Returned feature the rule that L and XL ships should only withdraw if there's another L or XL ship attacking the target.
--Tweak: Withdraw vectors to draw enemy towards allies: if there are no allies within 10km of the enemy, ships will withdraw towards the nearest ally. The vector is directly away from the enemy, if an ally is within 5km from the target. And perpendicular (90 deg) to an ally within 10km, giving the ally more chance to get closer to the enemy.
+-Tweak: Withdraw vectors to draw enemy towards allies: If there are no allies within 10km of the enemy, ships will withdraw towards the nearest ally. If an ally is within 5km from the target, the vector is directly away from the enemy. If an ally is within 10km, the vector is perpendicular (90 deg) to that ally, giving the ally more chance to get closer to the enemy.
+-Tweak: Only ships within 5km or in front of their high-risk ship enemy withdraws. They withdraw against stations as in previous versions.
+-Tweak: Improved capital ships moving to their next module target - especially if its on the other side of the station. Heh, the code was already in the mod before, but wasn't utilised - or specifically, I didn't see that it could be used to enact this actual behaviour until now. Basically: the module target is an object distinct from the station it is attached to. The two objects could be used to check if one is in the way of another from the ship - which this mod has always done. Previous versions only made capital ships withdraw at an angle that would put them closer to their next module target.
 -Bug-fix: While avoiding targets (e.g. flying around stations), the ships were not obeying the Attack order option "Attack all enemies".
+-Tweak: The arc of attackers of Coordinated Attacks is half its length. Previously, each attacking ship was separated by 10 degrees. In this version, they are separated by 5 degrees.
 -Bug-fix: Custom behaviours were getting cancelled automatically sometimes - causing them to flick between trying to perform the behaviour then not.
+-Bug-fix: The ignore flag that gets set when to allow the ship to simply fight on when they have a low chance of surviving is removed when they regenerate their shields or when they switch to a new target.
 
 v5.1.0306, 18 Sep 2022:
 -New feature: When the custom behaviours, avoid, step forward, and withdraw, are cancelled, they will not be applied again until after 10 seconds. This gives you some control of their use. Note that this doesn't persist after 10 seconds - unlike the "Avoid high-risk enemies" Interact Menu command, which persists until re-enabled.
@@ -25,32 +30,6 @@ v5.1.0306, 18 Sep 2022:
 -Bug-fix: The normal flee was interrupting Kuda's custom behaviours. E.g. Fleeing when withdrawing - causing large ships to break off from their attack rather than withdraw then return to attack.
 -Tweak: Rewrote the avoid and withdraw conditions for better performance and clarity (ease of debugging).
 -New feature: German localisation.
-
-v5.1.0305, 15 Sep 2022:
--Note: I added notes about my ideas behind this mod. Read them as a starter for this mod - if you wish. But I always suggest to "just" use the mod after skimming through the read-me. If you have question about the mod AFTER experiencing it, THEN read the read-me.
--Bug-fix: Ships were moving WAY out of sector. This occured only once during my tests/modding. But there was definitely a bug-fix required in my avoidance code. This bug shouldn't happen again.
--Bug-fix: Escorting non-fighters (e.g. supply ships and carriers) were still drifting towards high-risk enemies. They now stay a certain distance behind their commander during attacks.
--New feature: Small-sized and medium-sized ships harass their high-risk ship targets. With full shields, they attack. With shields at their skill-based withdrawal percentage or more, they avoid their target at half their avoidance distance. With less shields, they avoid them at their full avoidance distance - as they did in previous versions.
--New feature: The recall subordinates feature of the generic move order defaults to false unless the destination is more than 2 gates away. Note that this is the Recall Subordinates order that is initiated automatically from the general move order. Ships will still recall subordinates at other times.
--New feature: Fleets can now disengage from their small attack targets to prioritise new high-risk targets. This occurs when one in the fleet first engages a new high-risk target. Addresses the problem with large ships continuing to engage with smaller ships when there's higher-risk enemy.
--Tweak: A lot of the tests for avoidance and withdraw are now in event conditions. This allows for smoother operation of the AIs.
--Tweak: Added tests to engine's capabilities to capital ship's withdraw tests. If less than 25%, they stop to withdraw and just fight.
--Tweak: Avoid AI now knows whether to either (1) move around a high-risk enemy while keeping it as a target (i.e. combat-appropriate avoid distance) or (2) actually avoid a high-risk enemy during general flights (i.e. longer avoid distances).
--Tweak: Made small craft with missiles/torpedoes to follow fighter avoidance rules. Now that fighters harass their targets, limiting these ships' attack runs will increase their surviviability, especially against station targets. Previous versions made these ships ignore the rules until their missiles/torpedoes are expended.
--Many Coordinated Attack fixes. I think this order was meant to be: (1) used from a short distance to the target and (2) managed manually. My changes (from the last update and this update) is to allow it to be used like other orders - fire and forget.
-	The Coordinated Attack changes from this update are:
-	1. Bug-fix of original order: subordinate orders getting initialised twice.
-	2. New feature: Allow the leader to receive my custom avoid behaviour. E.g. if there's a big enemy station between it and Coordinated Attack target.
-	3. New feature: Subordinates respond properly to attacks on them while they wait at their rally point. I.e. small harassing enemies will not release them but high-risk enemies will.
-	4. New feature: Coordinated Attacks start to attack once their target attacks or is attacked by another ship of the same faction as the attackers. Note that Coordinated Attacks are only applied by the player to their ships. But if ever it is applied by another faction, this will work.
-	5. New feature: Rally points are now in an organised arc. Ships with the Attack order are the front. Ships with the Protect Ship order are at the back.
-	6. Bug-fix of Kuda's addition: Rally point of subordinates were at the original distances - instead of my intended longer distance, which the lead ship had. I.e. the lead ship's rally point was well behind its subordinate's rally points.
-	7. Bug-fix of Kuda's addition: Lead ship wasn't showing its rally point.
-	8. Bug-fix of Kuda's addition: Ships engage properly if the target attacks them or moves closer to the rally points.
-	9. Bug-fix of Kuda's addition: Rally point now gets reset properly if the target moves elsewhere.
-	Read all the changes to this order in the Coordinated Attack section below.
--Bug-fix of Protect Ship AI: Add event listeners so that ships in low-attention function like in visible attention.
--Tweaks (many): Cleaned up more of the code. Moved testing of avoidance and withdrawl determination into event conditions. Added vars to clearly define intent of code - e.g. instead of repeating test conditions. Removed unnecessary blocks of code, unnecessary debug outputs, variables. Etc.
 
 Attack AI Tweaks:
 =================
@@ -182,6 +161,32 @@ Japanese localisation by Arkblade.
 
 History
 =======
+v5.1.0305, 15 Sep 2022:
+-Note: I added notes about my ideas behind this mod. Read them as a starter for this mod - if you wish. But I always suggest to "just" use the mod after skimming through the read-me. If you have question about the mod AFTER experiencing it, THEN read the read-me.
+-Bug-fix: Ships were moving WAY out of sector. This occured only once during my tests/modding. But there was definitely a bug-fix required in my avoidance code. This bug shouldn't happen again.
+-Bug-fix: Escorting non-fighters (e.g. supply ships and carriers) were still drifting towards high-risk enemies. They now stay a certain distance behind their commander during attacks.
+-New feature: Small-sized and medium-sized ships harass their high-risk ship targets. With full shields, they attack. With shields at their skill-based withdrawal percentage or more, they avoid their target at half their avoidance distance. With less shields, they avoid them at their full avoidance distance - as they did in previous versions.
+-New feature: The recall subordinates feature of the generic move order defaults to false unless the destination is more than 2 gates away. Note that this is the Recall Subordinates order that is initiated automatically from the general move order. Ships will still recall subordinates at other times.
+-New feature: Fleets can now disengage from their small attack targets to prioritise new high-risk targets. This occurs when one in the fleet first engages a new high-risk target. Addresses the problem with large ships continuing to engage with smaller ships when there's higher-risk enemy.
+-Tweak: A lot of the tests for avoidance and withdraw are now in event conditions. This allows for smoother operation of the AIs.
+-Tweak: Added tests to engine's capabilities to capital ship's withdraw tests. If less than 25%, they stop to withdraw and just fight.
+-Tweak: Avoid AI now knows whether to either (1) move around a high-risk enemy while keeping it as a target (i.e. combat-appropriate avoid distance) or (2) actually avoid a high-risk enemy during general flights (i.e. longer avoid distances).
+-Tweak: Made small craft with missiles/torpedoes to follow fighter avoidance rules. Now that fighters harass their targets, limiting these ships' attack runs will increase their surviviability, especially against station targets. Previous versions made these ships ignore the rules until their missiles/torpedoes are expended.
+-Many Coordinated Attack fixes. I think this order was meant to be: (1) used from a short distance to the target and (2) managed manually. My changes (from the last update and this update) is to allow it to be used like other orders - fire and forget.
+	The Coordinated Attack changes from this update are:
+	1. Bug-fix of original order: subordinate orders getting initialised twice.
+	2. New feature: Allow the leader to receive my custom avoid behaviour. E.g. if there's a big enemy station between it and Coordinated Attack target.
+	3. New feature: Subordinates respond properly to attacks on them while they wait at their rally point. I.e. small harassing enemies will not release them but high-risk enemies will.
+	4. New feature: Coordinated Attacks start to attack once their target attacks or is attacked by another ship of the same faction as the attackers. Note that Coordinated Attacks are only applied by the player to their ships. But if ever it is applied by another faction, this will work.
+	5. New feature: Rally points are now in an organised arc. Ships with the Attack order are the front. Ships with the Protect Ship order are at the back.
+	6. Bug-fix of Kuda's addition: Rally point of subordinates were at the original distances - instead of my intended longer distance, which the lead ship had. I.e. the lead ship's rally point was well behind its subordinate's rally points.
+	7. Bug-fix of Kuda's addition: Lead ship wasn't showing its rally point.
+	8. Bug-fix of Kuda's addition: Ships engage properly if the target attacks them or moves closer to the rally points.
+	9. Bug-fix of Kuda's addition: Rally point now gets reset properly if the target moves elsewhere.
+	Read all the changes to this order in the Coordinated Attack section below.
+-Bug-fix of Protect Ship AI: Add event listeners so that ships in low-attention function like in visible attention.
+-Tweaks (many): Cleaned up more of the code. Moved testing of avoidance and withdrawl determination into event conditions. Added vars to clearly define intent of code - e.g. instead of repeating test conditions. Removed unnecessary blocks of code, unnecessary debug outputs, variables. Etc.
+
 v5.1.0304, 3 Sep 2022:
 -Bug-fix: Withdrawal getting stuck between withdraw and attack behaviours.
 -Tweak: Carriers now behave similar to Auxiliaries: they'll stay away from their attack target.
