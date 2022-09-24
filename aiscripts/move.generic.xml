@@ -170,43 +170,4 @@
 	<add sel="//on_abort">
 		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
-	<!-- DeadAir Diffs -->
-	<replace sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_if[@value='$recallsubordinates and this.assignedcontrolled.subordinates.count and (@this.assignedcontrolled.order.state != orderstate.critical) and not this.$recalling_subordinates?']/do_for_each[@name='$locsub']/do_if[@value='$locsub.isoperational and this.assignedcontrolled.dockingallowed.{$locsub} and (not $locsub.dock or not $locsub.hascontext.{this.assignedcontrolled})']/@value">$locsub.isoperational and this.assignedcontrolled.dockingallowed.{$locsub} and (not $locsub.dock or not $locsub.hascontext.{this.assignedcontrolled}) and (not ((@$locsub.assignment == assignment.assist) or (@$locsub.defaultorder.id == 'Assist')))</replace>
-	<replace sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_for_each[@name='$locship']/do_if[@value='$locship.isoperational and (not $locship.dock or not $locship.hascontext.{this.assignedcontrolled})']/@value">$locship.isoperational and (not $locship.dock or not $locship.hascontext.{this.assignedcontrolled}) and (not ((@$locship.assignment == assignment.assist) or (@$locship.defaultorder.id == 'Assist')))</replace>
-	<remove sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_if[@value='$intersector? and not @this.zone.isclass.highway and (@$waitforsubordinates or $waitforatgate or this.assignedcontrolled.iscapitalship)']/do_if[@value='not $waitforsubordinates? and not $waitforatgate.isoperational and not this.zone.isclass.highway']"/>
-	<remove sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/wait/@max"/>
-	<add sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/wait" type="@exact">[(0.2 * (15 - [this.ship.pilot.skill.piloting,9].max))s,0.1s].max</add>
-	<add sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/do_if[@value='$position']/move_to" pos="before">
-		<do_if value="this.assignedcontrolled.dock and this.assignedcontrolled.pilot">
-			<do_if value="@this.assignedcontrolled.order.id != 'Undock' or @this.assignedcontrolled.order.id != 'DockAt' or @this.assignedcontrolled.order.id != 'DockAndWait'">
-				<run_script name="'move.undock'">
-					<param name="uselaunchtubes" value="true"/>
-				</run_script>
-				<debug_text text="'MOD: DeadAirAITweaks -- %1 -- Undocking ship with move order: %2'.[player.age,this.assignedcontrolled.idcode]" context="false" filter="error" chance="100"/>
-			</do_if>
-		</do_if>
-	</add>
-	<replace sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/do_if[@value='$position']/move_to/@travel">(not $noboost) and (this.assignedcontrolled.distanceto.[$positionspace, $position] gt 15km)</replace>
-	<add sel="/aiscript/attention/actions/do_if[@value='this.sector != $targetsector or (this.zone != $targetzone and (not @$endzone or this.zone != $endzone) and ($endintargetzone or @$targetzone.isclass.highway or this.ship.bboxdistanceto.[$positionspace, $position, $destination] gt 10km))']/do_else/do_else/move_to" pos="before">
-		<do_if value="this.assignedcontrolled.dock and this.assignedcontrolled.pilot">
-			<do_if value="@this.assignedcontrolled.order.id != 'Undock' or @this.assignedcontrolled.order.id != 'DockAt' or @this.assignedcontrolled.order.id != 'DockAndWait'">
-				<run_script name="'move.undock'">
-					<param name="uselaunchtubes" value="true"/>
-				</run_script>
-				<debug_text text="'MOD: DeadAirAITweaks -- %1 -- Undocking ship with move order: %2'.[player.age,this.assignedcontrolled.idcode]" context="false" filter="error" chance="100"/>
-			</do_if>
-		</do_if>
-	</add>
-	<add sel="/aiscript/attention/actions/do_if[@value='not @$rotation']" pos="before">
-		<do_if value="this.assignedcontrolled.dock and this.assignedcontrolled.pilot">
-			<do_if value="@this.assignedcontrolled.order.id != 'Undock' or @this.assignedcontrolled.order.id != 'DockAt' or @this.assignedcontrolled.order.id != 'DockAndWait'">
-				<run_script name="'move.undock'">
-					<param name="uselaunchtubes" value="true"/>
-				</run_script>
-				<debug_text text="'MOD: DeadAirAITweaks -- %1 -- Undocking ship with move order: %2'.[player.age,this.assignedcontrolled.idcode]" context="false" filter="error" chance="100"/>
-			</do_if>
-		</do_if>
-	</add>
-	<add sel="/aiscript/attention/actions/do_if[@value='not @$rotation']/do_if[@value='this.ship.distanceto.[$positionspace, $safepos] gt this.ship.size']/move_to" type="@travel">(not $noboost) and (this.assignedcontrolled.distanceto.[$positionspace, $safepos] gt 15km)</add>
-	<add sel="/aiscript/attention/actions/do_else[4]/move_to" type="@travel">(not $noboost) and (this.assignedcontrolled.distanceto.[$positionspace, $safepos] gt 15km)</add>
 </diff>
