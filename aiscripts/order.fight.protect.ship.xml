@@ -15,7 +15,10 @@
             (
               this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
               this.assignedcontrolled.primarypurpose != purpose.fight or
-              this.assignedcontrolled.type == shiptype.carrier
+              (
+              this.assignedcontrolled.type == shiptype.carrier and
+              @this.assignedcontrolled.commander.isoperational
+            )
             ) and
             @global.$kAAIT_Config.$xssm_isAvoidHighRisk
           ) or
@@ -24,7 +27,10 @@
             (
               this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
               this.assignedcontrolled.primarypurpose != purpose.fight or
-              this.assignedcontrolled.type == shiptype.carrier
+              (
+              this.assignedcontrolled.type == shiptype.carrier and
+              @this.assignedcontrolled.commander.isoperational
+            )
             ) and
             @global.$kAAIT_Config.$xssm_isAvoidHighRisk_allFactions
           ) or
@@ -84,7 +90,10 @@
               $kAAIT_distToEnemy le this.assignedcontrolled.maxradarrange * 0.5
             ) or
             this.assignedcontrolled.primarypurpose != purpose.fight or
-            this.assignedcontrolled.type == shiptype.carrier">
+            (
+              this.assignedcontrolled.type == shiptype.carrier and
+              @this.assignedcontrolled.commander.isoperational
+            )">
             <debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.order.$kAAITParam_iskAAITOrder: ' + @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
             <do_if value="
               (not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder) and
@@ -181,7 +190,9 @@
           <abort_called_scripts resume="finish" />
         </do_if>
         <do_elseif value="(event.name == 'event_object_changed_zone') or (event.name == 'event_object_changed_sector')">
-          <remove_from_group group="$leaderpilot.$escortgroup" object="this.ship"/>
+          <do_if value="@$leaderpilot.exists">
+            <remove_from_group group="$leaderpilot.$escortgroup" object="this.ship"/>
+          </do_if>
           <abort_called_scripts resume="start" />
         </do_elseif>
         <do_else>
@@ -278,7 +289,6 @@
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
       <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_ProtectShip" />
       <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <set_value name="$radius" exact="this.assignedcontrolled.maxradarrange * 2" />
         <wait min="1s" max="3s" />
       </do_if>
     </do_if>
@@ -348,10 +358,10 @@
   <label name="fight" />
 -->
   <remove sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;fight&quot;]" />
-<!-- add before. add vars from visible attention so that the handler could work.
-  <do_if value="@$target.isoperational">
+<!-- add after. add vars from visible attention so that the handler could work.
+  <do_if value="not $target.isoperational">
 -->
-  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;@$target.isoperational&quot;]">
+  <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;not $target.isoperational&quot;]">
     <do_if value="$target.isoperational">
       <do_if value="@$target.pilot">
         <set_value name="$leaderpilot" exact="$target.pilot"/>

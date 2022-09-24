@@ -122,7 +122,10 @@
 			<do_if value="
 				(
 					this.assignedcontrolled.primarypurpose != purpose.fight or
-					this.assignedcontrolled.type == shiptype.carrier
+					(
+						this.assignedcontrolled.type == shiptype.carrier and
+						@this.assignedcontrolled.commander.isoperational
+					)
 				) and
 				@this.assignedcontrolled.commander.isoperational and
 				this.assignedcontrolled.commander.isclass.ship and
@@ -161,7 +164,10 @@
 			</do_if>
 			<do_elseif value="
 				this.assignedcontrolled.primarypurpose != purpose.fight or
-				this.assignedcontrolled.type == shiptype.carrier">
+				(
+					this.assignedcontrolled.type == shiptype.carrier and
+					@this.assignedcontrolled.commander.isoperational
+				)">
 				<do_if value="$target.isclass.ship">
 					<set_value name="$distAvoid" exact="this.assignedcontrolled.maxradarrange * 2" />
 				</do_if>
@@ -249,7 +255,9 @@
 		</actions>
 	</attention>
 	<on_abort>
-		<stop_moving object="this.assignedcontrolled" />
+		<do_if value="@this.assignedcontrolled.isoperational">
+			<stop_moving object="this.assignedcontrolled" />
+		</do_if>
 		<do_if value="@this.$kAAIT_data">
 			<set_value name="this.$kAAIT_data.$isAvoiding" exact="false" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />

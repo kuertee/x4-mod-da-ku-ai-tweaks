@@ -83,7 +83,10 @@
 			<do_if value="
 				$target.isclass.station or
 				this.assignedcontrolled.primarypurpose != purpose.fight or
-				this.assignedcontrolled.type == shiptype.carrier">
+				(
+					this.assignedcontrolled.type == shiptype.carrier and
+					@this.assignedcontrolled.commander.isoperational
+				)">
 				<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget" />
 			</do_if>
 			<do_else>
@@ -126,7 +129,10 @@
 				$target.isclass.ship and
 				(
 					this.assignedcontrolled.primarypurpose != purpose.fight or
-					this.assignedcontrolled.type == shiptype.carrier
+					(
+						this.assignedcontrolled.type == shiptype.carrier and
+						@this.assignedcontrolled.commander.isoperational
+					)
 				)
 			">
 				<set_value name="this.$kAAIT_data.$distance_attackFrom" exact="this.assignedcontrolled.maxradarrange" />
@@ -173,7 +179,10 @@
 						</check_any>
 						<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 						<check_value value="this.assignedcontrolled.primarypurpose == purpose.fight" />
-						<check_value value="this.assignedcontrolled.type != shiptype.carrier" />
+						<check_any>
+							<check_value value="this.assignedcontrolled.type != shiptype.carrier" />
+							<check_value value="not @this.assignedcontrolled.commander.isoperational" />
+						</check_any>
 						<check_value value="this.assignedcontrolled.weapons.all.count" />
 						<check_value value="this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25" />
 						<check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" />
@@ -232,7 +241,9 @@
 		</actions>
 	</attention>
 	<on_abort>
-		<stop_moving object="this.assignedcontrolled" />
+		<do_if value="@this.assignedcontrolled.isoperational">
+			<stop_moving object="this.assignedcontrolled" />
+		</do_if>
 		<do_if value="@this.$kAAIT_data">
 			<set_value name="this.$kAAIT_data.$isWithdrawing" exact="false" />
 			<remove_value name="this.$kAAIT_data.$orderLocation_space" />
