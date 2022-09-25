@@ -18,4 +18,51 @@
 	<add sel="//run_script[@name=&quot;'move.generic'&quot;]">
 		<param name="kAAITParam_iskAAITOrder" value="true" />
 	</add>
-</diff>
+	<!-- DeadAir Diffs -->
+	<replace sel="/aiscript/order[@id='Flee'][@name='{1041, 551}']/params/param[@name='deploydistraction']/@default">true</replace>
+	<replace sel="/aiscript/order[@id='Flee'][@name='{1041, 551}']/params/param[@name='maxboostdistance']/@default">this.assignedcontrolled.maxradarrange</replace>
+	<replace sel="/aiscript/init/do_if[@value='not $method or not (typeof $method).isnumeric or ($method lt 1) or ($method gt 5)']/do_else/set_value[@name='$method'][@exact='5']">
+		<do_if value="true">
+			<do_if value="(not $attacker.isclass.celestialbody) and ((not $method) or not (typeof $method).isnumeric or ($method lt 1) or ($method gt 5))">
+				<do_if value="not this.iscapitalship">
+					<find_station name="$stations" functional="true" space="this.zone">
+						<match_relation_to object="this" relation="dock" comparison="ge"/>
+						<match_relation_to object="$attacker" relation="enemy" comparison="le"/>
+					</find_station>
+					<do_if value="not @$stations.count">
+						<find_station name="$stations" functional="true" space="this.sector">
+							<match_relation_to object="this" relation="dock" comparison="ge"/>
+							<match_relation_to object="$attacker" relation="enemy" comparison="le"/>
+							<match_distance object="this.assignedcontrolled" max="this.assignedcontrolled.maxradarrange"/>
+						</find_station>
+					</do_if>
+					<do_if value="not @$stations.count">
+						<find_station name="$stations" functional="true" space="this.sector">
+							<match_relation_to object="this" relation="dock" comparison="ge"/>
+							<match_distance object="$attacker" min="$attacker.maxradarrange"/>
+						</find_station>
+					</do_if>
+					<do_if value="$stations">
+						<set_value name="$method" exact="2"/>
+						<remove_value name="$stations"/>
+					</do_if>
+					<do_else>
+						<set_value name="$method" exact="3"/>
+					</do_else>
+				</do_if>
+				<do_else>
+					<set_value name="$method" exact="3"/>
+				</do_else>
+			</do_if>
+			<do_else>
+				<set_value name="$method" exact="5"/>
+			</do_else>
+		</do_if>
+	</replace>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$attacker.isclass.celestialbody and not this.assignedcontrolled.takesregiondamage']" pos="before">
+		<do_if value="@$attacker.coverowner">
+			<signal_objects object="$attacker" param="'LoseCover'" param2="false"/>
+		</do_if>
+	</add>
+	<replace sel="/aiscript/attention/actions/do_if[@chance='90 - (this.skill.morale * 6)']/@chance">[90 - ([this.skill.morale,9].max * 6),0].max</replace>
+	</diff>
