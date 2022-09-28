@@ -236,7 +236,7 @@
 						<param name="disable" value="$disable"/>
 						<param name="disablehullpercentagethreshold" value="$disablehullpercentagethreshold"/>
 						<param name="disabletargets" value="$disabletargets"/>
-						<param name="allowothertargets" value="false"/>
+						<param name="allowothertargets" value="$allowothertargets"/>
 						<param name="squad_attack" value="$squad_attack"/>
 						<param name="internalorder" value="true"/>
 						<param name="debugchance" value="$debugchance"/>
@@ -266,6 +266,21 @@
 		<param name="kAAITParam_enemyAvoid" value="if (@this.$kAAIT_data.$isTargetHighRisk or @this.$kAAIT_data.$isTargetPotentialHighRisk) then @this.$kAAIT_data.$defensibleTarget else null" />
 		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 	</add>
+<!-- replace. purpose: if ship has commander, find ships from the commander.
+<do_if value="$allowothertargets">
+	<find_ship name="$bigtargets" space="$target.sector" class="[class.ship_xl, class.ship_l]" owner="$target.owner" multiple="true">
+		<match_distance object="this.assignedcontrolled" max="this.assignedcontrolled.currentradarrange"/>
+	</find_ship>
+	<find_ship name="$smalltargets" space="$target.sector" class="[class.ship_m, class.ship_s]" owner="$target.owner" multiple="true">
+		<match_distance object="this.assignedcontrolled" max="this.assignedcontrolled.currentradarrange"/>
+	</find_ship>
+-->
+	<replace sel="//do_if[@value=&quot;$allowothertargets&quot;]/find_ship[@name=&quot;$bigtargets&quot;]/match_distance[@object=&quot;this.assignedcontrolled&quot;]">
+		<match_distance object="if @this.assignedcontrolled.commander.isoperational then this.assignedcontrolled.commander else this.assignedcontrolled" max="this.assignedcontrolled.currentradarrange"/>
+	</replace>
+	<replace sel="//do_if[@value=&quot;$allowothertargets&quot;]/find_ship[@name=&quot;$smalltargets&quot;]/match_distance[@object=&quot;this.assignedcontrolled&quot;]">
+		<match_distance object="if @this.assignedcontrolled.commander.isoperational then this.assignedcontrolled.commander else this.assignedcontrolled" max="this.assignedcontrolled.currentradarrange"/>
+	</replace>
 <!-- add. purpose: pass data to DefensibleScript.
 	<run_script name="$DefensibleScript">
 -->
