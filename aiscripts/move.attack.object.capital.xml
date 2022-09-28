@@ -71,14 +71,23 @@
 				</do_if>
 				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $kAAIT_result_isMovetoEngage: ' + $kAAIT_result_isMovetoEngage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			</actions>
+			<actions name="kAAIT_GetIsTargetBlocked">
+				<set_value name="$kAAIT_test_target_isInTheWay" exact="this.$kAAIT_data.$defensibleTarget" />
+				<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$target" />
+				<include_interrupt_actions ref="kAAIT_GetIsTargetInTheWay" />
+				<remove_value name="$kAAIT_test_target_isInTheWay" />
+				<remove_value name="$kAAIT_test_target_isInTheWayOf" />
+				<set_value name="$isTargetBlocked" exact="$kAAIT_result_isTargetInTheWay" />
+				<remove_value name="$kAAIT_result_isTargetInTheWay" />
+			</actions>
 		</library>
 	</add>
 <!-- add. purpose: add handlers.
 	<interrupts>
 -->
 	<add pos="prepend" sel="//interrupts">
-		<handler ref="kAAIT_Handler_AvoidWithdrawOrJustFight" />
-		<handler ref="kAAIT_Handler_NewBigTarget" />
+		<!-- <handler ref="kAAIT_Handler_AvoidWithdrawOrJustFight" /> -->
+		<!-- <handler ref="kAAIT_Handler_NewBigTarget" /> -->
 	</add>
 <!-- add prepend. purpose: init var.
 	<init>
@@ -106,24 +115,30 @@
 	<add pos="before" sel="//label[@name=&quot;fight&quot;]">
 		<resume label="fight" />
 
-		<label name="kAAIT_label_move_to_engage_position_order" />
-		<debug_text text="this.assignedcontrolled.idcode + ' LABEL move_to_engage_position_order'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<label name="kAAIT_label_move_to_engage_position" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveEngagePosition'" immediate="true">
 			<param name="target" value="$target"/>
 		</create_order>
 		<wait min="5s" max="10s" />
-		<debug_text text="this.assignedcontrolled.idcode + ' shouldnt be here because kAAIT_MoveEngagePosition should have been activated'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<resume label="fight" />
 
 		<label name="kAAIT_label_step_forward" />
-		<debug_text text="this.assignedcontrolled.idcode + ' LABEL step_forward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveStepForward'" immediate="true">
-			<param name="target" value="$target" />
-		</create_order>
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_step_forward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<include_interrupt_actions ref="kAAIT_GetIsTargetBlocked" />
+		<do_if value="$isTargetBlocked">
+			<resume label="kAAIT_label_move_to_engage_position" />
+		</do_if>
+		<do_else>
+			<create_order object="this.assignedcontrolled" id="'kAAIT_MoveStepForward'" immediate="true">
+				<param name="target" value="$target" />
+			</create_order>
+			<wait min="5s" max="10s" />
+		</do_else>
 		<resume label="fight" />
 
 		<label name="kAAIT_label_avoid" />
-		<debug_text text="this.assignedcontrolled.idcode + ' LABEL avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
 		<resume label="fight" />
@@ -134,11 +149,9 @@
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-			<set_value name="$kAAIT_test_target_isAvoid" exact="$target" comment="check if target is obstructed by big enemy - e.g. station the module target is attached to" />
-			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-			<do_if value="$kAAIT_result_isAvoid and @$kAAIT_result_avoidEnemy and $kAAIT_result_avoidEnemy != $target">
-				<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-				<resume label="kAAIT_label_avoid" />
+			<include_interrupt_actions ref="kAAIT_GetIsTargetBlocked" />
+			<do_if value="$isTargetBlocked">
+				<resume label="kAAIT_label_move_to_engage_position" />
 			</do_if>
 			<do_if value="
 				this.assignedcontrolled.primarypurpose != purpose.fight or
@@ -153,7 +166,7 @@
 			<do_else>
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
-					<resume label="kAAIT_label_move_to_engage_position_order" />
+					<resume label="kAAIT_label_move_to_engage_position" />
 				</do_if>
 				<do_elseif value="$target.isclass.module">
 					<do_if value="this.$kAAIT_data.$moduleTarget?">
@@ -161,7 +174,7 @@
 							comment="only move to engage position AGAIN if there was a previous module target">
 							<debug_text text="this.assignedcontrolled.idcode + ' NEW $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
-							<resume label="kAAIT_label_move_to_engage_position_order" />
+							<resume label="kAAIT_label_move_to_engage_position" />
 						</do_if>
 						<do_else>
 							<debug_text text="this.assignedcontrolled.idcode + ' SAME $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -246,7 +259,7 @@
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and @this.$kAAIT_data.$isTargetHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
 			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-			<do_if value="@$kAAIT_result_bigEnemy">
+			<do_if value="@$kAAIT_result_bigEnemy != this.$kAAIT_data.$defensibleTarget">
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy (too near): ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<resume label="kAAITLabel_withdraw" />
 			</do_if>
