@@ -8,13 +8,17 @@ Dead Air AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-t
 
 Updates
 =======
+v5.1.0309, 30 Sep 2022:
+-Bug-fix: XSSM ships with missles and torpedoes weren't attacking their targets even when their shields were full.
+-Tweak: The "avoid" and "withdraw" behaviours were getting applied when either the "avoid" and "withdraw" Extension Options were enabled. The avoid behaviour is now applied when the avoid option is enabled. And the withdraw behaviour is applied when the withdraw option is enabhled.
+
 v5.1.0308, 29 Sep 2022:
 -Bug-fix: Remove possibility of a game freeze that sometimes occurs after having the mod for some time. Thanks to blosphere on Nexus for reporting it, providing logs and save files, and testing my fixes several times.
 -Bug-fix: In general attacks (i.e. not Coordinated Attacks), the ships were not acquiring the move to engage positions behaviour - causing them to run towards their targets at speed. Bug introduced during my work on Coordinated Attack.
 -Returned feature: Bombers (XS, S and M with missiles and/or torpedoes) now attack stations like they do ships. I removed this feature because I made XS, S and M ships attack their target when their shields are above the threshold for them withdrawing/avoiding EXCEPT for stations in the v5.1.0305, 15 Sep 2022 version. In this version, bombers attack stations until their shields are below their withdraw/avaoid threshold. Other XS, S and M ships avoid stations allways.
 -Tweak: Improved (again) capital ships moving to their next module target - especially if its on the other side of the station.
--Tweak: Withdraw vectors to draw enemy towards allies: If there are no allies within 10km of the enemy, ships will withdraw towards the nearest ally. If an ally is within 5km from the target, the vector is directly away from the enemy. If an ally is within 10km, the vector is perpendicular (90 deg) to that ally, giving the ally more chance to get closer to the enemy.
--Tweak: Only ships within 5km or in front of their high-risk ship enemy withdraws. They withdraw against stations as in previous versions.
+-Tweak: Withdraw vectors to draw enemy towards allies: If there are no allies within 10 km of the enemy, ships will withdraw towards the nearest ally. If an ally is within 5 km from the target, the vector is directly away from the enemy. If an ally is within 10 km, the vector is perpendicular (90 deg) to that ally, giving the ally more chance to get closer to the enemy.
+-Tweak: Only ships within 5 km or in front of their high-risk ship enemy withdraws. They withdraw against stations as in previous versions.
 -Bug-fix: While avoiding targets (e.g. flying around stations), the ships were not obeying the Attack order option "Attack all enemies". They were attacking others even when the option was not enabled.
 -Tweak: The "Attack all enemies" base-game feature now finds enemies in the vicinity of the fleet commander. Prevents ships away from the fleet (e.g. in another sector) acquiring targets far from the area of engagement.
 -Tweak: The arc of attackers of Coordinated Attacks is half its length. Previously, each attacking ship was separated by 10 degrees. In this version, they are separated by 5 degrees.
@@ -27,7 +31,7 @@ Attack AI Tweaks:
 
 Mod effects
 ===========
-(1) All ships avoid high-risk enemies. (2) L, and XL ships inch forward against high-risk targets. (3) L, and XL ships withdraw from high-risk targets when their shields fall below their skill-based withdrawal percentage (i.e. between 75% and 90%).
+All ships acquire the "Avoid High-risk Enemies" and "Move To Engage Target" behaviours. Destroyers and larger ships acquire the "Step Forward" and "Withdraw (to regenerate shields)" behaviours.
 
 Requirements
 ============
@@ -44,50 +48,82 @@ Notes about this mod and my ideas behind it:
 7. When they are not avoiding, withdrawing, moving to engage position, the ships attack with the base game AI. I.e. This mod doesn't actually change their actual attack behaviours (e.g. lauch drones, what their turrets do, etc.).
 8. Read the "What this mod doesn't do" section below.
 
-Avoid high-risk enemies
-=======================
-All ships move around high-risk enemies that are in their flight path. (https://youtu.be/mWBef0_mrmE)
+The custom behaviours: Avoid, Move to engage, Step forward, Withdraw
+====================================================================
+Note that all ships will always acquire the Attack behaviour when their AI commanders or the player orders them to attack. The Attack order will be listed in their Behaviour menu. This mod will never remove this order. Only their commanders or the player cancels this Attack order.
 
-XS (except for drones), S, and M class ships with less than 100% shields will circle high-risk station targets until they outnumber 75% of their targets' turrets.
-REMOVED since v5.1.0305: Ships with missile and torpedo loadouts do not acquire this behaviour until their missiles and torpedoes are depleted. (https://youtu.be/DFVtwZxSKes)
-Ships will attack their high-risk ship targets when they have full shields or they outnumber 50% of their targets' weapons.
-At shields of more than their skills-based withdrawal levels (i.e. between 75% to 90%) or more they avoid their high-risk targets at half their pilots' skills avoidance distance.
-With less shields they avoid their high-risk targets at their pilots' skills-based avoidance distance.
+This mod only applies the custom behaviours at the events listed below. When the ships do not have any of these custom behaviours in their Behaviour menu, their base-game AI is controlling them.
 
-L, and XL class ships, enroute to their targets, will stop short of their targets to prevent accidental kamikaze attacks.
+Note that these behaviours can be controlled by the player several ways. They are listed in the section, Player controls, below.
 
-Non-fighters (e.g. auxiliaries and carriers) will stay a short distance behind their commander.
-
-Additional L, and XL AI behaviours
-==================================
-Step forward: When attacking high-risk targets, L and XL ships will move forward from near their max range up to an optimal range based on the times they withdrew and the times they didn't have to withdraw. The player's removal of high-damage turrets have a direct effect on the AI's behaviour.
-
-Previous versions start at their optimal range based on their DPS, their target DPS and the number of times they withdrew. You can enable this previous version in the Extension Options.
-
-The current version makes use of long-range weapons earlier and for a longer time - softening up their target. The previous version used all weapons sooner (because they get closer sooner) but put the ship in danger sooner - causing some ships to withdraw sooner and more often.
-
-Withdraw out of range: When shields drop below their skills-based withdraw levels or operational weapon count is low, L and XL ships will withdraw out of range of high-risk enemies at a distance based on their remaining shields. They withdraw farther with lower shields to give it time to recharge. Against high-risk ships, L, and XL attackers will not withdraw unless there are other L, and XL attackers.
-
-Ships that have a low chance of survival or ships targeting enemies with a low chance of survival never withdraw or cancel their withdrawals.
-
-Withdrawing ships cancel their withdrawal when their ship target stop chasing them (and when they are at least 10km away, to allow for some shields to recharge).
+1. At the start of attack runs:
+	Vs stations:
+		XS (except drones), S, M (XSSM), L and XL (LXL) class ships will acquire the MOVE TO ENGAGE POSITION behaviour at a distance based on their combat range and adjusted by the pilot's skill and morale.
+			The engage position is 75% their combat range for low-rated pilots - putting them in danger sooner. And 100% for higher-rated pilots.
+			The MOVE TO ENGAGE behaviour prevents them from ramming their targets.
+		XS (except drones), S and M (XSSM) class ships with full shields will never attack their station targets - unless they have missiles and/or torpedoes.
+		XSSM ships will AVOID (i.e. circle) their station targets until the number of attackers, adjusted by their pilot's skill and morale, outnumber 75% of the station's turrets.
+			Low-rated pilots will over-estimate the number of attackers by up to 2 times - causing them to attack earlier.
+		When the number of attackers outnumber the station's turrets (at that certain percentage), XSSM ships will attack as long as their shields are full.
+	Vs ships:
+		XSSM ships with full shields will attack their ship targets.
+		XSS ships will AVOID their ship targets until the number of attackers, adjusted by their pilot's skill and morale, outnumber 25% of the ship's turrets.
+			Low-rated pilots will over-estimate the number of attackers by up to 2 times - causing them to attack earlier.
+		M ships will AVOID their ship target until the number of attackers, adjusted by their pilot's skill and morale, outnumber 50% of the ship's turrets.
+			Low-rated pilots will over-estimate the number of attackers by up to 2 times - causing them to attack earlier.
+		When the number of attackers outnumber the ship's turrets (at that certain percentage), XSSM ships will attack as long as their shields are above a certain percentage dictated by the pilot's skill and morale.
+			75% shields for low-rated pilots. They are impulsive and over-confident. And 90% shields for high-rated pilots. They are careful and patient.
+2. During attack runs:
+	Vs stations:
+		LXL class ships will STEP FORWARD several meters dictated by the pilot's skill and morale once a minute until they are at an optimal range dictated by their main guns and turrets.
+			2 km at every step for low-rated pilots - putting them in danger sooner. And 1 km at every step for high-rated pilots.
+		Carriers will always AVOID their targets. They continue to perform their other activities according to their base-game Attack AI. But they never engage their targets directly. (They are too slow to WITHDRAW when required.)
+3. While AVOIDING:
+	Ships with the "Attack all enemies" option enabled in the Behaviour menu will attack non-high-risk enemies while AVOIDING their main high-risk target.
+4. When shield levels fall:
+	Vs ships and stations:
+		XSSM and LXL ships will WITHDRAW when their shields fall a certain percentage dictated by the pilot's skill and morale.
+			75% shields for low-rated pilots. And 90% shields for high-rated pilots.
+		The distance of this WITHDRAWAL is based on the level of their shields. Further when shields are low. Nearer when shields are still high.
+		Ships will try to draw their targets towards an ally when WITHDRAWING.
+		Note that the WITHDRAW behaviour is not the Flee behaviour. The WITHDRAW behaviour is to remove the ship from their target's weapons range temporarily to regenerate their shields.
+	Vs ships:
+		LXL ships will only WITHDRAW if they are at their target's front quadrant or if they are within 5 km of their target.
+5. While WITHDRAWING:
+	XSSM and LXL ships will cancel their WITHDRAWAL when their hull is damaged to below 50%. Their chance of survival is low.
+	They will also cancel their WITHDRAWAL when their ship target's shields fall below 25%.
+	They will also cancel their WITHDRAWAL when they detect that their ship target has stopped chasing them.
+6. When changing station module targets:
+	LXL ships will move around (i.e. MOVE TO ENGAGE POSITION) the station to a vector better suited for their new module targets.
+7. When not attacking:
+	XSSM and LXL ships will always AVOID stations and enemy LXL ships that are in the way of their destination. (https://youtu.be/mWBef0_mrmE)
 
 High-risk enemies
 =================
 Potentially high-risk enemies are 1.5x physically larger than the ship.
-For XS (except for drones), S, and M ships, high-risk enemies have turrets that outnumber the attackers.
-For L, and XL ships, high-risk enemies have more DPS than the ship.
+For XSSM ships, high-risk enemies have turrets that outnumber the attackers.
+For LXL ships, high-risk enemies can cause higher damage-per-second (DPS) than the ship.
 
-NPC Piloting Skills and Morale
+NPC piloting skills and morale
 ==============================
 The NPC pilot's piloting skills and morale affect these behaviours:
-1. Counting attackers on enemy targets: Pilots of lower skills and morale overly count attackers - juding their targets to be of lower-risk than they should be.
+1. Counting attackers on enemy targets: Pilots of lower skills and morale overly count attackers - judging their targets to be of lower-risk than they should be.
 2. Engage position: The engage position of pilots with lower skills and morale are closer to the target - specifically, 75% combat range instead of 100% combat range.
-3. Step forward distance: Pilots of lower skills and morale step forward 3 km at a time instead of 1 km at a time.
-4. Shield percentage for withdrawal: Pilots of lower skills and morale will withdraw when their shields are at 50% instead of at 90%.
-5. Withdrwal and avoidance distance: Pilots of lower skills and morale withdraw to 25% their max radar range (approximately, 10 km) instead of to 50% their max radar range (approximately 20 km).
+3. Step forward distance: Pilots of lower skills and morale step forward 2 km at a time instead of 1 km at a time.
+4. Shield percentage for withdrawal: Pilots of lower skills and morale will withdraw when their shields are at 75% instead of at 90%.
 
-Disable all these skill-based features in the Extension Options so that all ships operate at perfect skills and high morale.
+Disable these skill-based features in the Extension Options so that all ships operate at perfect skill and high morale.
+
+Player controls
+===============
+1. The AVOID behaviour can be disabled several ways:
+	Disabling the option in the ship's Behaviour menu will prevent the ship from acquiring the AVOID behaviour during an Attack session. I.e. Multiple successive Attack orders is one session.
+	It will be re-enabled at new Attack sessions.
+	Cancelling the AVOID order from the Behaviour menu will prevent the ship from acquiring the AVOID behaviour for 10 seconds.
+	Using the Interact menu will prevent the ship from acquiring the AVOID behaviour until it is re-enabled with the Interact menu.
+	Disabling the AVOID behaviours in the Extension Options will prevent all ships from acquiring the AVOID behaviour.
+2. The STEP FORWARD and WITHDRAW behaviours can be disabled from the ship's Behaviour menu.
+	Disabling these in the Extension Options will disable these behaviours for all ships.
 
 Coordinated Attack Quality-Of-Life Changes
 ==========================================
@@ -105,22 +141,12 @@ Coordinated Attack Quality-Of-Life Changes
 	Addresses this problem: The ships continue to wait at the rally point when they should just attack.
 6. The Coordinated Attack order of the lead ship is replaced with the normal Attack order when the attack starts. The new behaviours work better when the Attack order is not "embedded" in the Coordinated Attack order.
 
-Interact Menu
-=============
-There are two right-click commands that sets or unsets two options in the attack order UI.
-1. "Enable/Disable 'Attack all enemies'": This sets or unsets the attack order 'Attack all enemies' option. This option allows or disallows the ship from acquiring other targets other than their primary target.
-2. "Enable/Disable 'Avoid high-risk enemies'": This sets or unsets this mod's "avoid" behaviour. When set, the ships acquire this mod's determination of high-risk targets and avoid them according to the behaviours described above. When unset, the ships ignore this mod's AI. Functionally, these are an "attack now" and "hold off attack and stay at a distance" commands.
-
-Player-owned ships only
-=======================
-By default, these AI behaviours are applied to player-owned ships only. But you can enable them for ALL ships. Note that I've not tested them on all ships.
-
 What this mod doesn't do
 ========================
 1. Order fleet subordinates to attack. Fleet subordinates only acquire this mod's attack behaviours WHEN they acquire an attack order from either their commander or the player. This mod will never start their attacks. How they behave at the start of their attack, defend and intercept stances are determined by their AI commander's orders.
-2. For XS (except for drones), S, and M ships: set their starting targets. The only time this mod sets targets for XS (except for drones), S, and M ships are when they are circling a high-risk enemy AND their "Attack all enemies" option is enabled.
-3. For L, and XL ships: set their targets.
-4. Find and move to the best attack vector. (Nor did the base attack AI.) Ships that are in "ideal" attack vectors are incidental. (Same with the base attack AI.)
+2. For XSSM ships: set their starting targets. The only time this mod sets targets for XS (except for drones), S, and M ships are when they are circling a high-risk enemy AND their "Attack all enemies" option is enabled.
+3. For LXL ships: set their targets.
+4. Dictate when ships use their missiles and torpedoes.
 5. Increase the efficiency of attacks in low attention. Damages received and dealt in attacks in low attention are determined by the base game. I.e. ships could be in good attack ranges (and out of reach of their target's weapons) but still not deal the optimal damage per second.
 
 Install
@@ -147,7 +173,7 @@ Credits
 =======
 By kuertee.
 Chinese localisation by Tiomer.
-German localisation by LeLeon.
+German localisation by EagleFour. Previous by LeLeon.
 Japanese localisation by Arkblade.
 
 History
