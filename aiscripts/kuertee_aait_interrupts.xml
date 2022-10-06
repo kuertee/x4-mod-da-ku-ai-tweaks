@@ -28,7 +28,7 @@
 					<set_value name="this.$kAAIT_data.$isTargetHighRisk" exact="@$kAAIT_result_isTargetHighRisk" />
 					<remove_value name="$kAAIT_test_target_isHighRisk" />
 				</do_if>
-				<do_if value="$kAAITParam_isAvoidHighRisk?">
+				<!-- <do_if value="$kAAITParam_isAvoidHighRisk?">
 					<do_if value="not this.$kAAIT_data.$isAvoidHighRisk_saved?" comment="not saved, so save it">
 						<do_if value="this.$kAAIT_isAvoidHighRisk_user?" comment="there's a user setting, use it">
 							<set_value name="$kAAITParam_isAvoidHighRisk" exact="this.$kAAIT_isAvoidHighRisk_user" />
@@ -37,21 +37,19 @@
 						<set_value name="this.$kAAIT_data.$isAvoidHighRisk_saved" exact="$kAAITParam_isAvoidHighRisk" />
 					</do_if>
 					<do_elseif value="this.$kAAIT_data.$isAvoidHighRisk_saved != @$kAAITParam_isAvoidHighRisk" comment="changed!">
-						<do_if value="this.$kAAIT_isAvoidHighRisk_user?">
+						<do_if value="not this.$kAAIT_isAvoidHighRisk_user?">
 							<debug_text text="this.assignedcontrolled.idcode + ' removing this.$kAAIT_isAvoidHighRisk_user: ' + this.$kAAIT_isAvoidHighRisk_user" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<remove_value name="this.$kAAIT_isAvoidHighRisk_user" comment="remove the user setting!" />
 						</do_if>
 					</do_elseif>
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-				</do_if>
+				</do_if> -->
 				<do_if value="
 					@this.$kAAIT_data.$isIgnoreKAAIT and
-					(
-						this.$kAAIT_data.$defensibleTarget.isclass.station or
-						this.assignedcontrolled.shieldpercentage gt 25
-					)">
+					this.assignedcontrolled.shieldpercentage gt 25">
 					<remove_value name="this.$kAAIT_data.$isIgnoreKAAIT" />
 				</do_if>
+				<set_value name="this.$kAAIT_data.$isInited" exact="true" />
 				<debug_text text="this.assignedcontrolled.idcode + ' this.$kAAIT_data: ' + this.$kAAIT_data" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			</actions>
 
@@ -233,31 +231,33 @@
 						<check_value value="not @this.$kAAIT_data.$isWithdrawing" />
 						<check_value value="not @this.$kAAIT_data.$isIgnoreKAAIT" />
 						<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight is allowed to withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-						<check_any comment="can actually withdraw">
+						<check_any comment="should actually avoid/withdraw">
 							<check_value value="$kAAIT_eventType == 'avoid'" />
 							<check_value value="$kAAIT_attacker.isclass.station" />
 							<check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]" />
-							<check_all>
+							<check_all comment="no attack order, so withdraw">
 								<check_value value="@this.assignedcontrolled.order.id != 'Attack'" />
 								<check_value value="@this.assignedcontrolled.nextorder.id != 'Attack'" />
 								<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight not attacking, so withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 							</check_all>
-							<check_all>
-								<check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" comment="has engines to withdraw" />
-								<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight can withdraw has engines'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-								<check_any comment="has other lxl attacker">
-									<check_all>
-										<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" />
-										<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count gt 1" />
-										<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-									</check_all>
-									<check_all>
-										<check_value value="not @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" />
-										<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count gt 0" />
-										<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers not including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-									</check_all>
-								</check_any>
-							</check_all>
+							<check_any>
+								<check_value value="$kAAIT_attacker != @this.$kAAIT_data.$defensibleTarget" comment="new attacker" />
+								<check_all comment="attacker is target and it has other lxl attacker">
+									<check_value value="$kAAIT_attacker == this.$kAAIT_data.$defensibleTarget" />
+									<check_any>
+										<check_all>
+											<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" />
+											<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count gt 1" />
+											<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+										</check_all>
+										<check_all>
+											<check_value value="not @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" />
+											<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count gt 0" />
+											<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers not including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+										</check_all>
+									</check_any>
+								</check_all>
+							</check_any>
 						</check_any>
 					</check_all>
 					<check_all>
@@ -269,19 +269,19 @@
 							</check_all>
 							<check_all>
 								<check_value value="$kAAIT_eventType == 'withdraw'" />
-								<check_value value="@$kAAITParam_isStepForwardWithdraw" />
+								<check_any>
+									<check_value value="@$kAAITParam_isAvoidHighRisk" />
+									<check_value value="@$kAAITParam_isStepForwardWithdraw" />
+								</check_any>
 							</check_all>
 						</check_any>
 						<check_any>
 							<check_all comment="get is avoid or withdraw now. when changed, also change others with the 'get is avoid or withdraw now' comment.">
 								<set_value name="$kAAIT_skillMult" exact="(@this.skill.piloting + @this.skill.morale) / 30.0" />
 								<check_all comment="get is potential high risk">
+									<check_value value="$kAAIT_attacker.dps.all" />
 									<check_any>
 										<check_value value="this.assignedcontrolled.primarypurpose != purpose.fight" />
-										<check_all>
-											<check_value value="this.assignedcontrolled.type == shiptype.carrier" />
-											<check_value value="@this.assignedcontrolled.commander.isoperational" />
-										</check_all>
 										<check_value value="$kAAIT_attacker.isclass.station" />
 										<check_value value="$kAAIT_attacker.size gt this.assignedcontrolled.size * 1.5" />
 									</check_any>
@@ -291,7 +291,7 @@
 								<check_value value="$kAAIT_isPotentialHighRiskEvent" />
 								<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight this.assignedcontrolled.shieldpercentage: ' + @this.assignedcontrolled.shieldpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 								<check_any comment="get $kAAIT_isActOnEventNow.">
-									<check_all>
+									<check_all comment="not an attack target, so avoid it">
 										<check_value value="$kAAIT_attacker != @this.kAAIT_data.$defensibleTarget" />
 										<check_value value="@this.assignedcontrolled.order.id != 'Attack'" />
 										<check_value value="@this.assignedcontrolled.nextorder.id != 'Attack'" />
@@ -312,7 +312,10 @@
 									</check_all>
 									<check_value value="@$kAAIT_isActOnEventNow" />
 									<check_all comment="v station">
-										<check_value value="$kAAIT_attacker.isclass.station" />
+										<check_all>
+											<check_value value="$kAAIT_attacker.isclass.station" />
+											<check_value value="$kAAIT_attacker.dps.all" />
+										</check_all>
 										<set_value name="$kAAIT_shield_withdrawAt" exact="75 + $kAAIT_skillMult * 15" />
 										<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_shield_withdrawAt: ' + @$kAAIT_shield_withdrawAt" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 										<check_value value="this.assignedcontrolled.shieldpercentage le $kAAIT_shield_withdrawAt" />
@@ -342,10 +345,15 @@
 					<do_if value="@$kAAIT_eventType == 'withdraw'">
 						<do_if value="$kAAIT_attacker != @this.$kAAIT_data.$defensibleTarget" comment="new target">
 							<do_if value="
+								(not this.assignedcontrolled.commander) and
+								@this.assignedcontrolled.subordinates.count">
+								<signal_objects object="this.assignedcontrolled" param="'kAAIT_new_big_target'" param2="table[$attacker = $kAAIT_attacker, $from = this.assignedcontrolled]" />
+							</do_if>
+							<do_elseif value="
 								@this.assignedcontrolled.commander.isclass.[class.ship_l, class.ship_xl] and
 								this.assignedcontrolled.commander.sector == this.sector">
-								<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_new_big_target'" param2="$kAAIT_attacker" />
-							</do_if>
+								<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_new_big_target'" param2="table[$attacker = $kAAIT_attacker, $from = this.assignedcontrolled]" />
+							</do_elseif>
 						</do_if>
 					</do_if>
 					<do_if value="@$kAAIT_isActOnEventNow">
@@ -365,37 +373,41 @@
 							<is_in_quadrant result="$kAAIT_isInFront" object="this.assignedcontrolled" target="$kAAIT_attacker" front="true" />
 							<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isInFront: ' + @$kAAIT_isInFront" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker}: ' + @this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-							<do_if value="$kAAIT_isInFront and this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker} le 5km">
-								<do_if value="@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count">
-									<sort_group group="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
-									<do_if value="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}">
-										<set_value name="$ally" exact="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{2}" />
-									</do_if>
-									<do_else>
-										<set_value name="$ally" exact="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{1}" />
-									</do_else>
-								</do_if>
-								<debug_text text="this.assignedcontrolled.idcode + ' $ally: ' + @$ally.knownname + ', ' + @$ally.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-								<debug_text text="this.assignedcontrolled.idcode + ' $ally.bboxdistanceto.{$kAAIT_attacker}: ' + @$ally.bboxdistanceto.{$kAAIT_attacker}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-								<do_if value="
-									(	(not @$ally.isoperational) or
-										(	$ally != this.assignedcontrolled and
-											$ally.bboxdistanceto.{$kAAIT_attacker} le 20km
-										)
-									)">
-									<do_if value="
-										@this.assignedcontrolled.order.id == 'Attack' and
-										(not @$DefensibleScript)
-									" comment="assumes this is already in an attack run_script set in order.fight.attack.object">
-										<abort_called_scripts resume="kAAITLabel_withdraw" />
-									</do_if>
-									<do_else comment="assumes in any other order with this handler">
-										<do_if value="not this.$kAAIT_data?">
-											<set_value name="this.$kAAIT_data" exact="table[]" />
+							<do_if value="
+								$kAAIT_attacker.isclass.station or
+								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+								$kAAIT_isInFront or
+								this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker} le 5km">
+								<do_if value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25">
+									<do_if value="@this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count">
+										<sort_group group="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
+										<do_if value="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}">
+											<set_value name="$ally" exact="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{2}" />
 										</do_if>
-										<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_attacker" />
-										<include_interrupt_actions ref="kAAIT_Order_Withdraw" />
-									</do_else>
+										<do_else>
+											<set_value name="$ally" exact="this.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{1}" />
+										</do_else>
+									</do_if>
+									<debug_text text="this.assignedcontrolled.idcode + ' $ally: ' + @$ally.knownname + ', ' + @$ally.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									<debug_text text="this.assignedcontrolled.idcode + ' $ally.bboxdistanceto.{$kAAIT_attacker}: ' + @$ally.bboxdistanceto.{$kAAIT_attacker}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									<do_if value="
+										(	@$ally != this.assignedcontrolled and
+											@$ally.bboxdistanceto.{$kAAIT_attacker} le 10km
+										)">
+										<do_if value="
+											@this.assignedcontrolled.order.id == 'Attack' and
+											(not @$DefensibleScript)
+										" comment="assumes this is already in an attack run_script set in order.fight.attack.object">
+											<abort_called_scripts resume="kAAITLabel_withdraw" />
+										</do_if>
+										<do_else comment="assumes in any other order with this handler">
+											<do_if value="not this.$kAAIT_data?">
+												<set_value name="this.$kAAIT_data" exact="table[]" />
+											</do_if>
+											<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_attacker" />
+											<include_interrupt_actions ref="kAAIT_Order_Withdraw" />
+										</do_else>
+									</do_if>
 								</do_if>
 							</do_if>
 						</do_elseif>
@@ -448,9 +460,6 @@
 							<do_if value="
 								this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isAvoid} le this.assignedcontrolled.maxradarrange and
 								(	this.assignedcontrolled.primarypurpose != purpose.fight or
-									(	this.assignedcontrolled.type == shiptype.carrier and
-										@this.assignedcontrolled.commander.isoperational
-									) or
 									(not $kAAIT_isTakeRisk)
 								)">
 								<set_value name="$kAAIT_result_avoidEnemy" exact="$kAAIT_test_target_isAvoid" />
@@ -505,7 +514,8 @@
 					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot kAAIT_result_avoidEnemy (3): ' + @$kAAIT_result_avoidEnemy.knownname + ' ' + @$kAAIT_result_avoidEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<do_if value="
 						$kAAIT_result_isAvoid and
-						@this.assignedcontrolled.order.$allowothertargets" comment="if avoiding, find smaller target first">
+						@this.assignedcontrolled.order.$allowothertargets and
+						(not @this.$kAAIT_data.$attackOrder.exists)" comment="if avoiding, find smaller target first">
 						<set_value name="$kAAIT_bigEnemy" exact="$kAAIT_result_avoidEnemy" />
 						<include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
 						<do_if value="@$kAAIT_result_target_found.isoperational">
@@ -532,15 +542,18 @@
 					<remove_value name="$kAAIT_test_target_isHighRisk" />
 					<do_if value="$kAAIT_result_isTargetPotentialHighRisk">
 						<do_if value="
-							(not this.assignedcontrolled.weapons.all.count) or
-							this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25 or
+							$kAAIT_test_target_isWithdraw.dps.all and
 							(
-								$kAAIT_test_target_isWithdraw.isclass.station and
-								this.assignedcontrolled.shieldpercentage le 75 + (@this.skill.piloting + @this.skill.morale) / 30.0 * 15
-							) or
-							(
-								$kAAIT_test_target_isWithdraw.isclass.ship and
-								this.assignedcontrolled.shieldpercentage le 75 + (@this.skill.piloting + @this.skill.morale) / 30.0 * 15
+								(not this.assignedcontrolled.weapons.all.count) or
+								this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25 or
+								(
+									$kAAIT_test_target_isWithdraw.isclass.station and
+									this.assignedcontrolled.shieldpercentage le 75 + (@this.skill.piloting + @this.skill.morale) / 30.0 * 15
+								) or
+								(
+									$kAAIT_test_target_isWithdraw.isclass.ship and
+									this.assignedcontrolled.shieldpercentage le 75 + (@this.skill.piloting + @this.skill.morale) / 30.0 * 15
+								)
 							)
 						">
 							<do_if value="not this.$kAAIT_data?">
@@ -556,47 +569,38 @@
 			<handler name="kAAIT_Handler_NewBigTarget">
 				<conditions>
 					<check_any>
-						<check_all>
-							<event_object_signalled object="this.assignedcontrolled" param="'kAAIT_new_big_target'" />
-							<set_value name="$kAAIT_isSignalMine" exact="true" />
-						</check_all>
+						<event_object_signalled object="this.assignedcontrolled" param="'kAAIT_new_big_target'" />
 						<event_object_signalled object="this.assignedcontrolled.commander" param="'kAAIT_new_big_target'" check="false" />
 					</check_any>
+					<check_value value="this.assignedcontrolled != event.param2.$from" />
+					<check_value value="not @this.$kAAIT_data.$isAvoiding" comment="not performing kAAIT order" />
+					<check_value value="not @this.$kAAIT_data.$isWithdrawing" comment="not performing kAAIT order" />
 					<check_all>
-						<check_value value="event.param2.isclass.[class.ship_l, class.ship_xl]" />
+						<check_value value="event.param2.$attacker.isclass.[class.ship_l, class.ship_xl]" />
 						<check_any comment="new target needs to be bigger or old target is a station">
-							<check_value value="@event.param2.size gt @this.$kAAIT_data.$defensibleTarget.size" comment="new target is bigger than current target" />
+							<check_value value="@event.param2.$attacker.size gt @this.$kAAIT_data.$defensibleTarget.size" comment="new target is bigger than current target" />
 							<check_value value="@this.$kAAIT_data.$defensibleTarget.isclass.station" comment="new LXL target is more dangerous than current station target" />
 						</check_any>
 						<check_all>
 							<check_any comment="current order is not attack or is of different target">
 								<check_value value="@this.assignedcontrolled.order.id != 'Attack'" />
-								<check_value value="@this.assignedcontrolled.order.$primarytarget != event.param2" />
+								<check_value value="@this.assignedcontrolled.order.$primarytarget != event.param2.$attacker" />
 							</check_any>
 							<check_any comment="next order is not attack or is of different target">
 								<check_value value="@this.assignedcontrolled.orders.{2}.id != 'Attack'" />
-								<check_value value="@this.assignedcontrolled.orders.{2}.$primarytarget != event.param2" />
+								<check_value value="@this.assignedcontrolled.orders.{2}.$primarytarget != event.param2.$attacker" />
 							</check_any>
 							<check_value value="@this.assignedcontrolled.orders.{3}.id != 'Attack'" comment="too many attack orders if there's already a 3rd attack order" />
 						</check_all>
 					</check_all>
-					<check_any>
-						<check_value value="not @this.$kAAIT_data.$attackOrder" />
-						<check_value value="event.param2.size gt @this.$kAAIT_data.$defensibleTarget.size" />
-					</check_any>
-					<check_any>
-						<check_value value="not @$kAAIT_isSignalMine" />
-						<check_value value="not @$allowothertargets" />
-					</check_any>
 				</conditions>
 				<actions>
 					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' ========================== order: ' + @this.assignedcontrolled.order.id" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 					<debug_text text="this.assignedcontrolled.idcode + ' size: ' + @this.$kAAIT_data.$defensibleTarget.size + ' class: ' + @this.$kAAIT_data.$defensibleTarget.class" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-					<debug_text text="this.assignedcontrolled.idcode + ' size: ' + event.param2.size + ' class: ' + event.param2.class" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-					<set_value name="$kAAIT_target_attack" exact="event.param2" />
+					<debug_text text="this.assignedcontrolled.idcode + ' size: ' + event.param2.$attacker.size + ' class: ' + event.param2.$attacker.class" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					<set_value name="$kAAIT_target_attack" exact="event.param2.$attacker" />
 					<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-					<remove_value name="$kAAIT_isSignalMine" />
 				</actions>
 			</handler>
 
@@ -735,11 +739,13 @@
 					</do_if>
 					<do_if value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
 						<set_value name="$kAAIT_isTargetPotentialHighRisk" exact="
-							$kAAIT_test_target_isHighRisk.isclass.station or
+							$kAAIT_test_target_isHighRisk.dps.all and
 							(
-								$kAAIT_test_target_isHighRisk.size gt this.assignedcontrolled.size * 1.5 and
-								$kAAIT_test_target_isHighRisk.primarypurpose == purpose.fight and
-								@$kAAIT_test_target_isHighRisk.type != shiptype.carrier
+								$kAAIT_test_target_isHighRisk.isclass.station or
+								(
+									$kAAIT_test_target_isHighRisk.size gt this.assignedcontrolled.size * 1.5 and
+									$kAAIT_test_target_isHighRisk.primarypurpose == purpose.fight
+								)
 							)
 						" />
 						<do_if value="$kAAIT_test_target_isHighRisk.isclass.station">
@@ -772,11 +778,7 @@
 								(
 									(
 										this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s] or
-										this.assignedcontrolled.primarypurpose != purpose.fight or
-										(
-											this.assignedcontrolled.type == shiptype.carrier and
-											@this.assignedcontrolled.commander.isoperational
-										)
+										this.assignedcontrolled.primarypurpose != purpose.fight
 									) and
 									@$kAAIT_test_target_isHighRisk.isclass.ship and
 									@$kAAIT_target_highRiskEntity.$kAAIT_attackers.count * this.$kAAIT_data.$skill_attackers_count_mult le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVShips / 100.0
@@ -784,11 +786,7 @@
 								(
 									(
 										this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s] or
-										this.assignedcontrolled.primarypurpose != purpose.fight or
-										(
-											this.assignedcontrolled.type == shiptype.carrier and
-											@this.assignedcontrolled.commander.isoperational
-										)
+										this.assignedcontrolled.primarypurpose != purpose.fight
 									) and
 									@$kAAIT_test_target_isHighRisk.isclass.station and
 									@$kAAIT_target_highRiskEntity.$kAAIT_attackers.count * this.$kAAIT_data.$skill_attackers_count_mult le $kAAIT_gunCount * global.$kAAIT_Config.$xss_outnumberVStations / 100.0
@@ -808,16 +806,20 @@
 					</do_if>
 					<do_elseif value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
 						<set_value name="$kAAIT_isTargetPotentialHighRisk" exact="
-							$kAAIT_test_target_isHighRisk.isclass.station or
+							$kAAIT_test_target_isHighRisk.dps.all and
 							(
-								$kAAIT_test_target_isHighRisk.size gt this.assignedcontrolled.size * 1.5 and
-								$kAAIT_test_target_isHighRisk.primarypurpose == purpose.fight and
-								@$kAAIT_test_target_isHighRisk.type != shiptype.carrier and
-								$kAAIT_test_target_isHighRisk.dps.all gt this.assignedcontrolled.dps.all * 1.25
+								$kAAIT_test_target_isHighRisk.isclass.station or
+								(
+									$kAAIT_test_target_isHighRisk.size gt this.assignedcontrolled.size * 1.5 and
+									$kAAIT_test_target_isHighRisk.primarypurpose == purpose.fight
+								)
 							)
 						" />
 						<set_value name="$kAAIT_result_isTargetPotentialHighRisk" exact="$kAAIT_isTargetPotentialHighRisk" />
-						<set_value name="$kAAIT_result_isTargetHighRisk" exact="$kAAIT_isTargetPotentialHighRisk" />
+						<set_value name="$kAAIT_result_isTargetHighRisk" exact="
+							$kAAIT_isTargetPotentialHighRisk and
+							$kAAIT_test_target_isHighRisk.dps.all gt this.assignedcontrolled.dps.all * 1.25
+						" />
 					</do_elseif>
 				</do_if>
 				<debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_isTargetPotentialHighRisk: ' + @$kAAIT_isTargetPotentialHighRisk + ' $kAAIT_result_isTargetHighRisk: ' + @$kAAIT_result_isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -887,10 +889,6 @@
 				<set_value name="$kAAIT_result_target_found" exact="null" />
 				<do_if value="
 					this.assignedcontrolled.primarypurpose == purpose.fight and
-					(
-						this.assignedcontrolled.type != shiptype.carrier or
-						(not @this.assignedcontrolled.commander.isoperational)
-					) and
 					(not @this.$kAAIT_data.$attackOrder.exists)">
 					<do_if value="$kAAIT_bigEnemy.isclass.ship">
 						<set_value name="$kAAIT_dist_min" exact="this.assignedcontrolled.maxradarrange * 0.25" />
@@ -1096,7 +1094,7 @@
 			<actions name="kAAIT_CleanOrders">
 				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_CleanOrders order: ' + @this.assignedcontrolled.order.id" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders" counter="$i" reverse="true">
-					<do_if value="@$kAAIT_order.$kAAITParam_iskAAITOrder and $i gt 1" comment="cancel other move.kuertee.*.xml order">
+					<do_if value="@$kAAIT_order.$kAAITParam_iskAAITOrder" comment="cancel other move.kuertee.*.xml order">
 						<debug_text text="this.assignedcontrolled.idcode + ' cancel_order ' + $kAAIT_order.id" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<cancel_order order="$kAAIT_order" />
 					</do_if>
@@ -1113,6 +1111,9 @@
 					<do_if value="this.assignedcontrolled.commander.isoperational">
 						<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_remove_subordinate'" param2="this.assignedcontrolled" />
 					</do_if>
+				</do_if>
+				<do_if value="@this.$kAAIT_data.$attackOrder">
+					<cancel_order order="this.$kAAIT_data.$attackOrder" />
 				</do_if>
 				<create_order name="$kAAIT_order_attack" object="this.assignedcontrolled" id="'Attack'" immediate="true">
 					<param name="primarytarget" value="$kAAIT_target_attack" />
@@ -1299,10 +1300,6 @@
 							<check_any>
 								<check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s]" />
 								<check_value value="this.assignedcontrolled.primarypurpose != purpose.fight" />
-								<check_all>
-									<check_value value="this.assignedcontrolled.type == shiptype.carrier" />
-									<check_value value="@this.assignedcontrolled.commander.isoperational" />
-								</check_all>
 							</check_any>
 							<!-- <debug_text text="this.assignedcontrolled.idcode + ' UNKNOWN HANDLER xss'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 							<check_any>
@@ -1320,7 +1317,6 @@
 									<check_value value="$kAAIT_attacker.isclass.ship" />
 									<check_value value="$kAAIT_attacker.size gt this.assignedcontrolled.size * 1.5" />
 									<check_value value="$kAAIT_attacker.primarypurpose == purpose.fight" />
-									<check_value value="$kAAIT_attacker.type != shiptype.carrier" />
 									<set_value name="$kAAIT_isPotentialHighRiskEvent" exact="true" />
 									<!-- <debug_text text="this.assignedcontrolled.idcode + ' UNKNOWN HANDLER v ship $kAAIT_isPotentialHighRiskEvent'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 									<set_value name="$kAAIT_gunCount" exact="@$kAAIT_attacker.weapons.operational.count" />
@@ -1353,7 +1349,6 @@
 									<check_value value="$kAAIT_attacker.isclass.ship" />
 									<check_value value="$kAAIT_attacker.size gt this.assignedcontrolled.size * 1.5" />
 									<check_value value="$kAAIT_attacker.primarypurpose == purpose.fight" />
-									<check_value value="$kAAIT_attacker.type != shiptype.carrier" />
 									<set_value name="$kAAIT_isPotentialHighRiskEvent" exact="true" />
 									<!-- <debug_text text="this.assignedcontrolled.idcode + ' UNKNOWN HANDLER v ship $kAAIT_isPotentialHighRiskEvent'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 									<set_value name="$kAAIT_gunCount" exact="@$kAAIT_attacker.weapons.operational.count" />
@@ -1382,7 +1377,6 @@
 								<check_all>
 									<check_value value="$kAAIT_attacker.size gt this.assignedcontrolled.size * 1.5" />
 									<check_value value="$kAAIT_attacker.primarypurpose == purpose.fight" />
-									<check_value value="$kAAIT_attacker.type != shiptype.carrier" />
 									<set_value name="$kAAIT_isPotentialHighRiskEvent" exact="true" />
 									<!-- <debug_text text="this.assignedcontrolled.idcode + ' UNKNOWN HANDLER v ship $kAAIT_isPotentialHighRiskEvent'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 									<check_value value="$kAAIT_attacker.dps.all gt this.assignedcontrolled.dps.all * 1.25" />
@@ -1395,12 +1389,9 @@
 					<check_all comment="get is avoid or withdraw now. when changed, also change others with the 'get is avoid or withdraw now' comment.">
 						<set_value name="$kAAIT_skillMult" exact="(@this.skill.piloting + @this.skill.morale) / 30.0" />
 						<check_all comment="get is potential high risk">
+							<check_value value="$kAAIT_attacker.dps.all" />
 							<check_any>
 								<check_value value="this.assignedcontrolled.primarypurpose != purpose.fight" />
-								<check_all>
-									<check_value value="this.assignedcontrolled.type == shiptype.carrier" />
-									<check_value value="@this.assignedcontrolled.commander.isoperational" />
-								</check_all>
 								<check_value value="$kAAIT_attacker.isclass.station" />
 								<check_value value="$kAAIT_attacker.size gt this.assignedcontrolled.size * 1.5" />
 							</check_any>
