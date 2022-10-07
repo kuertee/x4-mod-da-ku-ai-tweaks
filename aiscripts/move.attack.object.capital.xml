@@ -154,15 +154,17 @@
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+			<do_if value="this.$kAAIT_data.$isTargetHighRisk">
+				<set_value name="$kAAIT_test_target_isAvoid" exact="this.$kAAIT_data.$defensibleTarget" />
+				<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+				<do_if value="$kAAIT_result_isAvoid">
+					<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+					<resume label="kAAIT_label_avoid" />
+				</do_if>
+			</do_if>
 			<include_interrupt_actions ref="kAAIT_GetIsTargetBlocked" />
 			<do_if value="$isTargetBlocked">
 				<resume label="kAAIT_label_move_to_engage_position" />
-			</do_if>
-			<do_if value="
-				this.$kAAIT_data.$isTargetHighRisk and
-				this.assignedcontrolled.primarypurpose != purpose.fight">
-				<set_value name="this.$kAAIT_data.$target_avoid" exact="this.$kAAIT_data.$defensibleTarget" />
-				<resume label="kAAIT_label_avoid" />
 			</do_if>
 		</do_if>
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and (not @this.$kAAIT_data.$isIgnoreKAAIT)">

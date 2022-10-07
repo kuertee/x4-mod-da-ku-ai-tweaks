@@ -60,12 +60,21 @@
 				<resume label="finish" />
 			</do_if>
 
-			<do_if value="
+			<!-- <do_if value="
 				@this.assignedcontrolled.nextorder.id != 'Repair' and
 				@this.assignedcontrolled.nextorder.id != 'RestockSubordinates' and
 				(
 					this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
 					this.assignedcontrolled.hullpercentage le 25
+				)" comment="resupply if required and not already resupplying."> -->
+			<do_if value="
+				@this.assignedcontrolled.nextorder.id != 'Repair' and
+				@this.assignedcontrolled.nextorder.id != 'RestockSubordinates' and
+				@this.assignedcontrolled.nextorder.id != 'DockAt' and
+				@this.assignedcontrolled.nextorder.id != 'DockAndWait' and
+				(	this.assignedcontrolled.hullpercentage le 25 or
+					this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25 or
+					this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f le 0.25
 				)" comment="resupply if required and not already resupplying.">
 				<signal_objects object="this.assignedcontrolled" param="'resupply'" param2="[false]" param3="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				<wait min="1s" max="3s" />
