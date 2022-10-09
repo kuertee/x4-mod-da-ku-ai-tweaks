@@ -98,20 +98,18 @@
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
 	</add>
-<!-- add. purpose: change carrier's min and max operating distance
+<!-- add before. purpose: change $maintaindistance
 	<do_if value="$iscarrier and $maintaindistance">
 -->
-	<add sel="//do_if[@value=&quot;$iscarrier and $maintaindistance&quot;]">
-		<set_value name="$minoperationalrange_orig" exact="$minoperationalrange"/>
-		<set_value name="$maxoperationalrange_orig" exact="$maxoperationalrange"/>
-		<do_if value="
-			(this.isplayerowned and @global.$kAAIT_Config.$isCarriersAttackLikeDestroyers) or
-			((not this.isplayerowned) and @global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions)
-		">
-			<set_value name="$minoperationalrange" exact="this.$kAAIT_data.$combatRange_min"/>
-			<set_value name="$maxoperationalrange" exact="this.$kAAIT_data.$combatRange_max"/>
-			<debug_text text="this.assignedcontrolled.idcode + ' $minoperationalrange_orig: ' + $minoperationalrange_orig + ' $minoperationalrange: ' + $minoperationalrange" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<debug_text text="this.assignedcontrolled.idcode + ' $maxoperationalrange_orig: ' + $maxoperationalrange_orig + ' $maxoperationalrange: ' + $maxoperationalrange" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+	<add pos="before" sel="//do_if[@value=&quot;$iscarrier and $maintaindistance&quot;]">
+		<do_if value="$iscarrier">
+			<do_if value="
+				(this.isplayerowned and @global.$kAAIT_Config.$isCarriersAttackLikeDestroyers) or
+				((not this.isplayerowned) and @global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions)
+			">
+				<set_value name="$maintaindistance" exact="false" />
+				<debug_text text="this.assignedcontrolled.idcode + ' $maintaindistance: ' + $maintaindistance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			</do_if>
 		</do_if>
 	</add>
 <!-- add before. purpose: custom behaviours.
@@ -132,7 +130,21 @@
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_step_forward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_GetIsTargetBlocked" />
 		<do_if value="$isTargetBlocked">
-			<resume label="kAAIT_label_move_to_engage_position" />
+			<do_if value="
+				this.assignedcontrolled.type != shiptype.carrier or
+				(
+					(
+						this.isplayerowned and
+						global.$kAAIT_Config.$isCarriersAttackLikeDestroyers
+					) or
+					(
+						(not this.isplayerowned) and
+						global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions
+					)
+				)
+			">
+				<resume label="kAAIT_label_move_to_engage_position" />
+			</do_if>
 		</do_if>
 		<do_else>
 			<create_order object="this.assignedcontrolled" id="'kAAIT_MoveStepForward'" immediate="true">
@@ -164,7 +176,21 @@
 			</do_if>
 			<include_interrupt_actions ref="kAAIT_GetIsTargetBlocked" />
 			<do_if value="$isTargetBlocked">
-				<resume label="kAAIT_label_move_to_engage_position" />
+				<do_if value="
+					this.assignedcontrolled.type != shiptype.carrier or
+					(
+						(
+							this.isplayerowned and
+							global.$kAAIT_Config.$isCarriersAttackLikeDestroyers
+						) or
+						(
+							(not this.isplayerowned) and
+							global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions
+						)
+					)
+				">
+					<resume label="kAAIT_label_move_to_engage_position" />
+				</do_if>
 			</do_if>
 		</do_if>
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
@@ -182,7 +208,21 @@
 			<do_else> -->
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
-					<resume label="kAAIT_label_move_to_engage_position" />
+					<do_if value="
+						this.assignedcontrolled.type != shiptype.carrier or
+						(
+							(
+								this.isplayerowned and
+								global.$kAAIT_Config.$isCarriersAttackLikeDestroyers
+							) or
+							(
+								(not this.isplayerowned) and
+								global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions
+							)
+						)
+					">
+						<resume label="kAAIT_label_move_to_engage_position" />
+					</do_if>
 				</do_if>
 				<do_elseif value="$target.isclass.module">
 					<do_if value="this.$kAAIT_data.$moduleTarget?">
@@ -190,7 +230,21 @@
 							comment="only move to engage position AGAIN if there was a previous module target">
 							<debug_text text="this.assignedcontrolled.idcode + ' NEW $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 							<set_value name="this.$kAAIT_data.$moduleTarget" exact="$target" />
-							<resume label="kAAIT_label_move_to_engage_position" />
+							<do_if value="
+								this.assignedcontrolled.type != shiptype.carrier or
+								(
+									(
+										this.isplayerowned and
+										global.$kAAIT_Config.$isCarriersAttackLikeDestroyers
+									) or
+									(
+										(not this.isplayerowned) and
+										global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions
+									)
+								)
+							">
+								<resume label="kAAIT_label_move_to_engage_position" />
+							</do_if>
 						</do_if>
 						<do_else>
 							<debug_text text="this.assignedcontrolled.idcode + ' SAME $moduleTarget: ' + this.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -256,7 +310,21 @@
 			">
 				<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 				<do_if value="$kAAIT_distToTarget gt this.$kAAIT_data.$combatRange_min">
-					<resume label="kAAIT_label_step_forward" />
+					<do_if value="
+						this.assignedcontrolled.type != shiptype.carrier or
+						(
+							(
+								this.isplayerowned and
+								global.$kAAIT_Config.$isCarriersAttackLikeDestroyers
+							) or
+							(
+								(not this.isplayerowned) and
+								global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions
+							)
+						)
+					">
+						<resume label="kAAIT_label_step_forward" />
+					</do_if>
 				</do_if>
 			</do_if>
 		</do_if>
@@ -336,7 +404,21 @@
 			">
 				<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{this.$kAAIT_data.$defensibleTarget}" />
 				<do_if value="$kAAIT_distToTarget gt this.$kAAIT_data.$combatRange_min">
-					<resume label="kAAIT_label_step_forward" />
+					<do_if value="
+						this.assignedcontrolled.type != shiptype.carrier or
+						(
+							(
+								this.isplayerowned and
+								global.$kAAIT_Config.$isCarriersAttackLikeDestroyers
+							) or
+							(
+								(not this.isplayerowned) and
+								global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions
+							)
+						)
+					">
+						<resume label="kAAIT_label_step_forward" />
+					</do_if>
 				</do_if>
 			</do_if>
 		</do_if>

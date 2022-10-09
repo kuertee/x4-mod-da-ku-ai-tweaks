@@ -207,6 +207,27 @@
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
 	</add>
+<!-- add after. purpose: check start avoid. i.e. gravidar events not soon enough if already near a big enemy
+	<label name="start" />
+-->
+	<add pos="after" sel="//label[@name=&quot;start&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+			<do_if value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
+				<set_value name="$kAAIT_test_target_isAvoid" exact="this.$kAAIT_data.$defensibleTarget" />
+			</do_if>
+			<do_else>
+				<set_value name="$kAAIT_test_target_isAvoid" exact="null" />
+			</do_else>
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+				<do_if value="not this.$kAAIT_data?">
+					<set_value name="this.kAAIT_data" exact="table[]" />
+				</do_if>
+				<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+			</do_if>
+		</do_if>
+	</add>
 <!-- add. purpose: debug
 	<do_if value="not $target">
 -->
@@ -264,7 +285,22 @@
 	<add pos="before" sel="//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="this.assignedcontrolled.idcode + ' target out of range. move to engage if station. otherwise use move generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-			<do_if value="$primarytarget.isclass.station">
+			<do_if value="
+				$primarytarget.isclass.station and
+				(
+					this.assignedcontrolled.type != shiptype.carrier or
+					(
+						(
+							this.isplayerowned and
+							global.$kAAIT_Config.$isCarriersAttackLikeDestroyers
+						) or
+						(
+							(not this.isplayerowned) and
+							global.$kAAIT_Config.$isCarriersAttackLikeDestroyers_allFactions
+						)
+					)
+				)
+			">
 				<set_value name="this.$kAAIT_data.$target_avoid" exact="$target" />
 				<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
 			</do_if>
@@ -274,7 +310,6 @@
 	<run_script name="'move.generic'" result="$movesuccess">
 -->
 	<add sel="//run_script[@name=&quot;'move.generic'&quot;]">
-		<param name="kAAITParam_enemyAvoid" value="if (@this.$kAAIT_data.$isTargetHighRisk or @this.$kAAIT_data.$isTargetPotentialHighRisk) then @this.$kAAIT_data.$defensibleTarget else null" />
 		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 	</add>
 <!-- replace. purpose: if ship has commander, find ships from the commander.
