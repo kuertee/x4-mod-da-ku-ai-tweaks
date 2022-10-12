@@ -44,9 +44,32 @@
 					</do_elseif>
 					<debug_text text="this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 				</do_if> -->
+				<!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
+					fight: shield gt skill-withdraw-value.
+					withdraw: shield gt 5, shield le skill-withdraw-value.
+					fight: shield le 5, hull gt 50.
+					withdraw: shield le 5, hull gt 25, hull le 50.
+					fight: hull le 25.
+				-->
 				<do_if value="
 					@this.$kAAIT_data.$isIgnoreKAAIT and
-					this.assignedcontrolled.shieldpercentage gt 25">
+					(
+						(
+							this.$kAAIT_data.$defensibleTarget.isclass.station and
+							this.assignedcontrolled.shieldpercentage gt this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation
+						) or
+						(
+							this.$kAAIT_data.$defensibleTarget.isclass.ship and
+							(
+								this.assignedcontrolled.shieldpercentage gt this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip or
+								(
+									this.assignedcontrolled.shieldpercentage le 5 and
+									this.assignedcontrolled.hullpercentage gt 50
+								) or
+								this.assignedcontrolled.hullpercentage le 25
+							)
+						)
+					)" comment="clear ignore flag when ship should fight. e.g. v ship: when no shields, but good hull.">
 					<remove_value name="this.$kAAIT_data.$isIgnoreKAAIT" />
 				</do_if>
 				<set_value name="this.$kAAIT_data.$isInited" exact="true" />
@@ -184,7 +207,11 @@
 							<!-- <check_value value="player.age gt @$kAAIT_time_eventAttacked" />
 							<set_value name="$kAAIT_time_eventAttacked" exact="player.age + 0.25s" /> -->
 							<set_value name="$kAAIT_attacker" exact="if event.param.defensible then event.param.defensible else event.param" />
-							<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker.knownname (withdraw): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+							<check_any>
+								<check_value value="not global.$kAAIT_Config.$debugChance" />
+								<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+								<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker.knownname (withdraw): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							</check_any>
 							<check_value value="$kAAIT_attacker.isclass.[class.ship, class.station]" />
 							<check_value value="not @$kAAIT_attacker.isunit" />
 							<check_value value="not @$kAAIT_attacker.islasertower" />
@@ -211,20 +238,35 @@
 								<check_value value="$kAAIT_attacker != @$primarytarget" />
 								<check_value value="$kAAIT_attacker != @$target" />
 							</check_all>
-							<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker.knownname (avoid): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+							<check_any>
+								<check_value value="not global.$kAAIT_Config.$debugChance" />
+								<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+								<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker.knownname (avoid): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							</check_any>
 							<check_value value="player.age gt @this.$kAAIT_data.$time_avoidAllowed" />
 							<set_value name="$kAAIT_eventType" exact="'avoid'" />
 						</check_all>
 					</check_any>
-					<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name + ' @$kAAIT_eventType: ' + @$kAAIT_eventType" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+					<check_any>
+						<check_value value="not global.$kAAIT_Config.$debugChance" />
+						<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+						<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name + ' @$kAAIT_eventType: ' + @$kAAIT_eventType" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</check_any>
 					<check_value value="@$kAAIT_eventType" />
 					<set_value name="$kAAIT_attackerEntity" exact="if @$kAAIT_attacker.assignedaipilot then $kAAIT_attacker.assignedaipilot else $kAAIT_attacker.defencenpc" />
-					<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attackerEntity.name: ' + @$kAAIT_attackerEntity.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+					<check_any>
+						<check_value value="not global.$kAAIT_Config.$debugChance" />
+						<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+						<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attackerEntity.name: ' + @$kAAIT_attackerEntity.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</check_any>
 					<check_value value="@$kAAIT_attackerEntity.exists" />
 					<check_all comment="is allowed to actually avoid or withdraw. when changed, also change others with the 'is allowed to actually avoid or withdraw' comment.">
 						<check_any>
 							<check_value value="$kAAIT_attacker.isclass.station" />
-							<check_value value="$kAAIT_attacker.shieldpercentage gt 25" />
+							<check_any>
+								<check_value value="$kAAIT_attacker.shieldpercentage gt 25" />
+								<check_value value="$kAAIT_attacker.hullpercentage gt 25" />
+							</check_any>
 							<check_value value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]" />
 						</check_any>
 						<check_value value="not this.assignedcontrolled.isunit" />
@@ -242,50 +284,87 @@
 							<check_all comment="no attack order, so withdraw">
 								<check_value value="@this.assignedcontrolled.order.id != 'Attack'" />
 								<check_value value="@this.assignedcontrolled.nextorder.id != 'Attack'" />
-								<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight not attacking, so withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+								<check_any>
+									<check_value value="not global.$kAAIT_Config.$debugChance" />
+									<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+									<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight not attacking, so withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+								</check_any>
 							</check_all>
 							<check_any>
 								<check_value value="$kAAIT_attacker != @this.$kAAIT_data.$defensibleTarget" comment="new attacker" />
-								<!-- <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}: ' + @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-								<!-- <debug_text text="this.assignedcontrolled.idcode + ' @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count: ' + @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 								<check_all comment="attacker is target and it has other lxl attacker">
+									<check_any>
+										<check_value value="not global.$kAAIT_Config.$debugChance" />
+										<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+										<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}: ' + @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</check_any>
+									<check_any>
+										<check_value value="not global.$kAAIT_Config.$debugChance" />
+										<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+										<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count: ' + @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</check_any>
 									<check_value value="$kAAIT_attacker == this.$kAAIT_data.$defensibleTarget" />
 									<check_any>
 										<check_all>
 											<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" />
 											<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count gt 1" />
-											<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+											<check_any>
+												<check_value value="not global.$kAAIT_Config.$debugChance" />
+												<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+												<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+											</check_any>
 										</check_all>
 										<check_all>
 											<check_value value="not @$kAAIT_attackerEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" />
 											<check_value value="@$kAAIT_attackerEntity.$kAAIT_attackers_lxl.count gt 0" />
-											<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers not including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+											<check_any>
+												<check_value value="not global.$kAAIT_Config.$debugChance" />
+												<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+												<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers not including me'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+											</check_any>
 										</check_all>
 									</check_any>
 								</check_all>
 							</check_any>
 						</check_any>
-						<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight is allowed to withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+						<check_any>
+							<check_value value="not global.$kAAIT_Config.$debugChance" />
+							<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+							<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight is allowed to withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						</check_any>
 					</check_all>
 					<check_all>
 						<check_any comment="is avoid high-risk. ensure that these parameters are set-up in the orders that use this handler.">
 							<check_value value="@$kAAITParam_iskAAITOrder" />
 							<check_all>
 								<check_value value="$kAAIT_eventType == 'avoid'" />
-								<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+								<check_any>
+									<check_value value="not global.$kAAIT_Config.$debugChance" />
+									<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+									<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+								</check_any>
 								<check_value value="@$kAAITParam_isAvoidHighRisk" />
 							</check_all>
 							<check_all>
 								<check_value value="$kAAIT_eventType == 'withdraw'" />
-								<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-								<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 								<check_any>
-									<check_value value="@$kAAITParam_isAvoidHighRisk" />
-									<check_value value="@$kAAITParam_isStepForwardWithdraw" />
+									<check_value value="not global.$kAAIT_Config.$debugChance" />
+									<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+									<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 								</check_any>
+								<check_any>
+									<check_value value="not global.$kAAIT_Config.$debugChance" />
+									<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+									<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+								</check_any>
+								<check_value value="@$kAAITParam_isStepForwardWithdraw" />
 							</check_all>
 						</check_any>
-						<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight params are good'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+						<check_any>
+							<check_value value="not global.$kAAIT_Config.$debugChance" />
+							<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+							<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight params are good'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						</check_any>
 						<check_all comment="get is avoid or withdraw now. when changed, also change others with the 'get is avoid or withdraw now' comment.">
 							<set_value name="$kAAIT_skillMult" exact="(@this.skill.piloting + @this.skill.morale) / 30.0" />
 							<check_all comment="get is potential high risk">
@@ -300,28 +379,49 @@
 								</check_any>
 								<set_value name="$kAAIT_isPotentialHighRiskEvent" exact="true" />
 							</check_all>
-							<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_isPotentialHighRiskEvent: ' + @$kAAIT_isPotentialHighRiskEvent + '. need $kAAIT_isActOnEventNow below.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-							<check_value value="$kAAIT_isPotentialHighRiskEvent" />
-							<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight this.assignedcontrolled.shieldpercentage: ' + @this.assignedcontrolled.shieldpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+							<check_any>
+								<check_value value="not global.$kAAIT_Config.$debugChance" />
+								<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+								<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_isPotentialHighRiskEvent: ' + @$kAAIT_isPotentialHighRiskEvent + '. need $kAAIT_isActOnEventNow below.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							</check_any>
+							<check_value value="@$kAAIT_isPotentialHighRiskEvent" />
+							<check_any>
+								<check_value value="not global.$kAAIT_Config.$debugChance" />
+								<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+								<check_value value="not global.$kAAIT_Config.$debugChance" />
+								<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight this.assignedcontrolled.shieldpercentage: ' + @this.assignedcontrolled.shieldpercentage + ' this.assignedcontrolled.hullpercentage: ' + @this.assignedcontrolled.hullpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+							</check_any>
 							<check_any comment="get $kAAIT_isActOnEventNow.">
 								<check_all comment="not an attack target, so avoid it">
 									<check_value value="$kAAIT_attacker != @this.kAAIT_data.$defensibleTarget" />
 									<check_value value="@this.assignedcontrolled.order.id != 'Attack'" />
 									<check_value value="@this.assignedcontrolled.nextorder.id != 'Attack'" />
 									<set_value name="$kAAIT_isActOnEventNow" exact="true" />
-									<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight general movement avoid this!'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+									<check_any>
+										<check_value value="not global.$kAAIT_Config.$debugChance" />
+										<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+										<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight general movement avoid this!'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</check_any>
 								</check_all>
 								<check_value value="@$kAAIT_isActOnEventNow" />
 								<check_all comment="no operational weapons">
 									<check_value value="not @this.assignedcontrolled.weapons.all.count" />
 									<set_value name="$kAAIT_isActOnEventNow" exact="true" />
-									<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight no operational weapons'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+									<check_any>
+										<check_value value="not global.$kAAIT_Config.$debugChance" />
+										<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+										<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight no operational weapons'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</check_any>
 								</check_all>
 								<check_value value="@$kAAIT_isActOnEventNow" />
 								<check_all comment="too few operational weapons">
 									<check_value value="@this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25" />
 									<set_value name="$kAAIT_isActOnEventNow" exact="true" />
-									<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight too few operational weapons'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+									<check_any>
+										<check_value value="not global.$kAAIT_Config.$debugChance" />
+										<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+										<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight too few operational weapons'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</check_any>
 								</check_all>
 								<check_value value="@$kAAIT_isActOnEventNow" />
 								<check_all comment="v station">
@@ -329,27 +429,77 @@
 										<check_value value="$kAAIT_attacker.isclass.station" />
 										<check_value value="$kAAIT_attacker.dps.all" />
 									</check_all>
-									<set_value name="$kAAIT_shield_withdrawAt" exact="75 + $kAAIT_skillMult * 15" />
-									<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_shield_withdrawAt: ' + @$kAAIT_shield_withdrawAt" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+									<check_any>
+										<check_all>
+											<check_value value="@this.assignedcontrolled.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation" />
+											<set_value name="$kAAIT_shield_withdrawAt" exact="@this.assignedcontrolled.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation" />
+										</check_all>
+										<set_value name="$kAAIT_shield_withdrawAt" exact="75 + $kAAIT_skillMult * 15" />
+									</check_any>
+									<check_any>
+										<check_value value="not global.$kAAIT_Config.$debugChance" />
+										<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+										<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_shield_withdrawAt: ' + @$kAAIT_shield_withdrawAt" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</check_any>
 									<check_value value="this.assignedcontrolled.shieldpercentage le $kAAIT_shield_withdrawAt" />
 									<set_value name="$kAAIT_isActOnEventNow" exact="true" />
-									<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight v station shieldpercentage: ' + (this.assignedcontrolled.shieldpercentage) + ' le? ' + (75 + $kAAIT_skillMult * 15)" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 								</check_all>
 								<check_value value="@$kAAIT_isActOnEventNow" />
 								<check_all comment="v ship">
 									<check_value value="$kAAIT_attacker.isclass.ship" />
-									<set_value name="$kAAIT_shield_withdrawAt" exact="75 + $kAAIT_skillMult * 15" />
-									<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_shield_withdrawAt: ' + @$kAAIT_shield_withdrawAt" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
-									<check_value value="this.assignedcontrolled.shieldpercentage le $kAAIT_shield_withdrawAt" />
+									<check_value value="$kAAIT_attacker.dps.all" />
+									<check_any>
+										<check_all>
+											<check_value value="@this.assignedcontrolled.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" />
+											<set_value name="$kAAIT_shield_withdrawAt" exact="@this.assignedcontrolled.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" />
+										</check_all>
+										<set_value name="$kAAIT_shield_withdrawAt" exact="40 - $kAAIT_skillMult * 25" />
+									</check_any>
+									<check_any>
+										<check_value value="not global.$kAAIT_Config.$debugChance" />
+										<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+										<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_shield_withdrawAt: ' + @$kAAIT_shield_withdrawAt" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+									</check_any>
+									<!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
+										fight: shield gt skill-withdraw-value.
+										withdraw: shield gt 5, shield le skill-withdraw-value.
+										fight: shield le 5, hull gt 50.
+										withdraw: shield le 5, hull gt 25, hull le 50.
+										fight: hull le 25.
+									-->
+									<check_any>
+										<check_all comment="good shields: fight. poor shields: withdraw">
+											<check_value value="this.assignedcontrolled.shieldpercentage gt 5" />
+											<check_value value="this.assignedcontrolled.shieldpercentage le $kAAIT_shield_withdrawAt" />
+											<check_any>
+												<check_value value="not global.$kAAIT_Config.$debugChance" />
+												<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+												<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight poor shields (le skill-withdraw)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+											</check_any>
+										</check_all>
+										<check_all comment="no shields, good hull: fight. poor hull: withdraw.">
+											<check_value value="this.assignedcontrolled.shieldpercentage le 5" />
+											<check_value value="this.assignedcontrolled.hullpercentage gt 25" />
+											<check_value value="this.assignedcontrolled.hullpercentage le 50" />
+											<check_any>
+												<check_value value="not global.$kAAIT_Config.$debugChance" />
+												<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+												<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight poor shields (le 5), medium hull (gt 25 le 50)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+											</check_any>
+										</check_all>
+									</check_any>
 									<set_value name="$kAAIT_isActOnEventNow" exact="true" />
-									<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight v ship shieldpercentage: ' + (this.assignedcontrolled.shieldpercentage) + ' le? ' + (75 + $kAAIT_skillMult * 15)" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 								</check_all>
 								<check_value value="@$kAAIT_isActOnEventNow" />
 							</check_any>
 						</check_all>
 					</check_all>
 					<check_value value="$kAAIT_isActOnEventNow" />
-					<!-- <debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_isActOnEventNow: ' + @$kAAIT_isActOnEventNow" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
+					<check_any>
+						<check_value value="not global.$kAAIT_Config.$debugChance" />
+						<check_value value="@this.assignedcontrolled.idcode != @global.$kAAIT.$debugChance_idCode" />
+						<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_isActOnEventNow: ' + @$kAAIT_isActOnEventNow" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+					</check_any>
 				</conditions>
 				<actions>
 					<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name + ' $kAAIT_eventType: ' + @$kAAIT_eventType + ' order: ' + @this.assignedcontrolled.order.id" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
@@ -459,6 +609,13 @@
 						@$kAAIT_attackTarget.isoperational and
 						$kAAIT_test_target_isAvoid == $kAAIT_attackTarget
 					">
+						<!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
+							fight: shield gt skill-withdraw-value.
+							withdraw: shield gt 5, shield le skill-withdraw-value.
+							fight: shield le 5, hull gt 50.
+							withdraw: shield le 5, hull gt 25, hull le 50.
+							fight: hull le 25.
+						-->
 						<set_value name="$kAAIT_isTakeRisk" exact="
 							(	(not $kAAIT_test_target_isAvoid.isclass.station) and
 								(not $kAAIT_test_target_isAvoid.isclass.ship)
@@ -474,7 +631,14 @@
 							) or
 							(	$kAAIT_test_target_isAvoid.isclass.ship and
 								this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25 and
-								this.assignedcontrolled.shieldpercentage ge @this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip * 0.25
+								(
+									this.assignedcontrolled.shieldpercentage ge @this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip or
+									(
+										this.assignedcontrolled.shieldpercentage le 5 and
+										this.assignedcontrolled.hullpercentage gt 50
+									) or
+									this.assignedcontrolled.hullpercentage le 25
+								)
 							)" comment="v station: lxl or missiles + shields ok + weapons ok, v ship: shields ok + weapons ok" />
 						<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot $kAAIT_isTakeRisk: ' + $kAAIT_isTakeRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<do_if value="
@@ -964,7 +1128,7 @@
 						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation" exact="75 + (this.skill.piloting + this.skill.morale) / 30.0 * 15" comment="0 = 75, 5 = 90" />
 					</do_if>
 					<do_elseif value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
-						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" exact="75 + (this.skill.piloting + this.skill.morale) / 30.0 * 15" comment="0 = 75, 5 = 90" />
+						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" exact="40 - (this.skill.piloting + this.skill.morale) / 30.0 * 15" comment="0 = 40, 5 = 25" />
 						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation" exact="75 + (this.skill.piloting + this.skill.morale) / 30.0 * 15" comment="0 = 75, 5 = 90" />
 					</do_elseif>
 					<set_value name="this.$kAAIT_data.$skill_distance_withdraw" exact="this.assignedcontrolled.maxradarrange * (0.35 + (this.skill.piloting + this.skill.morale) / 30.0 * 0.15)" comment="0 = * 0.35, 5 = * 0.5" />
@@ -978,7 +1142,7 @@
 						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation" exact="90" />
 					</do_if>
 					<do_elseif value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
-						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" exact="90" />
+						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" exact="25" />
 						<set_value name="this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation" exact="90" />
 					</do_elseif>
 					<set_value name="this.$kAAIT_data.$skill_distance_withdraw" exact="this.assignedcontrolled.maxradarrange * 0.5" />

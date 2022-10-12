@@ -193,6 +193,7 @@
 			<remove_value name="$isJustFight" />
 			<remove_value name="$isCancelWithdrawal" />
 			<remove_value name="$isRequestHelp" />
+			<!-- <remove_value name="$isRedoVector" /> -->
 			<debug_text text="this.assignedcontrolled.idcode + ' move_to start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
@@ -232,63 +233,63 @@
 						<!-- <debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and $kAAIT_detailedDebugChance then @global.$kAAIT_Config.$debugChance else 0" /> -->
 						<set_value name="$dist_toWithdrawDest_current" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
 						<set_value name="$dist_targetToWithdrawDest_current" exact="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
-						<check_any>
-							<check_all comment="just fight. target has low shields or ship has low chance of surviving.">
-								<check_value value="$target.isclass.ship" />
-								<check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
-								<check_any>
-									<check_value value="$target.shieldpercentage le 25" comment="target has low shields, just fight it" />
-									<check_all comment="ship has low chance of surviving, just fight">
-										<check_value value="this.assignedcontrolled.shieldpercentage le 25" />
-										<check_value value="this.assignedcontrolled.hullpercentage le 50" />
-									</check_all>
-								</check_any>
-								<set_value name="$isRequestHelp" exact="true" />
-								<set_value name="$isJustFight" exact="true" />
-							</check_all>
-							<check_any comment="cancel withdrawal. either: help is requested, too far from ally, or target has not chased ship.">
-								<check_all>
+						<check_all>
+							<check_value value="$target.isclass.ship" />
+							<check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
+							<check_any>
+								<!-- <check_all>
+									<check_value value="$target.shieldpercentage le 0" comment="target has low shields, just fight it" />
+									<set_value name="$isCancelWithdrawal" exact="true" />
+									<set_value name="$isRequestHelp" exact="true" comment="request for help also - cancel all withdrawals of other ships" />
+								</check_all> -->
+								<!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
+									fight: shield gt skill-withdraw-value.
+									withdraw: shield gt 5, shield le skill-withdraw-value.
+									fight: shield le 5, hull gt 50.
+									withdraw: shield le 5, hull gt 25, hull le 50.
+									fight: hull le 25.
+								-->
+								<check_all comment="good shields">
+									<check_value value="this.assignedcontrolled.shieldpercentage gt this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" />
+									<set_value name="$isJustFight" exact="'good shields (gt skill-withdraw)'" />
+								</check_all>
+								<check_all comment="ship has no shield, but good hull">
+									<check_value value="this.assignedcontrolled.shieldpercentage le 5" comment="still have low shields. 5 = margin of error to 0 shields" />
+									<check_value value="this.assignedcontrolled.hullpercentage gt 50" />
+									<set_value name="$isJustFight" exact="'poor shield (le 5), good hull (gt 50)'" />
+									<!-- <set_value name="$isRequestHelp" exact="true" /> -->
+									<set_value name="$shield_beforeWithdraw" exact="this.assignedcontrolled.shieldpercentage" />
+								</check_all>
+								<check_all comment="ship has low chance of surviving">
+									<check_value value="this.assignedcontrolled.hullpercentage le 25" />
+									<set_value name="$isJustFight" exact="'poor hull (le 25)'" />
+									<set_value name="$isRequestHelp" exact="true" />
+									<set_value name="$shield_beforeWithdraw" exact="this.assignedcontrolled.shieldpercentage" />
+								</check_all>
+								<check_all comment="help requested">
 									<check_value value="$target.isclass.ship" />
 									<check_value value="event.name == 'event_object_signalled'" comment="help signal received" />
-									<set_value name="$isCancelWithdrawal" exact="true" />
+									<set_value name="$isCancelWithdrawal" exact="'help request acknowledged'" />
 								</check_all>
 								<check_all comment="too far from ally">
 									<check_value value="$target.isclass.ship" />
 									<check_value value="@$ally.isoperational" />
-									<check_value value="@this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" />
-									<check_value value="this.assignedcontrolled.shieldpercentage lt this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip" />
 									<check_value value="this.assignedcontrolled.bboxdistanceto.{$ally} gt this.assignedcontrolled.maxradarrange * 0.25" />
-									<set_value name="$isCancelWithdrawal" exact="true" />
+									<set_value name="$isCancelWithdrawal" exact="'too far from ally'" />
 								</check_all>
-								<check_all comment="target has not chased">
+								<check_all comment="has gotten away from target">
 									<check_value value="$target.isclass.ship" />
-									<check_any>
-										<check_value value="$distToTarget gt this.assignedcontrolled.maxradarrange" comment="withdraw successful" />
-										<check_all>
-											<check_value value="$distToTarget gt this.assignedcontrolled.maxradarrange * 0.125" />
-											<check_any comment="withdrew a short distance and target has stopped its chase (i.e. distance of target to intended withdraw point has increased">
-												<check_value value="$dist_targetToWithdrawDest_current gt $dist_targetToWithdrawDest" comment="has not chased" />
-												<check_all comment="enemy has not kept up the chase">
-													<check_value value="$dist_toWithdrawDest_current le $dist_toWithdrawDest * 0.75" comment="ship has moved towards dest" />
-													<check_value value="$dist_toWithdrawDest_current le $dist_targetToWithdrawDest_current * 0.5" comment="ship dist to dest is less than half target dist to dest" />
-												</check_all>
-											</check_any>
-										</check_all>
-									</check_any>
-									<set_value name="$isCancelWithdrawal" exact="true" />
+									<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
+									<set_value name="$isCancelWithdrawal" exact="'has escaped pursuer'" />
 								</check_all>
 							</check_any>
-							<check_all comment="request for help. ship has lost shields">
-								<check_value value="$target.isclass.ship" />
-								<check_value value="$shield_beforeWithdraw gt 25" />
-								<check_value value="this.assignedcontrolled.shieldpercentage le 25" />
-								<set_value name="$isRequestHelp" exact="true" />
-							</check_all>
-						</check_any>
+						</check_all>
 					</conditions>
 					<actions>
-						<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+						<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + @event.parm + ' event.param2: ' + @event.param2.knownname + ' ' + @event.param2.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 						<do_if value="@$isRequestHelp">
+							<!-- <debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + @event.parm + ' event.param2: ' + @event.param2.knownname + ' ' + @event.param2.idcode" chance="@global.$kAAIT_Config.$debugChance" /> -->
+							<!-- <debug_text text="this.assignedcontrolled.idcode + ' $isRequestHelp this.assignedcontrolled: ' + @this.assignedcontrolled.knownname + ' ' + @this.assignedcontrolled.idcode" chance="@global.$kAAIT_Config.$debugChance" /> -->
 							<do_if value="@this.assignedcontrolled.subordinates.count">
 								<signal_objects object="this.assignedcontrolled" param="'kAAIT_help'" param2="this.assignedcontrolled" />
 							</do_if>
@@ -309,6 +310,7 @@
 				</interrupt>
 			</wait>
 			<debug_text text="this.assignedcontrolled.idcode + ' wait end'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+			<!-- <debug_text text="this.assignedcontrolled.idcode + ' $isRedoVector: ' + $isRedoVector" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" /> -->
 			<do_if value="
 				(not @$isJustFight) and
 				(not @$isCancelWithdrawal) and
@@ -330,6 +332,9 @@
 						this.assignedcontrolled.shieldpercentage le this.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation
 					)
 				)">
+				<!-- <do_if value="$isRedoVector">
+					<resume label="move" />
+				</do_if> -->
 				<do_if value="
 					(not $target.isclass.ship) or
 					this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 5km
