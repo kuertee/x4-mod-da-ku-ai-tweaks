@@ -1,5 +1,29 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
+<!-- add and replace. purpose: version.
+  <aiscript name="order.fight.escort" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" priority="2" version="21">
+    <attention min="visible">
+-->
+  <replace sel="//aiscript[@name=&quot;order.fight.escort&quot;]/@version">23</replace>
+  <add pos="before" sel="//attention[@min=&quot;visible&quot;]">
+    <patch sinceversion="23">
+      <do_if value="not @$objectinhighway">
+        <!-- <debug_text text="this.assignedcontrolled.idcode + ' (' + this.owner + ') $objectinhighway: ' + @$objectinhighway" /> -->
+        <set_value name="$objectinhighway" exact="this.ship"/>
+        <do_if value="@$target.zone.isclass.highway">
+          <set_value name="$objectinhighway" exact="$target"/>
+        </do_if>
+        <!-- <debug_text text="this.assignedcontrolled.idcode + ' (' + this.owner + ') $objectinhighway (post): ' + @$objectinhighway" /> -->
+      </do_if>
+      <do_if value="not @$leaderpilot">
+        <!-- <debug_text text="this.assignedcontrolled.idcode + ' (' + this.owner + ') $leaderpilot: ' + @$leaderpilot" /> -->
+        <set_value name="$leaderpilot" exact="$target.pilot"/>
+        <!-- <debug_text text="this.assignedcontrolled.idcode + ' (' + this.owner + ') $leaderpilot (post): ' + @$leaderpilot" /> -->
+      </do_if>
+      <set_order_syncpoint_reached order="this.assignedcontrolled.order" />
+      <unassign_order_syncpoint_from_order order="this.assignedcontrolled.order" />
+    </patch>
+  </add>
 <!-- add. purpose: params.
   <params>
 -->
@@ -56,73 +80,12 @@
   <add pos="before" sel="//location[@object=&quot;$target&quot;][@condition=&quot;$target.exists&quot;]">
     <location object="@$kAAIT_orderLocation_space" position="@$kAAIT_orderLocation_pos" condition="@$kAAIT_orderLocation_space and @$kAAIT_orderLocation_pos" />
   </add>
-<!-- add. purpose: move to avoid or not.
-  <interrupts>
-    <library>
--->
-  <add sel="//interrupts/library">
-    <actions name="kAAIT_Actions_AvoidOrNot_Escort">
-      <debug_text text="this.assignedcontrolled.idcode + ' EVENT kAAIT_Actions_AvoidOrNot_Escort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-      <do_if value="@$target.assignedaipilot.$kAAIT_data.$defensibleTarget.isoperational or @$target.order.$primarytarget.isoperational or @$target.nextorder.$primarytarget.isoperational">
-        <do_if value="@$target.assignedaipilot.$kAAIT_data.$defensibleTarget">
-          <set_value name="$kAAIT_enemy" exact="$target.assignedaipilot.$kAAIT_data.$defensibleTarget" />
-        </do_if>
-        <do_elseif value="@$target.order.$primarytarget.isoperational">
-          <set_value name="$kAAIT_enemy" exact="$target.order.$primarytarget" />
-        </do_elseif>
-        <do_elseif value="@$target.nextorder.$primarytarget.isoperational">
-          <set_value name="$kAAIT_enemy" exact="$target.nextorder.$primarytarget" />
-        </do_elseif>
-        <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_enemy: ' + $kAAIT_enemy.knownname + ' ' + $kAAIT_enemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-        <do_if value="@$kAAIT_enemy.isoperational">
-          <set_value name="$kAAIT_test_target_isHighRisk" exact="$kAAIT_enemy" />
-          <include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
-          <remove_value name="$kAAIT_test_target_isHighRisk" />
-          <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_result_isTargetHighRisk: ' + $kAAIT_result_isTargetHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-          <set_value name="$kAAIT_distToEnemy" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_enemy}" />
-          <debug_text text="this.assignedcontrolled.idcode + ' $kAAIT_distToEnemy: ' + $kAAIT_distToEnemy" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-          <do_if value="$kAAIT_result_isTargetHighRisk">
-            <do_if value="this.assignedcontrolled.primarypurpose != purpose.fight">
-              <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_enemy" />
-              <include_interrupt_actions ref="kAAIT_Order_Avoid" />
-            </do_if>
-            <do_elseif value="$kAAIT_distToEnemy le this.assignedcontrolled.maxradarrange">
-              <set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_enemy" />
-              <set_value name="$kAAIT_test_target_isInTheWayOf" exact="$target" />
-              <include_interrupt_actions ref="kAAIT_GetIsTargetInTheWay" />
-              <remove_value name="$kAAIT_test_target_isInTheWay" />
-              <remove_value name="$kAAIT_test_target_isInTheWayOf" />
-              <do_if value="$kAAIT_result_isTargetInTheWay">
-                <debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.order.$kAAITParam_iskAAITOrder: ' + @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
-                <do_if value="
-                  (not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder) and
-                  @$allowothertargets and
-                  this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange * 1.25 and
-                  (not @this.$kAAIT_data.$attackOrder.exists)
-                ">
-                  <set_value name="$kAAIT_bigEnemy" exact="$kAAIT_enemy" />
-                  <include_interrupt_actions ref="kAAIT_FindSmallerTargetFarFromBigTarget" />
-                </do_if>
-                <do_if value="@$kAAIT_result_target_found.isoperational">
-                  <set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
-                  <include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-                </do_if>
-                <do_else>
-                  <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_enemy" />
-                  <include_interrupt_actions ref="kAAIT_Order_Avoid" />
-                </do_else>
-              </do_if>
-            </do_elseif>
-          </do_if>
-        </do_if>
-      </do_if>
-    </actions>
-  </add>
 <!-- add. purpose: withdraw ai.
   <interrupts>
 -->
   <add pos="prepend" sel="//interrupts">
     <handler ref="kAAIT_Handler_AvoidWithdrawOrJustFight" />
+    <handler ref="kAAIT_Handler_NewBigTarget" />
   </add>
 <!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
   <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
@@ -151,56 +114,55 @@
     YbdP   88 o.`Y8b 88 88""Yb 88  .o 88""
      YP    88 8bodP' 88 88oodP 88ood8 888888
  -->
-<!-- replace. purpose: do not return if target of escort has an attack order
-  <do_if value="(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)">
+-->
+  <add pos="before" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;start&quot;]">
+    <resume label="start" />
+
+    <label name="kAAIT_label_avoid" />
+    <debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    <include_interrupt_actions ref="kAAIT_Order_Avoid" />
+    <wait min="5s" max="10s" />
+    <resume label="start" />
+
+    <label name="kAAIT_label_escort_during_attacks" />
+    <set_value name="$kAAIT_target_escort" exact="$target" />
+    <include_interrupt_actions ref="kAAIT_GetEscortPos" />
+    <get_safe_pos result="$kAAIT_pos" zone="$target.zone" object="$target.sector" value="$kAAIT_result_pos_escort" />
+    <set_value name="$kAAIT_orderLocation_space" exact="$target.zone" />
+    <set_value name="$kAAIT_orderLocation_pos" exact="$kAAIT_pos" />
     <run_script name="'move.generic'" result="$movesuccess">
--->
-  <replace sel="(//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)&quot;])[1]/@value">(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and ((@$target.order.id != 'Attack' and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km) or this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 2))</replace>
-<!-- add. purpose: avoid?
-  <do_if value="@$target.pilot">
-  <do_elseif value="not $target.isownerless">
-    <wait/>
--->
-  <add pos="before" sel="//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;@$target.pilot&quot;]/following-sibling::do_elseif[@value=&quot;not $target.isownerless&quot;]//wait">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_Escort" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
+      <param name="destination" value="$kAAIT_orderLocation_space" />
+      <param name="position" value="$kAAIT_orderLocation_pos" />
+      <param name="kAAITParam_iskAAITOrder" value="true" />
+    </run_script>
   </add>
-<!-- add. purpose: avoid?
-  <do_while value="$target.isoperational and (($target.owner == faction.player) or $leaderpilot)">
--->
-  <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.isoperational and (($target.owner == faction.player) or $leaderpilot)&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_Escort" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
-  </add>
-<!-- add prepend. purpose: withdraw or not.
+<!-- add after. purpose: check if need to avoid high-risk in the way to the target
   <attention min="visible">
-    ...
-    <do_while value="$target.isoperational and (($target.owner == faction.player) or $leaderpilot)">
-      <wait>
-        <interrupt>
-          <actions>
+    <actions>
+      ...
+      <wait max="500ms" comment="delay to check leader, because there is no mutex" />
 -->
-  <add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.isoperational and (($target.owner == faction.player) or $leaderpilot)&quot;]/wait/interrupt/actions">
+  <add pos="after" sel="//attention[@min=&quot;visible&quot;]//wait[@max=&quot;500ms&quot;]">
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <do_if value="event.name == 'event_object_attacked'">
-        <set_value name="$kAAIT_test_target_isWithdraw" exact="event.param" />
-        <include_interrupt_actions ref="kAAIT_Actions_WithdrawOrNot" />
-        <remove_value name="$kAAIT_test_target_isWithdraw" />
-        <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-          <resume label="start" />
+      <do_if value="this.sector == $target.sector">
+        <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+        <do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+          <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+          <remove_value name="$kAAIT_result_avoidEnemy" />
+          <resume label="kAAIT_label_avoid" />
         </do_if>
       </do_if>
-      <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_Escort" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <resume label="start" />
+    </do_if>
+  </add>
+<!-- add before. purpose: do not create formation if commander is attacking.
+  <create_formation leader="$target" follower="this.assignedcontrolled" formation="$currentformation" param="$formationparam" maxshipsperline="$maxshipsperline" rollmembers="$rollmembers" rollformation="$rollformation"/>
+-->
+  <add pos="before" sel="//attention[@min=&quot;visible&quot;]//create_formation[@leader=&quot;$target&quot;]">
+    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
+      <do_if value="
+        @$target.order.id == 'Attack' or
+        @$target.order.$kAAITParam_iskAAITOrder">
+        <resume label="kAAIT_label_escort_during_attacks" />
       </do_if>
     </do_if>
   </add>
@@ -216,76 +178,60 @@
   Y8   8P 88 Y88 88"Yb  88 Y88 Yb   dP   YbdPYbdP   88 Y88
   `YbodP' 88  Y8 88  Yb 88  Y8  YbodP     YP  YP    88  Y8
  -->
-<!-- replace. purpose: do not return if target has an atack order
-  <do_if value="(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)">
-    <run_script name="'move.generic'" result="$movesuccess">
--->
-  <replace sel="(//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)&quot;])[1]/@value">(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and ((@$target.order.id != 'Attack' and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km) or this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 2))</replace>
-<!-- add before. purpose: avoid
-  <do_if value="@$target.isoperational">
-    <do_if value="@$target.pilot">
-    <do_else>
-      <wait/>
--->
-  <add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;@$target.pilot&quot;]/following-sibling::do_else">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_Escort" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
-  </add>
-<!-- add before. purpose: avoid
-  <do_if value="@$target.isoperational">
-    <do_if value="($iscarrierbased and @this.assignedcontrolled.dock.container == $target) or ($in_formation? and not $objectinhighway?)">
-      <wait exact="$waittime">
--->
-  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;$waittime&quot;]">
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_Escort" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
-      </do_if>
-    </do_if>
-  </add>
-<!-- add prepend. purpose: withdraw or not.
-  <attention min="unknown">
-    ...
-    <do_if value="@$target.isoperational">
+<!-- add before. purpose: avoid.
+  <attention min="visible">
+    <actions>
       ...
-      <wait exact="$waittime">
-        <interrupt>
-          <actions>
+      <label name="start" />
 -->
-  <add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;@$target.isoperational&quot;]//wait[@exact=&quot;$waittime&quot;]/interrupt/actions">
+  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;start&quot;]">
+    <resume label="start" />
+
+    <label name="kAAIT_label_avoid" />
+    <debug_text text="this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
+    <include_interrupt_actions ref="kAAIT_Order_Avoid" />
+    <wait min="5s" max="10s" />
+    <resume label="start" />
+
+    <label name="kAAIT_label_escort_during_attacks" />
+    <set_value name="$kAAIT_target_escort" exact="$target" />
+    <include_interrupt_actions ref="kAAIT_GetEscortPos" />
+    <get_safe_pos result="$kAAIT_pos" zone="$target.zone" object="$target.sector" value="$kAAIT_result_pos_escort" />
+    <set_value name="$kAAIT_orderLocation_space" exact="$target.zone" />
+    <set_value name="$kAAIT_orderLocation_pos" exact="$kAAIT_pos" />
+    <run_script name="'move.generic'" result="$movesuccess">
+      <param name="destination" value="$kAAIT_orderLocation_space" />
+      <param name="position" value="$kAAIT_orderLocation_pos" />
+      <param name="kAAITParam_iskAAITOrder" value="true" />
+    </run_script>
+  </add>
+<!-- add after. purpose: check if need to avoid high-risk in the way to the target
+  <attention min="unknown">
+    <actions>
+      ...
+      <wait exact="500ms"/>
+-->
+  <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;500ms&quot;]">
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <do_if value="event.name == 'event_object_attacked'">
-        <set_value name="$kAAIT_test_target_isWithdraw" exact="event.param" />
-        <include_interrupt_actions ref="kAAIT_Actions_WithdrawOrNot" />
-        <remove_value name="$kAAIT_test_target_isWithdraw" />
-        <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-          <resume label="start" />
+      <do_if value="this.sector == $target.sector">
+        <include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+        <do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+          <set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+          <remove_value name="$kAAIT_result_avoidEnemy" />
+          <resume label="kAAIT_label_avoid" />
         </do_if>
       </do_if>
-      <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_Escort" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <resume label="start" />
-      </do_if>
     </do_if>
   </add>
-<!-- add before. purpose: avoid
-  <do_if value="@$target.isoperational">
-    <do_if value="($iscarrierbased and @this.assignedcontrolled.dock.container == $target) or ($in_formation? and not $objectinhighway?)">
-      <do_else>
-        <do_if value="$objectinhighway?">
-        <do_else>
-          <move_to object="this.ship" destination="$target.zone" uselocalhighways="false" travel="true" sinceversion="2">
+<!-- add before. purpose: do not create formation if commander is attacking.
+  <create_formation leader="$target" follower="this.assignedcontrolled" formation="$currentformation" param="$formationparam" maxshipsperline="$maxshipsperline" rollmembers="$rollmembers" rollformation="$rollformation"/>
 -->
-  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//move_to[@object=&quot;this.ship&quot;][@destination=&quot;$target.zone&quot;][@uselocalhighways=&quot;false&quot;][@travel=&quot;true&quot;]">
+  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//create_formation[@leader=&quot;$target&quot;]">
     <do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-      <include_interrupt_actions ref="kAAIT_Actions_AvoidOrNot_Escort" />
-      <do_if value="@this.$kAAIT_data.$target_avoid.isoperational">
-        <wait min="1s" max="3s" />
+      <do_if value="
+        @$target.order.id == 'Attack' or
+        @$target.order.$kAAITParam_iskAAITOrder">
+        <resume label="kAAIT_label_escort_during_attacks" />
       </do_if>
     </do_if>
   </add>
@@ -322,7 +268,7 @@
   <add pos="before" sel="(//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;(this.sector != $target.sector) or (((not this.assignedcontrolled.iscapitalship and not $target.zone.isclass.highway) or this.zone != $target.zone) and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km)&quot;])[1]">
     <debug_text text="this.assignedcontrolled.idcode + ' far away'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
   </add>
-  <add pos="before" sel="//attention[@min=&quot;visible&quot;]//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
+  <add pos="before" sel="(//attention[@min=&quot;visible&quot;]//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[2]">
     <debug_text text="this.assignedcontrolled.idcode + ' run_script move.generic'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
   </add>
   <add pos="before" sel="//attention[@min=&quot;visible&quot;]//wait[@max=&quot;500ms&quot;]">
@@ -358,7 +304,7 @@
   <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;start&quot;]">
     <debug_text text="this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
   </add>
-  <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
+  <add pos="before" sel="(//attention[@min=&quot;unknown&quot;]//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[2]">
     <debug_text text="this.assignedcontrolled.idcode + ' run_script move.generic'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0"/>
   </add>
   <add pos="before" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;500ms&quot;]">
