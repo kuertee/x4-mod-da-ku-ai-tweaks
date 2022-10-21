@@ -630,37 +630,6 @@
 				<debug_text text="this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot kAAIT_result_avoidEnemy (final): ' + @$kAAIT_result_avoidEnemy.knownname + ' ' + @$kAAIT_result_avoidEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Config.$debugChance else 0" />
 			</actions>
 
-			<actions name="kAAIT_Actions_WithdrawOrNot" comment="get is avoid or withdraw now. when changed, also change others with the 'get is avoid or withdraw now' comment.">
-				<do_if value="@$kAAITParam_isAvoidHighRisk and (not @this.$kAAIT_data.isWithdrawing) and (not @this.$kAAIT_data.$isIgnoreKAAIT)">
-					<set_value name="$kAAIT_test_target_isHighRisk" exact="$kAAIT_test_target_isWithdraw" />
-					<include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
-					<remove_value name="$kAAIT_test_target_isHighRisk" />
-					<do_if value="$kAAIT_result_isTargetPotentialHighRisk">
-						<do_if value="
-							$kAAIT_test_target_isWithdraw.dps.all and
-							(
-								(not this.assignedcontrolled.weapons.all.count) or
-								this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f le 0.25 or
-								(
-									$kAAIT_test_target_isWithdraw.isclass.station and
-									this.assignedcontrolled.shieldpercentage le 75 + (@this.skill.piloting + @this.skill.morale) / 30.0 * 15
-								) or
-								(
-									$kAAIT_test_target_isWithdraw.isclass.ship and
-									this.assignedcontrolled.shieldpercentage le 75 + (@this.skill.piloting + @this.skill.morale) / 30.0 * 15
-								)
-							)
-						">
-							<do_if value="not this.$kAAIT_data?">
-								<set_value name="this.$kAAIT_data" exact="table[]" />
-							</do_if>
-							<set_value name="this.$kAAIT_data.$target_avoid" exact="$kAAIT_test_target_isWithdraw" />
-							<include_interrupt_actions ref="kAAIT_Order_Withdraw" />
-						</do_if>
-					</do_if>
-				</do_if>
-			</actions>
-
 			<handler name="kAAIT_Handler_NewBigTarget">
 				<conditions>
 					<check_any>
@@ -1226,7 +1195,7 @@
 						<!-- <param name="kAAITParam_iskAAITOrder" value="true" /> -->
 						<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 						<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
-						<param name="debugchance" value="$debugchance"/>
+						<param name="debugchance" value="@$debugchance"/>
 					</create_order>
 					<set_value name="this.$kAAIT_data.$attackOrder" exact="$kAAIT_order_attack" />
 				</do_if>
@@ -1289,7 +1258,7 @@
 					<param name="deploydistraction" value="@this.$kAAIT_data.$defensibleTarget.isclass.ship"/>
 					<param name="log" value="false"/>
 					<param name="kAAITParam_iskAAITOrder" value="true"/>
-					<param name="debugchance" value="$debugchance"/>
+					<param name="debugchance" value="@$debugchance"/>
 				</create_order>
 			</actions>
 
