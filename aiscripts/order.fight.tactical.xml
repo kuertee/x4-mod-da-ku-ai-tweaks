@@ -101,7 +101,26 @@
 -->
 	<add pos="before" sel="//location[@object=&quot;$selectedtarget.toplevelcommander&quot;][@condition=&quot;$selectedtarget.isoperational&quot;]">
 		<location object="@$kAAIT_orderLocation_space" position="@$kAAIT_orderLocation_pos" condition="@$kAAIT_orderLocation_space and @$kAAIT_orderLocation_pos" />
+		<location object="$primarytarget" condition="@$primarytarget.isoperational" />
+		<location object="$selectedtarget" condition="@$selectedtarget.isclass.[class.ship_l, class.ship_xl, class.station]" />
 	</add>
+<!-- replace. purpose: if ship is alread an l or xl, do not find commander.
+	<actions name="select_targets">
+		<do_if value="not $primarytarget.isoperational">
+			<do_while value="$primarytarget.commander.isoperational and ($primarytarget.commander.sector == this.sector)">
+-->
+	<add pos="after" sel="//actions[@name=&quot;select_targets&quot;]//do_while[@value=&quot;$primarytarget.commander.isoperational and ($primarytarget.commander.sector == this.sector)&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' $primarytarget.idcode: ' + $primarytarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<replace sel="//actions[@name=&quot;select_targets&quot;]//do_while[@value=&quot;$primarytarget.commander.isoperational and ($primarytarget.commander.sector == this.sector)&quot;]/@value">(not $primarytarget.isclass.[class.ship_l, class.ship_xl]) and $primarytarget.commander.isoperational and ($primarytarget.commander.sector == this.sector)</replace>
+<!-- replace. purpose: if ship is alread an l or xl, do not find commander.
+	<init>
+		<do_while value="$primarytarget.commander.isoperational and ($primarytarget.commander.sector == $selectedtarget.sector)">
+-->
+	<add pos="after" sel="//init/do_while[@value=&quot;$primarytarget.commander.isoperational and ($primarytarget.commander.sector == $selectedtarget.sector)&quot;]">
+		<debug_text text="this.assignedcontrolled.idcode + ' $primarytarget.idcode: ' + $primarytarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<replace sel="//init/do_while[@value=&quot;$primarytarget.commander.isoperational and ($primarytarget.commander.sector == $selectedtarget.sector)&quot;]/@value">(not $primarytarget.isclass.[class.ship_l, class.ship_xl]) and $primarytarget.commander.isoperational and ($primarytarget.commander.sector == this.sector)</replace>
 <!-- add. purpose: debug
 	<actions name="clear_previous_orders">
 	<actions name="clear_all_orders">
@@ -558,6 +577,7 @@
 					(
 						@$subordinate.order.id == 'DockAndWait' or
 						@$subordinate.order.id == 'DockAt' or
+						@$subordinate.order.id == 'MoveToObject' or
 						@$subordinate.order.id == 'MoveWait' or
 						@$subordinate.order.id == 'Wait' or
 						@$subordinate.order.id == 'WaitForSignal'
@@ -585,6 +605,7 @@
 					(
 						@$subordinate.order.id == 'DockAndWait' or
 						@$subordinate.order.id == 'DockAt' or
+						@$subordinate.order.id == 'MoveToObject' or
 						@$subordinate.order.id == 'MoveWait' or
 						@$subordinate.order.id == 'Wait' or
 						@$subordinate.order.id == 'WaitForSignal'

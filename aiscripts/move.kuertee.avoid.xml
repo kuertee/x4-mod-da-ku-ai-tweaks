@@ -54,6 +54,7 @@
 		<!-- required for disengage handler -->
 		<set_value name="$pursuetargets" exact="false" />
 		<set_value name="$pursuedistance" exact="this.assignedcontrolled.maxradarrange" />
+		<set_value name="$debugchance" exact="0" />
 	</init>
 	<attention min="unknown">
 		<actions>
@@ -226,6 +227,9 @@
 				($isShortAvoidance and $distToCommander le this.assignedcontrolled.maxradarrange * 0.5)">
 				<resume label="finish" />
 			</do_if>
+
+			<label name="move_locked_destination" />
+			<debug_text text="this.assignedcontrolled.idcode + ' LABEL move_locked_destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
 			<remove_value name="$kAAIT_isCancelAvoidance" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
@@ -278,6 +282,10 @@
 					</do_else>
 				</do_if>
 			</do_if>
+			<do_elseif value="@$kAAIT_isInterrupted and this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 1km">
+				<remove_value name="$kAAIT_isInterrupted" />
+				<resume label="move_locked_destination" />
+			</do_elseif>
 			<resume label="finish" />
 
 			<label name="flee" />
