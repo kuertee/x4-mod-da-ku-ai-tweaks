@@ -97,6 +97,7 @@
 			<set_value name="$pitch_toWithdraw_deg" min="-15" max="15" />
 			<set_value name="$yaw_fromTarget" exact="$rotFromTarget.yaw * 180 / pi" />
 			<set_value name="$ally" exact="null" />
+			<set_value name="$yaw_toWithdraw_deg" exact="null" />
 			<do_if value="$target.isclass.station">
 				<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget" />
 			</do_if>
@@ -120,24 +121,13 @@
 							<create_orientation name="$rot_toAlly" orientation="look_at" refposition="$pos_ally">
 								<position value="$posShip" />
 							</create_orientation>
-							<set_value name="$random_jitter" min="-30" max="30" />
-							<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi + $random_jitter" />
-							<do_if value="$dist_targetToAlly le 10km">
-								<set_value name="$yaw_toAlly" exact="$yaw_toAlly + [-60, 60].random" comment="withdraw at 60 deg from ally" />
-							</do_if>
-							<set_value name="$yaw_toWithdraw_deg" exact="$yaw_toAlly" />
+							<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi" />
+							<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget + ($yaw_toAlly - $yaw_fromTarget) * 0.5" />
 						</do_if>
 					</do_if>
 				</do_if>
-				<do_if value="@$yaw_toWithdraw_deg == null" comment="no vector determined, get random vector">
-					<set_value name="$random_jitter" min="-5" max="5" />
-					<!-- <do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$bigEnemies.count" comment="more than one high-risk enemy">
-						<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget + [-30, -15, 15, 30].random" comment="smaller angles allow ship to escape quicker" />
-					</do_if>
-					<do_else> -->
-						<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget + [-90, -45, 45, 90].random" comment="larger angles allow other attackers to catch-up" />
-					<!-- </do_else> -->
-					<set_value name="$yaw_toWithdraw_deg" exact="$yaw_toWithdraw_deg + $random_jitter" />
+				<do_if value="$yaw_toWithdraw_deg == null" comment="no vector determined, get random vector">
+					<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget" />
 				</do_if>
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_toWithdraw_deg * pi / 180" />
@@ -336,14 +326,14 @@
 					(
 						(
 							$target.isclass.ship or
-							$target.defensible.isclass.ship
+							@$target.defensible.isclass.ship
 						) and
 						this.assignedcontrolled.shieldpercentage le global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vShip
 					) or
 					(
 						(
 							$target.isclass.station or
-							$target.defensible.isclass.station
+							@$target.defensible.isclass.station
 						) and
 						this.assignedcontrolled.shieldpercentage le global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation
 					)
