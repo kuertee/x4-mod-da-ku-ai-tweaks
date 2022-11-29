@@ -90,7 +90,7 @@
 						z="$posTarget.z + ($posEnemy.z - $posTarget.z) * 0.5" />
 				</do_for_each>
 			</do_if>
-			<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
+			<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip" comment="get vector from target ship because that's the direction of the withdraw">
 				<position value="$posTarget" />
 			</create_orientation>
 			<set_value name="$pitch_fromTarget" exact="$rotFromTarget.pitch * 180 / pi" />
@@ -108,7 +108,7 @@
 					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget.isclass.ship and
 					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count" comment="withdraw angle at 60 deg of ally to enemy">
 					<sort_group group="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
-					<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}">
+					<!-- <do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}">
 						<set_value name="$ally" exact="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.{2}" />
 					</do_if>
 					<do_else>
@@ -124,7 +124,23 @@
 							<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi" />
 							<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget + ($yaw_toAlly - $yaw_fromTarget) * 0.5" />
 						</do_if>
-					</do_if>
+					</do_if> -->
+					<do_for_each name="$ally" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl">
+						<do_if value="$ally != this.assignedcontrolled and $ally.isoperational and $ally.bboxdistanceto.{$target} gt 5km">
+							<create_position name="$pos_ally" space="$orderLocation_space" object="$ally" comment="get vectors based on target because the create_position below will be from the target" />
+							<create_orientation name="$rot_toAlly" orientation="look_at" refposition="$pos_ally" comment="get vector from target ship the eariler vector is based on that">
+								<position value="$posTarget" />
+							</create_orientation>
+							<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi" />
+							<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget + ($yaw_toAlly - $yaw_fromTarget) * 0.5"
+								comment="
+									direction of withdraw is AWAY from the target + (direction to ally - direction away from target) / 2.
+									this should put the direction of the withdraw on the opposite of ally from target.
+									i.e. all in vector-wise: ship is here ... yaw to withdraw to is here ... ally is in the middle ... target enemy is here
+								" />
+							<break />
+						</do_if>
+					</do_for_each>
 				</do_if>
 				<do_if value="$yaw_toWithdraw_deg == null" comment="no vector determined, get random vector">
 					<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTarget" />
@@ -338,11 +354,21 @@
 						this.assignedcontrolled.shieldpercentage le global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_shieldPercentage_withdrawAt_vStation
 					)
 				)">
-				<resume label="move_locked_destination" />
+				<do_if value="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 10km">
+					<resume label="move_locked_destination" />
+				</do_if>
+				<do_else>
+					<resume label="move" />
+				</do_else>
 			</do_if>
 			<do_elseif value="@$kAAIT_isInterrupted and this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 1km">
 				<remove_value name="$kAAIT_isInterrupted" />
-				<resume label="move_locked_destination" />
+				<do_if value="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 10km">
+					<resume label="move_locked_destination" />
+				</do_if>
+				<do_else>
+					<resume label="move" />
+				</do_else>
 			</do_elseif>
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" />
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" />
