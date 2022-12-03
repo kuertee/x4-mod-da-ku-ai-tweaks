@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<diff>
+<!--
+	replace. purpose: make signaller available in the ui.
+<param name="signaller" type="object" default="null" advanced="true" text="{1041, 10115}" comment="Signaller. object that will send releasesignal. Optional"/>
+-->
+	<!-- <replace sel="//param[@name=&quot;signaller&quot;]/@advanced">false</replace> -->
+<!--
+	add. purpose: cancel wait when order of signaller changes.
+<interrupts>
+	<handler ref="AttackHandler"/>
+	<handler ref="MissileLockHandler" />
+	<handler consume="false">
+		<conditions>
+			<check_any>
+-->
+	<add sel="//interrupts/handler[@ref=&quot;MissileLockHandler&quot;]/following-sibling::handler[@consume=&quot;false&quot;]/conditions/check_any">
+		<check_all comment="cancel repair due to repairee changing orders">
+			<check_any>
+				<event_object_order_ready object="$signaller" check="false" />
+				<event_object_order_cancelled object="$signaller" check="false" />
+			</check_any>
+			<check_value value="$releasesignal == 'resupply_proceed'" />
+			<check_value value="event.object.order.id != 'Dock'" />
+			<check_value value="event.object.order.id != 'DockAndWait'" />
+			<check_value value="event.object.order.id != 'Repair'" />
+		</check_all>
+	</add>
+	<add pos="prepend" sel="//interrupts/handler[@ref=&quot;MissileLockHandler&quot;]/following-sibling::handler[@consume=&quot;false&quot;]/actions">
+		<do_if value="this.isplayerowned">
+			<debug_text text="this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="@global.$kAAIT_Data.$debugChance" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $signaller: ' + @$signaller.knownname + ' ' + @$signaller.idcode" chance="@global.$kAAIT_Data.$debugChance" />
+			<debug_text text="this.assignedcontrolled.idcode + ' $releasesignal: ' + @$releasesignal" chance="@global.$kAAIT_Data.$debugChance" />
+			<debug_text text="this.assignedcontrolled.idcode + ' event.object.order.id: ' + @event.object.order.id" chance="@global.$kAAIT_Data.$debugChance" />
+		</do_if>
+	</add>
+</diff>
