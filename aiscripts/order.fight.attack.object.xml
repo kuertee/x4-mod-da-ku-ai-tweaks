@@ -170,19 +170,21 @@
 -->
 	<add pos="after" sel="//label[@name=&quot;start&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
-			<do_if value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
-				<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-			</do_if>
-			<do_else>
-				<set_value name="$kAAIT_test_target_isAvoid" exact="null" />
-			</do_else>
-			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
-				<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data?">
-					<include_interrupt_actions ref="kAAIT_RegisterShip" />
+			<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed">
+				<do_if value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
+					<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
 				</do_if>
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+				<do_else>
+					<set_value name="$kAAIT_test_target_isAvoid" exact="null" />
+				</do_else>
+				<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+					<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data?">
+						<include_interrupt_actions ref="kAAIT_RegisterShip" />
+					</do_if>
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+					<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+				</do_if>
 			</do_if>
 		</do_if>
 	</add>

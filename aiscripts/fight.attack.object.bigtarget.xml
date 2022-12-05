@@ -59,18 +59,20 @@
 	<add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_while[@value=&quot;$target.canbeattacked&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
 			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetHighRisk">
-				<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-				<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
-					<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.dps.missiles.all: ' + this.assignedcontrolled.dps.missiles.all" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
-					<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.ammostorage.missile.count: ' + this.assignedcontrolled.ammostorage.missile.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-					<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
-						<resume label="kAAITLabel_withdraw" />
+				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed">
+					<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+					<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+					<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+						<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.dps.missiles.all: ' + this.assignedcontrolled.dps.missiles.all" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+						<debug_text text="this.assignedcontrolled.idcode + ' this.assignedcontrolled.ammostorage.missile.count: ' + this.assignedcontrolled.ammostorage.missile.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+						<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
+							<resume label="kAAITLabel_withdraw" />
+						</do_if>
+						<do_else>
+							<resume label="kAAIT_label_avoid" />
+						</do_else>
 					</do_if>
-					<do_else>
-						<resume label="kAAIT_label_avoid" />
-					</do_else>
 				</do_if>
 			</do_if>
 		</do_if>
@@ -134,16 +136,18 @@
 	<add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//do_while[@value=&quot;$bigtarget.canbeattacked and not $isdead&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
 			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetHighRisk">
-				<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-				<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-					<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
-						<resume label="kAAITLabel_withdraw" />
+				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed">
+					<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+					<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+					<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+						<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
+							<resume label="kAAITLabel_withdraw" />
+						</do_if>
+						<do_else>
+							<resume label="kAAIT_label_avoid" />
+						</do_else>
 					</do_if>
-					<do_else>
-						<resume label="kAAIT_label_avoid" />
-					</do_else>
 				</do_if>
 			</do_if>
 		</do_if>

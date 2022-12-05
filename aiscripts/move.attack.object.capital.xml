@@ -180,20 +180,22 @@
 		<debug_text text="this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
 			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetHighRisk">
-				<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} le 10km">
-					<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-					<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-					<do_if value="$kAAIT_result_isAvoid">
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-						<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
-							<!-- do not withdraw here if against ship. allow kAAIT_Handler_AvoidWithdrawOrJustFight to order the withdrawal --> 
-							<do_if value="$kAAIT_test_target_isAvoid.isclass.station">
-								<resume label="kAAITLabel_withdraw" />
+				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed">
+					<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} le 10km">
+						<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+						<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+						<do_if value="$kAAIT_result_isAvoid">
+							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+							<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
+								<!-- do not withdraw here if against ship. allow kAAIT_Handler_AvoidWithdrawOrJustFight to order the withdrawal --> 
+								<do_if value="$kAAIT_test_target_isAvoid.isclass.station">
+									<resume label="kAAITLabel_withdraw" />
+								</do_if>
 							</do_if>
+							<do_else>
+								<resume label="kAAIT_label_avoid" />
+							</do_else>
 						</do_if>
-						<do_else>
-							<resume label="kAAIT_label_avoid" />
-						</do_else>
 					</do_if>
 				</do_if>
 			</do_if>
