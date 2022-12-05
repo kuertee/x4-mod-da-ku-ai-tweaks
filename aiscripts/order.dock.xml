@@ -1,4 +1,31 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='(($thisship.distanceto.{$destination} + $thisship.size / 2.0 + $destination.size / 2.0) gt 10km and ($thisship != player.occupiedship))']/do_if[@value='($thisship.distanceto.{$destination} gt $destination.distanceto.[$destination, $safepos])']/move_to/@travel">@$thisship.travel.active or (($thisship.distanceto.[$destination, $safepos] / [$thisship.maxspeed, 1m].max)s gt 60s) or ($thisship.distanceto.[$destination, $safepos] gt 15km)</replace>
+	<!--
+	  add. purpose: cancel waitforsignal on destination when an order changes.
+	  <interrupts>
+	  <create_order id="'WaitForSignal'" object="$destination" immediate="true">
+	-->
+	<add sel="//interrupts">
+		<handler comment="cancel wait for signal on destination when an order changes">
+			<conditions>
+				<check_any>
+					<event_object_order_ready object="this.assignedcontrolled" />
+					<event_object_order_cancelled object="this.assignedcontrolled" />
+				</check_any>
+				<check_value value="@$order_waitforsignal" />
+				<check_value value="this.assignedcontrolled.order.id != 'Dock'" />
+				<check_value value="this.assignedcontrolled.order.id != 'DockAndWait'" />
+				<check_value value="this.assignedcontrolled.order.id != 'Repair'" />
+				<check_value value="this.assignedcontrolled.order.id != 'Flee'" />
+			</conditions>
+			<actions>
+				<debug_text text="this.assignedcontrolled.idcode + ' $order_waitforsignal: ' + $order_waitforsignal + ' cancel wait for signal on destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="$destination.idcode + ' $order_waitforsignal: ' + $order_waitforsignal + ' cancel wait for signal'" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+				<cancel_order order="$order_waitforsignal" />
+			</actions>
+		</handler>
+	</add>
+	<add sel="//create_order[@id=&quot;'WaitForSignal'&quot;][@object=&quot;$destination&quot;]" type="@name">$order_waitforsignal</add>
+	<!-- DeadAir Diffs -->
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='(($thisship.distanceto.{$destination} + $thisship.size / 2.0 + $destination.size / 2.0) gt 10km and ($thisship != player.occupiedship))']/do_if[@value='($thisship.distanceto.{$destination} gt $destination.distanceto.[$destination, $safepos])']/move_to/@travel">@$thisship.travel.active or (($thisship.distanceto.[$destination, $safepos] / [$thisship.maxspeed, 1m].max)s gt 60s) or ($thisship.distanceto.[$destination, $safepos] gt 15km)</replace>
 </diff>
