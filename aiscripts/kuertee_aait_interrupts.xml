@@ -198,6 +198,7 @@
 							<check_any>
 								<check_value value="@this.assignedcontrolled.order.id == 'Attack'" />
 								<check_value value="@this.assignedcontrolled.order.id == 'TacticalOrder'" />
+								<check_value value="@this.assignedcontrolled.primarypurpose != purpose.fight" />
 							</check_any>
 							<check_any>
 								<check_all>
@@ -227,6 +228,7 @@
 							<check_any>
 								<check_value value="@this.assignedcontrolled.order.id == 'Attack'" />
 								<check_value value="@this.assignedcontrolled.order.id == 'TacticalOrder'" />
+								<check_value value="@this.assignedcontrolled.primarypurpose != purpose.fight" />
 							</check_any>
 							<set_value name="$kAAIT_attacker" exact="if event.param.defensible then event.param.defensible else event.param" />
 							<check_value value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_withdrawAllowed" />
@@ -292,6 +294,7 @@
 								<check_value value="$kAAIT_attacker.shieldpercentage gt 25" />
 								<check_value value="$kAAIT_attacker.hullpercentage gt 25" />
 							</check_any>
+							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight attacker shield and hull are high'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<check_any comment="is high-risk">
 								<check_all>
 									<check_value value="$kAAIT_attacker == @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
@@ -302,6 +305,7 @@
 									<check_value value="$kAAIT_attacker.primarypurpose == purpose.fight" />
 								</check_all>
 							</check_any>
+							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight attacker checks passed'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						</check_all>
 						<check_all comment="self">
 							<check_value value="not this.assignedcontrolled.isunit" />
@@ -313,6 +317,7 @@
 							<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isWithdrawing" />
 							<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT" />
 							<check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" />
+							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight self checks passed'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						</check_all>
 						<check_any comment="situation">
 							<check_value value="$kAAIT_eventType == 'avoid'" />
@@ -339,6 +344,7 @@
 										<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight has other attackers not including me'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 									</check_all>
 								</check_any>
+								<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight attacker is target and has other attackers'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							</check_all>
 						</check_any>
 						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight is allowed to withdraw'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -410,7 +416,7 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_isActOnEventNow: ' + @$kAAIT_isActOnEventNow" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				</conditions>
 				<actions>
-					<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+					<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name + ' $kAAIT_eventType: ' + @$kAAIT_eventType + ' order: ' + @this.assignedcontrolled.order.id" />
 						<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ================= $kAAIT_attacker: ' + @$kAAIT_attacker.knownname + ', ' + @$kAAIT_attacker.idcode" />
 					</do_if>
@@ -504,7 +510,7 @@
 					2. test if a high-risk enemy is in the way of destination or target
 					3. if avoiding, look for smaller target
 				-->
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -726,7 +732,7 @@
 					</check_all>
 				</conditions>
 				<actions>
-					<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+					<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget event.name: ' + event.name + ' order: ' + @this.assignedcontrolled.order.id" />
 						<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 					</do_if>
@@ -801,7 +807,7 @@
 					<check_value value="@$kAAITParam_tacticalOrderTarget.isoperational" />
 				</conditions>
 				<actions>
-					<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+					<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_TacticalSubordinateAttack event.name: ' + event.name + ' order: ' + @this.assignedcontrolled.order.id" />
 						<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP =================='" />
 					</do_if>
@@ -848,7 +854,7 @@
 				88  88 888888 88ood8 88     888888 88  Yb 8bodP'
 			 -->
 			<actions name="kAAIT_GetCombatRange">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetCombatRange event.name: ' + event.name + ' order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP =================='" />
 				</do_if>
@@ -876,7 +882,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetIsTargetHighRisk" comment="also update 'get is avoid or withdraw now' conditions in different handlers">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetHighRisk order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -907,7 +913,8 @@
 								(
 									$kAAIT_test_target_isHighRisk.size gt this.assignedcontrolled.size * 1.5 and
 									$kAAIT_test_target_isHighRisk.primarypurpose == purpose.fight
-								)
+								) or
+								this.assignedcontrolled.type == shiptype.carrier
 							)
 						" />
 						<do_if value="$kAAIT_test_target_isHighRisk.isclass.station">
@@ -974,7 +981,8 @@
 								(
 									$kAAIT_test_target_isHighRisk.size gt this.assignedcontrolled.size * 1.5 and
 									$kAAIT_test_target_isHighRisk.primarypurpose == purpose.fight
-								)
+								) or
+								this.assignedcontrolled.type == shiptype.carrier
 							)
 						" />
 						<set_value name="$kAAIT_result_isTargetPotentialHighRisk" exact="$kAAIT_isTargetPotentialHighRisk" />
@@ -990,7 +998,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetBigEnemies">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetBigEnemies order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1033,7 +1041,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetIsNearBigEnemies">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsNearBigEnemies order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1072,7 +1080,7 @@
 			</actions>
 
 			<actions name="kAAIT_FindSmallerTargetFarFromBigTarget">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTargetFarFromBigTarget order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP =================='" />
 				</do_if>
@@ -1102,7 +1110,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetSkillVars" comment="also update 'get is avoid or withdraw now' conditions in different handlers">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetSkillVars order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1141,7 +1149,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetEscortPos">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetEscortPos order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1208,7 +1216,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetIsTargetInTheWay">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsTargetInTheWay order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1305,7 +1313,7 @@
 				 YbodP  88  Yb 8888Y"  888888 88  Yb 8bodP'
 			 -->
 			<actions name="kAAIT_CleanOrders">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_CleanOrders order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1319,7 +1327,7 @@
 			</actions>
 
 			<actions name="kAAIT_Order_AttackOther">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Order_AttackOther order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1361,7 +1369,7 @@
 			</actions>
 
 			<actions name="kAAIT_Order_Avoid">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Order_Avoid order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1403,7 +1411,7 @@
 			</actions>
 
 			<actions name="kAAIT_Order_Flee">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Order_Flee order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1430,7 +1438,7 @@
 			</actions>
 
 			<actions name="kAAIT_Order_MoveToEngagePosition">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Order_MoveToEngagePosition order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ==========='" />
 				</do_if>
@@ -1451,7 +1459,7 @@
 			</actions>
 
 			<actions name="kAAIT_Order_Withdraw">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Order_Withdraw order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
@@ -1472,7 +1480,7 @@
 			</actions>
 
 			<actions name="kAAIT_RequestHelp">
-				<do_if value="(not this.isplayerowned) and (not $kAAITParam_isAvoidHighRisk) and (not $kAAITParam_isStepForwardWithdraw)">
+				<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_RequestHelp order: ' + @this.assignedcontrolled.order.id" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>

@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+	<!--
+	purpose, do not restock if
+	engines are busted. otherwise, auxilliary will forever wait.
+	busted engines = will take more than 2 min to reach supply destination
+	<do_if value="not $cleanup_interrupt?">
+		<do_if value="$destination_station_interrupt?">
+	-->
+	<add pos="before" sel="//do_if[@value=&quot;not $cleanup_interrupt?&quot;]/do_if[@value=&quot;$destination_station_interrupt?&quot;]">
+		<set_value name="$kuertee_isOkToResupply" exact="false" />
+		<do_if value="$destination_station_interrupt?">
+			<estimate_travel_time result="$kuertee_eta" start="this.assignedcontrolled" target="$destination_station_interrupt" ship="this.assignedcontrolled" />
+			<set_value name="$kuertee_isOkToResupply" exact="
+				$destination_station_interrupt? and
+				$kuertee_eta le 3min
+			" />
+		</do_if>
+	</add>
+	<replace sel="(//do_if[@value=&quot;not $cleanup_interrupt?&quot;]/do_if[@value=&quot;$destination_station_interrupt?&quot;])[2]/@value">$kuertee_isOkToResupply</replace>
+</diff>

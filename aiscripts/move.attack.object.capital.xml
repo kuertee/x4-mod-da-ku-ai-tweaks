@@ -104,6 +104,49 @@
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
 	</add>
+<!-- replace 2 instances.
+	purpose: $iscarrier behaviour is true if shiptype.carrier AND has subordinates or has a wingmate that is a capital ship.
+	i.e. base-game implementation sets iscarrier to true ONLY if subordinates are dockable on the carrier.
+	therefore: base-game implementation will put carrier in danger even if its subordinates are captial ships that do not dock on the carrier.
+	kuda's implementation makes it so that carriers never attack like destroyers UNLESS it has no more subordinates or it has no capital ship wingmate.
+	1st instance:
+	<set_value name="$iscarrier" exact="false"/>
+	<do_if value="this.assignedcontrolled.type == shiptype.carrier">
+		<do_for_each name="$locsub" in="this.assignedcontrolled.subordinates">
+			...
+-->
+	<replace sel="//set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]/following-sibling::do_if[@value=&quot;this.assignedcontrolled.type == shiptype.carrier&quot;]/do_for_each[@name=&quot;$locsub&quot;][@in=&quot;this.assignedcontrolled.subordinates&quot;]">
+		<set_value name="$iscarrier" exact="this.assignedcontrolled.subordinates.count" />
+		<do_if value="(not $iscarrier) and @this.assignedcontrolled.commander.subordinates.count">
+			<do_for_each name="$wingmate" in="this.assignedcontrolled.commander.subordinates">
+				<do_if value="$wingmate.iscapitalship">
+					<set_value name="$iscarrier" exact="true" />
+					<break />
+				</do_if>
+			</do_for_each>
+		</do_if>
+	</replace>
+<!-- 2nd instance:
+	remove:
+	<do_if value="$iscarrier">
+		<set_value name="$iscarrier" exact="false"/>
+		<do_for_each name="$locsub" in="this.assignedcontrolled.subordinates">
+	replace:
+	<do_if value="$iscarrier">
+		<set_value name="$iscarrier" exact="false"/>
+-->
+	<remove sel="//do_if[@value=&quot;$iscarrier&quot;]/set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]/following-sibling::do_for_each[@name=&quot;$locsub&quot;][@in=&quot;this.assignedcontrolled.subordinates&quot;]" />
+	<replace sel="//do_if[@value=&quot;$iscarrier&quot;]/set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]">
+		<set_value name="$iscarrier" exact="this.assignedcontrolled.subordinates.count" />
+		<do_if value="(not $iscarrier) and @this.assignedcontrolled.commander.subordinates.count">
+			<do_for_each name="$wingmate" in="this.assignedcontrolled.commander.subordinates">
+				<do_if value="$wingmate.iscapitalship">
+					<set_value name="$iscarrier" exact="true" />
+					<break />
+				</do_if>
+			</do_for_each>
+		</do_if>
+	</replace>
 <!-- add before. purpose: change $maintaindistance
 	<do_if value="$iscarrier and $maintaindistance">
 -->
