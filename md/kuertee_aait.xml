@@ -188,27 +188,32 @@
 						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.{$' + event.object.idcode + '} (post): ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" chance="global.$kAAIT_Data.$debugChance" />
 					</actions>
 				</cue> -->
-				<cue name="ShipStoppedCombat" instantiate="true">
+				<cue name="ShipStoppedCombat" instantiate="true" namespace="this">
 					<conditions>
 						<check_any>
-							<event_object_destroyed group="$ships" />
-							<event_object_docked group="$ships" />
-							<event_object_undocked group="$ships" />
-							<event_object_changed_sector group="$ships" />
+							<event_object_destroyed group="kAAIT_SettingsByShip.$ships" />
+							<event_object_docked group="kAAIT_SettingsByShip.$ships" />
+							<event_object_undocked group="kAAIT_SettingsByShip.$ships" />
+							<event_object_changed_sector group="kAAIT_SettingsByShip.$ships" />
 						</check_any>
-						<check_value value="@global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" />
 					</conditions>
 					<actions>
 						<debug_text text="'event.object: ' + @event.object.idcode + ' event.name: ' + event.name" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.{$' + event.object.idcode + '} (pre): ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-						<do_if value="event.name == 'event_object_destroyed'">
-							<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" />
-						</do_if>
-						<do_else>
-							<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}.$kAAIT_data" />
-							<do_if value="not @global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}.keys.count">
+						<do_if value="@global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}">
+							<do_if value="event.name == 'event_object_destroyed'">
 								<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" />
 							</do_if>
+							<do_else>
+								<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}.$kAAIT_data" />
+								<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}.$destination" />
+								<do_if value="not @global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}.keys.count">
+									<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" />
+								</do_if>
+							</do_else>
+						</do_if>
+						<do_else>
+							<remove_from_group group="kAAIT_SettingsByShip.$ships" object="event.object" />
 						</do_else>
 						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.{$' + event.object.idcode + '} (post): ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					</actions>
@@ -1206,19 +1211,61 @@
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
-		<cue name="kAAIT_Debug2_DebugLogWeaponRanges">
+		<cue name="kAAIT_Debug_ShowShipData" namespace="this">
 			<conditions>
 				<event_cue_signalled />
 			</conditions>
 			<actions>
-				<set_value name="$interact_target" exact="@event.param.$object" />
-				<debug_text text="'interact_target: ' + $interact_target + ', ' + $interact_target.knownname + ', ' + $interact_target.idcode" />
-				<debug_text text="'size: ' + $interact_target.size" />
-				<debug_text text="'primary: ' + $interact_target.maxcombatrange.primary" />
-				<debug_text text="'secondary: ' + $interact_target.maxcombatrange.secondary" />
-				<debug_text text="'lasers.all: ' + $interact_target.maxcombatrange.lasers.all" />
-				<debug_text text="'missiles.all: ' + $interact_target.maxcombatrange.missiles.all" />
-				<debug_text text="'turrets: ' + $interact_target.maxcombatrange.turrets" />
+				<set_value name="$ship" exact="@event.param.$object" />
+				<debug_text text="'$ship: ' + $ship.knownname + ' (' + $ship.idcode + ')'" />
+				<debug_text text="'assignedaipilot: ' + @$ship.assignedaipilot.knownname" />
+				<debug_text text="'defencenpc: ' + @$ship.defencenpc.knownname" />
+				<set_value name="$entity" exact="$ship.assignedaipilot" />
+				<do_if value="not $entity">
+					<set_value name="$entity" exact="$ship.defencenpc" />
+				</do_if>
+				<do_if value="@$entity.$kAAIT_attackers_timeAdded">
+					<run_actions ref="DebugData">
+						<param name="Data" value="(player.age - @$entity.$kAAIT_attackers_timeAdded) + ' seconds ago'" />
+						<param name="Prefix" value="'$kAAIT_attackers_timeAdded'" />
+					</run_actions>
+					<run_actions ref="DebugData">
+						<param name="Data" value="@$entity.$kAAIT_attackers" />
+						<param name="Prefix" value="'$kAAIT_attackers'" />
+					</run_actions>
+					<run_actions ref="DebugData">
+						<param name="Data" value="@$entity.$kAAIT_attackers_lxl" />
+						<param name="Prefix" value="'$kAAIT_attackers_lxl'" />
+					</run_actions>
+				</do_if>
+				<debug_text text="'size: ' + $ship.size" />
+				<debug_text text="'primarypurpose: ' + $ship.primarypurpose" />
+				<debug_text text="'order: ' + $ship.order.id" />
+				<debug_text text="'orders.{1}: ' + @$ship.orders.{1}.id" />
+				<debug_text text="'defaultorder: ' + @$ship.defaultorder.id" />
+				<create_position name="$pos" space="$ship.sector" object="$ship" />
+				<debug_text text="'$pos: ' + $pos" />
+				<debug_text text="'maxspeed: ' + @$ship.maxspeed" />
+				<debug_text text="'travel.maxspeed: ' + @$ship.travel.maxspeed" />
+				<debug_text text="'dps.all: ' + @$ship.dps.all" />
+				<do_if value="@$ship.isclass.ship">
+					<set_value name="$weapons" exact="@$ship.weapons.operational.count" />
+				</do_if>
+				<do_else>
+					<set_value name="$weapons" exact="
+						@$ship.weapons.operational.count + 
+						[@$ship.weapons.operational.count, @$ship.turrets.operational.count].max
+					" />
+				</do_else>
+				<debug_text text="'$weapons: ' + $weapons" />
+				<debug_text text="'maxcombatrange.primary: ' + $ship.maxcombatrange.primary" />
+				<debug_text text="'maxcombatrange.secondary: ' + $ship.maxcombatrange.secondary" />
+				<debug_text text="'maxcombatrange.lasers.all: ' + $ship.maxcombatrange.lasers.all" />
+				<debug_text text="'maxcombatrange.missiles.all: ' + $ship.maxcombatrange.missiles.all" />
+				<debug_text text="'maxcombatrange.turrets: ' + $ship.maxcombatrange.turrets" />
+				<run_actions ref="DebugData">
+					<param name="Data" value="@global.$kAAIT_Data.$settingsByShipId.{'$' + @$ship.idcode}" />
+				</run_actions>
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
@@ -1241,7 +1288,7 @@
 				</do_if>
 				<debug_text text="'event.name: ' + event.name" chance="global.$kAAIT_Data.$debugChance" />
 				<do_if value="@$interact_target.exists">
-					<debug_text text="'$interact_target: ' + $interact_target + ' (' + $interact_target.knownname + ')'" chance="global.$kAAIT_Data.$debugChance" />
+					<debug_text text="'$interact_target: ' + @$interact_target + ' (' + @$interact_target.knownname + ')'" chance="global.$kAAIT_Data.$debugChance" />
 					<do_if value="global.$kAAIT_Data.$debugChance">
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
 							$id = 'kaait_debug_all_ships',
@@ -1265,40 +1312,19 @@
 							$callback = kAAIT_Debug2_UndebugThisShip
 						]" />
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kAAIT_purpose',
+							$id = 'kaait_show_data',
 							$section = 'main',
-							$text = 'debug: purpose: ' + @$interact_target.primarypurpose + ' size: ' + $interact_target.size,
+							$text = 'debug: log data of this ship',
 							$icon = null,
-							$callback = null
+							$callback = kAAIT_Debug_ShowShipData
 						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kAAIT_target',
-							$section = 'main',
-							$text = 'debug: target: ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_data.$defensibleTarget.idcode + ' (size: ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_data.$defensibleTarget.size + ' h-r?' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_data.$isTargetHighRisk + ')',
-							$icon = null,
-							$callback = null
-						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kAAIT_Avoid_user',
-							$section = 'main',
-							$text = 'debug: avoid vars: ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_isAvoidHighRisk_user + ' (' + @$interact_target.order.$kAAITParam_isAvoidHighRisk + ', ' + @$interact_target.defaultorder.$kAAITParam_isAvoidHighRisk + ')',
-							$icon = null,
-							$callback = null
-						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kAAIT_StepWithdraw_user',
-							$section = 'main',
-							$text = 'debug: step/withdraw vars: ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_isStepForwardWithdraw_user + ' (' + @$interact_target.order.$kAAITParam_isStepForwardWithdraw + ', ' + @$interact_target.defaultorder.$kAAITParam_isStepForwardWithdraw + ')',
-							$icon = null,
-							$callback = null
-						]" />
-						<do_if value="$interact_target.isclass.ship">
-							<set_value name="$weapons" exact="@$interact_target.weapons.operational.count" />
+						<do_if value="@$ship.isclass.ship">
+							<set_value name="$weapons" exact="@$ship.weapons.operational.count" />
 						</do_if>
 						<do_else>
 							<set_value name="$weapons" exact="
-								@$interact_target.weapons.operational.count + 
-								[@$interact_target.weapons.operational.count, @$interact_target.turrets.operational.count].max
+								@$ship.weapons.operational.count + 
+								[@$ship.weapons.operational.count, @$ship.turrets.operational.count].max
 							" />
 						</do_else>
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
@@ -1309,55 +1335,12 @@
 							$callback = kAAIT_Debug2_DestroyWeapons
 						]" />
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kaait_debug_order',
-							$section = 'main',
-							$text = 'debug: order: ' + @$interact_target.order.id + ' (' + @$interact_target.order.script + ')',
-							$icon = null,
-							$callback = kAAIT_Debug2_DebugLogWeaponRanges
-						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kaait_debug_orders_1',
-							$section = 'main',
-							$text = 'debug: orders.{1}: ' + @$interact_target.orders.{1}.id + ' (' + @$interact_target.orders.{1}.script + ')',
-							$icon = null,
-							$callback = kAAIT_Debug2_DebugLogWeaponRanges
-						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kaait_debug_defaultorder',
-							$section = 'main',
-							$text = 'debug: defaultorder: ' + @$interact_target.defaultorder.id + ' (' + @$interact_target.defaultorder.script + ')',
-							$icon = null,
-							$callback = kAAIT_Debug2_DebugLogWeaponRanges
-						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'kaait_travel_active',
-							$section = 'main',
-							$text = 'debug: maxspeed: ' + @$interact_target.maxspeed + ' ' + @$interact_target.travel.maxspeed,
-							$icon = null,
-							$callback = null
-						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'dps',
-							$section = 'main',
-							$text = 'debug: dps: ' + @$interact_target.dps.all + ' shield: ' + @$interact_target.shieldpercentage,
-							$icon = null,
-							$callback = null
-						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
 							$id = 'debug_resupply',
 							$section = 'main',
 							$text = 'debug: signal resupply',
 							$icon = null,
 							$callback = DebugSignalResupply
 						]" />
-						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
-							$id = 'debug_combat_range',
-							$section = 'main',
-							$text = 'debug: min, max: ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_data.$combatRange_min + ', ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_data.$combatRange_max,
-							$icon = null,
-							$callback = null
-						]" />
-						<debug_text text="'$kAAIT_data: ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + $interact_target.idcode}.$kAAIT_data" />
 					</do_if>
 				</do_if>
 				<reset_cue cue="this" />
