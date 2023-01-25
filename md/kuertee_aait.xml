@@ -211,21 +211,29 @@
 								<remove_from_group group="kAAIT_SettingsByShip.$ships" object="$ship_inList" />
 							</do_if>
 						</do_for_each>
+						<debug_text text="'kAAIT_SettingsByShip.$ships.count (post): ' + kAAIT_SettingsByShip.$ships.count" />
+						<run_actions ref="DebugData">
+							<param name="Data" value="kAAIT_SettingsByShip.$ships" />
+						</run_actions>
 						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.keys.count (pre): ' + global.$kAAIT_Data.$settingsByShipId.keys.count" />
-						<do_for_each name="$idCode_inList" in="global.$kAAIT_Data.$settingsByShipId.keys.list" reverse="true">
-							<do_if value="not @global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}.$kAAIT_Data">
+						<do_for_each name="$idCode_inList" valuename="$data_inList" in="global.$kAAIT_Data.$settingsByShipId" reverse="true">
+							<debug_text text="$idCode_inList + ': ' + $data_inList" />
+							<do_if value="
+								(not @$data_inList.$kAAIT_data) or
+								(
+									@$data_inList.$kAAIT_data.keys.count == 1 and
+									$data_inList.$kAAIT_data.$bigEnemies and
+									$data_inList.$kAAIT_data.$bigEnemies.count == 0 and
+								)
+							">
 								<debug_text text="$idCode_inList + ' has no attack data. removing.'" />
-								<do_if value="@global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}.$ship.exists">
-									<remove_from_group group="kAAIT_SettingsByShip.$ships" object="global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}.$ship" />
+								<do_if value="@$data_inList.$ship.exists">
+									<remove_from_group group="kAAIT_SettingsByShip.$ships" object="$data_inList.$ship" />
 									<debug_text text="$idCode_inList + ' removing ship from list.'" />
 								</do_if>
 								<remove_value name="global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}" />
 							</do_if>
 						</do_for_each>
-						<debug_text text="'kAAIT_SettingsByShip.$ships.count (post): ' + kAAIT_SettingsByShip.$ships.count" />
-						<run_actions ref="DebugData">
-							<param name="Data" value="kAAIT_SettingsByShip.$ships" />
-						</run_actions>
 						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.keys.count (post): ' + global.$kAAIT_Data.$settingsByShipId.keys.count" />
 						<run_actions ref="DebugData">
 							<param name="Data" value="global.$kAAIT_Data.$settingsByShipId" />

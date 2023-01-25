@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$targets.count']" pos="before">
+    <do_if value="this.assignedcontrolled.isclass.ship_m or this.assignedcontrolled.isclass.ship_s">
+      <do_if value="(this.assignedcontrolled.ammostorage.missile.count) and (this.assignedcontrolled.dps.missiles.all gt 0)">
+        <do_for_each name="$missilelauncher" in="this.assignedcontrolled.weapons.operational.list">
+          <do_if value="(macro.weapon_gen_m_torpedo_01_mk1_macro == $missilelauncher.macro) or (macro.weapon_gen_m_torpedo_01_mk2_macro == $missilelauncher.macro)">
+            <set_value name="$hastorpedo" exact="true"/>
+            <break/>
+          </do_if>
+        </do_for_each>
+      </do_if>
+      <do_else>
+        <set_value name="$hastorpedo" exact="false"/>
+      </do_else>
+    </do_if>
+  </add>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$targets.count']/do_if[@value='$targets.{$i} == $primarytarget or $targets.{$i}.container == $primarytarget']/set_value[@name='$priority'][@exact='$priority + 10.0']/@exact">$priority + 20.0</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$targets.count']/do_elseif[@value='$distance lt 5500m']/@value">$distance le this.assignedcontrolled.maxcombatrange.all</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$targets.count']/do_elseif[@value='$distance le this.assignedcontrolled.maxcombatrange.all']/do_if[@value='$distance gt 500m']">
+    <set_value name="$priority" exact="$priority + 10.0"/>
+  </replace>
+  <remove sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$targets.count']/do_elseif[@value='$distance le this.assignedcontrolled.maxcombatrange.all']/do_else"/>
+  <remove sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$targets.count']/do_if[@value='@$escort.exists']"/>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$targets.count']/do_if[@value='$priority gt $highest']" pos="before">
+    <do_if value="this.assignedcontrolled.isclass.ship">
+      <do_if value="this.assignedcontrolled.isclass.ship_xl">
+        <set_value name="$priority" exact="$priority * (if (@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station] or @$targets.{$i}.isrealclass.station) then 2 else (if @$targets.{$i}.isclass.[class.ship_xs, class.ship_s] then 0.5 else 1))"/>
+      </do_if>
+      <do_elseif value="this.assignedcontrolled.isclass.ship_l">
+        <set_value name="$priority" exact="$priority * (if (@$targets.{$i}.isclass.[class.ship_m, class.ship_l, class.ship_xl] or @$targets.{$i}.container.isclass.[class.ship_xl]) then 2 else (if @$targets.{$i}.isclass.[class.ship_xs, class.ship_s] then 0.5 else 1))"/>
+      </do_elseif>
+      <do_elseif value="this.assignedcontrolled.isclass.ship_m">
+        <do_if value="if $hastorpedo? then $hastorpedo else false">
+          <set_value name="$priority" exact="$priority * (if (@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station] or @$targets.{$i}.container.isclass.[class.ship_l, class.ship_xl, class.station] or @$targets.{$i}.isrealclass.station) then 2 else (if @$targets.{$i}.isclass.[class.ship_xs, class.ship_s] then 0.5 else 1))"/>
+        </do_if>
+        <do_else>
+          <set_value name="$priority" exact="$priority * (if (@$targets.{$i}.isclass.[class.ship_s, class.ship_m, class.ship_l] or @$targets.{$i}.container.isclass.[class.ship_l]) then 2 else (if (@$targets.{$i}.isclass.[class.ship_xs, class.ship_xl, class.station] or @$targets.{$i}.isrealclass.station) then 0.5 else 1))"/>
+        </do_else>
+      </do_elseif>
+      <do_elseif value="this.assignedcontrolled.isclass.ship_s">
+        <do_if value="if $hastorpedo? then $hastorpedo else false">
+          <set_value name="$priority" exact="$priority * (if (@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station] or @$targets.{$i}.container.isclass.[class.ship_l, class.ship_xl, class.station] or @$targets.{$i}.isrealclass.station) then 2 else (if $targets.{$i}.isclass.[class.ship_xs, class.ship_s] then 0.5 else 1))"/>
+        </do_if>
+        <do_else>
+          <set_value name="$priority" exact="$priority * (if @$targets.{$i}.isclass.[class.ship_xs, class.ship_s, class.ship_m] then 2 else (if (@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station] or @$targets.{$i}.isrealclass.station) then 0.5 else 1))"/>
+        </do_else>
+      </do_elseif>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$selected == 0']" pos="before">
+    <remove_value name="$hastorpedo"/>
+  </add>
+</diff>

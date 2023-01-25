@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$repairfrequency'][@exact='10s']/@exact">60s</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$baserepairrate'][@exact='50']/@exact">1</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_else[2]/set_value[@name='$repairmodifier'][@exact='[this.defensible.combinedskill, 90].min + 10']/@exact">if this.defensible.isclass.station then 250 else [([this.defensible.people.service.count,1].max * [this.defensible.people.service.combinedskill,1].max),1].max</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_else[3]/set_value[@name='$hulldamagelimit'][@exact='60 + (40 * $repairmodifier / 100)']/@exact">100</replace>
+  <add sel="/aiscript/attention[@min='unknown']/actions/wait[@min='$repairfrequency'][@max='$repairfrequency + 1s']" pos="before">
+    <do_if value="true">
+      <set_value name="$repairfrequency" exact="if this.defensible.isclass.station then 300s else 60s"/>
+      <set_value name="$baserepairrate" exact="1"/>
+    </do_if>
+  </add>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$CurrentElement.exists']/do_if[@value='$CurrentElement.hullpercentage lt $hulldamagelimit']/do_if[@value='$CurrentElement.isfunctional']/resume/@chance">[this.defensible.combinedskill, 90].min + 10</replace>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$networkid']/do_if[@value='$unitamounts']">
+    <set_value name="$repairratefactor" exact="[1.025 ^ $repairratefactor,1.025].max"/>
+  </add>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$repairratefactor == 0']/do_if[@value='this.defensible.trueowner == faction.xenon']/set_value[@name='$repairratefactor'][@exact='0.3']/@exact">1.0</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$repairratefactor == 0']/do_else/set_value[@name='$repairratefactor'][@exact='0.1']/@exact">1.0</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$repairratefactor'][@exact='$repairratefactor * $repairmodifier / 25']/@exact">$repairratefactor * $repairmodifier</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not $Defensible.isclass.station and $Defensible.maxhull ge 1']/do_if[@value='$Defensible.hullpercentage lt $hulldamagelimit']/set_value[@name='$addedhullpercentage'][@exact='[100f - $Defensible.hullpercentage, 100f * $repairrate / $Defensible.maxhull].min']/@exact">[100f - $Defensible.hullpercentage, [[100f * $repairrate / $Defensible.maxhull,0.001].max,5.0].min].min</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not $Defensible.isclass.station and $Defensible.maxhull ge 1']/do_if[@value='$Defensible.hullpercentage lt $hulldamagelimit']/do_if[@value='$addedhullpercentage gt 0f']/do_if[@value='$controlentity.exists']/apply_experience/@factor">$addedhullpercentage</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not $Defensible.isclass.station and $Defensible.maxhull ge 1']/do_if[@value='$Defensible.hullpercentage lt $hulldamagelimit']/do_if[@value='$addedhullpercentage gt 0f']/apply_experience/@factor">$addedhullpercentage</replace>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not $Defensible.isclass.station and $Defensible.maxhull ge 1']/do_if[@value='$Defensible.hullpercentage lt $hulldamagelimit']/do_if[@value='$addedhullpercentage gt 0f']">
+    <debug_text text="'Ship ID: %1 -- Ship Class: %2 -- Ship Type: %3 -- Repairrate: %4 -- Service Count: %5 -- Service Combined Skill: %6 -- Added Hull Percent %7'.[this.defensible.idcode, this.defensible.class, this.defensible.macro, $repairrate, this.defensible.people.service.count, this.defensible.people.service.combinedskill,$addedhullpercentage]" chance="if this.defensible.isplayerowned then 100 else $debugchance"/>
+  </add>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$CurrentElement']/do_elseif[@value='$CurrentElement.isoperational']/do_if[@value='$CurrentElement.maxhull'][@min='1']/do_else/set_value[@name='$addedhullpercentage'][@exact='[100f - $CurrentElement.hullpercentage, 100f * $repairrate / $CurrentElement.maxhull].min']/@exact">[100f - $CurrentElement.hullpercentage, [[100f * $repairrate / $CurrentElement.maxhull,0.001].max,1.0].min].min</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$CurrentElement']/do_elseif[@value='$CurrentElement.isoperational']/do_if[@value='$CurrentElement.maxhull'][@min='1']/do_else/do_if[@value='$addedhullpercentage gt 0f']/do_if[@value='$controlentity.exists']/apply_experience/@factor">$addedhullpercentage</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$CurrentElement']/do_elseif[@value='$CurrentElement.isoperational']/do_if[@value='$CurrentElement.maxhull'][@min='1']/do_else/do_if[@value='$addedhullpercentage gt 0f']/apply_experience/@factor">$addedhullpercentage</replace>
+</diff>
