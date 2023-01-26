@@ -27,7 +27,7 @@
 						<reset_cue cue="kAAIT2_OnLuaLoaderReady" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="19">
+				<cue name="kAAIT2_Config" namespace="this" version="20">
 					<actions>
 						<set_value name="global.$kAAIT_Data" exact="this" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
@@ -60,8 +60,9 @@
 						<set_value name="global.$kAAIT_Data.$isCarriersAttackLikeDestroyers" exact="false" />
 						<set_value name="global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions" exact="false" />
 						<!-- individual ship settings -->
-						<set_value name="global.$kAAIT_Data.$settingsByShipId" exact="table[]" />
-						<set_value name="global.$kAAITByShipId" exact="global.$kAAIT_Data.$settingsByShipId" comment="shortcut to settingsByShipId" />
+						<create_group groupname="global.$kAAIT_Data.$ships" />
+						<set_value name="global.$kAAIT_Data.$byShipId" exact="table[]" />
+						<set_value name="global.$kAAITByShipId" exact="global.$kAAIT_Data.$byShipId" comment="shortcut to $byShipId" />
 					</actions>
 					<patch sinceversion="5">
 						<debug_text text="'sinceversion 5, state: ' + this.state" />
@@ -132,6 +133,35 @@
 						<set_value name="global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip_allFactions" exact="false" />
 						<set_value name="global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation_allFactions" exact="false" />
 					</patch>
+					<patch sinceversion="20">
+						<debug_text text="'patch sinceversion 20, state: ' + this.state" />
+						<create_group groupname="global.$kAAIT_Data.$ships" />
+						<do_for_each name="$ship_inList" in="kAAIT_SettingsByShip.$ships">
+							<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship_inList" />
+						</do_for_each>
+						<remove_value name="kAAIT_SettingsByShip.$ships" />
+						<run_actions ref="DebugData">
+							<param name="Data" value="global.$kAAIT_Data.$ships" />
+							<param name="Prefix" value="'patch 20: global.$kAAIT_Data.$ships'" />
+						</run_actions>
+						<run_actions ref="DebugData">
+							<param name="Data" value="@kAAIT_SettingsByShip.$ships" />
+							<param name="Prefix" value="'patch 20: should be empty: kAAIT_SettingsByShip.$ships'" />
+						</run_actions>
+						<set_value name="global.$kAAIT_Data.$byShipId" exact="table[]" />
+						<do_for_each name="$idCode_inList" valuename="$data_inList" in="global.$kAAIT_Data.$settingsByShipId">
+							<set_value name="global.$kAAIT_Data.$byShipId.{$idCode_inList}" exact="$data_inList" />
+						</do_for_each>
+						<remove_value name="global.$kAAIT_Data.$settingsByShipId" />
+						<run_actions ref="DebugData">
+							<param name="Data" value="global.$kAAIT_Data.$byShipId" />
+							<param name="Prefix" value="'patch 20: global.$kAAIT_Data.$byShipId'" />
+						</run_actions>
+						<run_actions ref="DebugData">
+							<param name="Data" value="@global.$kAAIT_Data.$settingsByShipId" />
+							<param name="Prefix" value="'patch 20: should be empty: global.$kAAIT_Data.$settingsByShipId'" />
+						</run_actions>
+					</patch>
 				</cue>
 			</cues>
 		</cue>
@@ -146,31 +176,29 @@
 				<event_cue_signalled />
 			</conditions>
 			<actions>
-				<create_group groupname="$ships" />
-				<set_value name="global.$kAAIT_Data.$ships" exact="$ships" />
 			</actions>
 			<patch sinceversion="2">
 				<debug_text text="'patch sinceversion 2, state: ' + this.state" />
 				<set_value name="$ids" exact="[]" />
 				<do_for_each name="$ship_inList" in="global.$kAAIT_Data.$ships" reverse="true">
-					<do_if value="not @global.$kAAIT_Data.$settingsByShipId.{'$' + $ship_inList.idcode}">
+					<do_if value="not @global.$kAAIT_Data.$byShipId.{'$' + $ship_inList.idcode}">
 						<remove_from_group group="global.$kAAIT_Data.$ships" object="$ship_inList" />
 						<debug_text text="'remove_from_group: ' + $ship_inList.idcode" />
 					</do_if>
 					<do_else>
 						<append_to_list name="$ids" exact="'$' + $ship_inList.idcode" />
-						<debug_text text="'keep: ' + $ship_inList.idcode + ': ' + global.$kAAIT_Data.$settingsByShipId.{'$' + $ship_inList.idcode}" />
+						<debug_text text="'keep: ' + $ship_inList.idcode + ': ' + global.$kAAIT_Data.$byShipId.{'$' + $ship_inList.idcode}" />
 					</do_else>
 				</do_for_each>
-				<do_for_each name="$id_inList" valuename="$value_inList" in="global.$kAAIT_Data.$settingsByShipId" reverse="true">
+				<do_for_each name="$id_inList" valuename="$value_inList" in="global.$kAAIT_Data.$byShipId" reverse="true">
 					<do_if value="not $ids.indexof.{$id_inList}">
-						<remove_value name="global.$kAAIT_Data.$settingsByShipId.{$id_inList}.$kAAIT_Data" />
-						<do_if value="not global.$kAAIT_Data.$settingsByShipId.{$id_inList}.keys.count">
-							<remove_value name="global.$kAAIT_Data.$settingsByShipId.{$id_inList}" />
-							<debug_text text="'remove_value: ' + $id_inList + ': ' + global.$kAAIT_Data.$settingsByShipId.{$id_inList}" />
+						<remove_value name="global.$kAAIT_Data.$byShipId.{$id_inList}.$kAAIT_Data" />
+						<do_if value="not global.$kAAIT_Data.$byShipId.{$id_inList}.keys.count">
+							<remove_value name="global.$kAAIT_Data.$byShipId.{$id_inList}" />
+							<debug_text text="'remove_value: ' + $id_inList + ': ' + global.$kAAIT_Data.$byShipId.{$id_inList}" />
 						</do_if>
 						<do_else>
-							<debug_text text="'keep: ' + $id_inList + ': ' + global.$kAAIT_Data.$settingsByShipId.{$id_inList}" />
+							<debug_text text="'keep: ' + $id_inList + ': ' + global.$kAAIT_Data.$byShipId.{$id_inList}" />
 						</do_else>
 					</do_if>
 				</do_for_each>
@@ -180,20 +208,20 @@
 				<cue name="ShipStoppedCombat" instantiate="true" namespace="this">
 					<conditions>
 						<check_any>
-							<event_object_destroyed group="kAAIT_SettingsByShip.$ships" />
-							<event_object_docked group="kAAIT_SettingsByShip.$ships" />
-							<event_object_undocked group="kAAIT_SettingsByShip.$ships" />
-							<event_object_changed_sector group="kAAIT_SettingsByShip.$ships" />
+							<event_object_destroyed group="global.$kAAIT_Data.$ships" />
+							<event_object_docked group="global.$kAAIT_Data.$ships" />
+							<event_object_undocked group="global.$kAAIT_Data.$ships" />
+							<event_object_changed_sector group="global.$kAAIT_Data.$ships" />
 						</check_any>
 					</conditions>
 					<actions>
 						<debug_text text="'event.object: ' + @event.object.idcode + ' event.name: ' + event.name" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.{$' + event.object.idcode + '} (pre): ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-						<do_if value="@global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}">
-							<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" />
+						<debug_text text="'global.$kAAIT_Data.$byShipId.{$' + event.object.idcode + '} (pre): ' + @global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<do_if value="@global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}">
+							<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}" />
 						</do_if>
-						<remove_from_group group="kAAIT_SettingsByShip.$ships" object="event.object" />
-						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.{$' + event.object.idcode + '} (post): ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + event.object.idcode}" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<remove_from_group group="global.$kAAIT_Data.$ships" object="event.object" />
+						<debug_text text="'global.$kAAIT_Data.$byShipId.{$' + event.object.idcode + '} (post): ' + @global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					</actions>
 				</cue>
 				<cue name="kAAIT_SettingsByShip_CleanUpOnReload">
@@ -201,34 +229,48 @@
 						<check_any>
 							<event_cue_signalled />
 							<event_game_loaded />
+							<event_ui_triggered screen="'OptionsMenu'" />
 						</check_any>
 					</conditions>
 					<actions>
-						<debug_text text="'kAAIT_SettingsByShip.$ships.count (pre): ' + kAAIT_SettingsByShip.$ships.count" />
-						<do_for_each name="$ship_inList" in="kAAIT_SettingsByShip.$ships" reverse="true">
-							<do_if value="not @global.$kAAIT_Data.$settingsByShipId.{'$' + $ship_inList.idcode}">
-								<debug_text text="$ship_inList.idcode + ' has no data. removing.'" />
-								<remove_from_group group="kAAIT_SettingsByShip.$ships" object="$ship_inList" />
+						<debug_text text="'global.$kAAIT_Data.$ships.count (pre): ' + global.$kAAIT_Data.$ships.count" chance="@global.$kAAIT_Data.$debugChance" />
+						<do_for_each name="$ship_inList" in="global.$kAAIT_Data.$ships" reverse="true">
+							<do_if value="not @global.$kAAIT_Data.$byShipId.{'$' + $ship_inList.idcode}">
+								<debug_text text="$ship_inList.idcode + ' has no data. removing.'" chance="@global.$kAAIT_Data.$debugChance" />
+								<remove_from_group group="global.$kAAIT_Data.$ships" object="$ship_inList" />
 							</do_if>
 						</do_for_each>
-						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.keys.count (pre): ' + global.$kAAIT_Data.$settingsByShipId.keys.count" />
-						<do_for_each name="$idCode_inList" in="global.$kAAIT_Data.$settingsByShipId.keys.list" reverse="true">
-							<do_if value="not @global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}.$kAAIT_Data">
-								<debug_text text="$idCode_inList + ' has no attack data. removing.'" />
-								<do_if value="@global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}.$ship.exists">
-									<remove_from_group group="kAAIT_SettingsByShip.$ships" object="global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}.$ship" />
-									<debug_text text="$idCode_inList + ' removing ship from list.'" />
-								</do_if>
-								<remove_value name="global.$kAAIT_Data.$settingsByShipId.{$idCode_inList}" />
-							</do_if>
-						</do_for_each>
-						<debug_text text="'kAAIT_SettingsByShip.$ships.count (post): ' + kAAIT_SettingsByShip.$ships.count" />
-						<run_actions ref="DebugData">
-							<param name="Data" value="kAAIT_SettingsByShip.$ships" />
+						<debug_text text="'global.$kAAIT_Data.$ships.count (post): ' + global.$kAAIT_Data.$ships.count" chance="@global.$kAAIT_Data.$debugChance" />
+						<run_actions ref="DebugData" chance="@global.$kAAIT_Data.$debugChance">
+							<param name="Data" value="global.$kAAIT_Data.$ships" />
+							<param name="Prefix" value="'kAAIT_SettingsByShip_CleanUpOnReload global.$kAAIT_Data.$ships'" />
 						</run_actions>
-						<debug_text text="'global.$kAAIT_Data.$settingsByShipId.keys.count (post): ' + global.$kAAIT_Data.$settingsByShipId.keys.count" />
-						<run_actions ref="DebugData">
-							<param name="Data" value="global.$kAAIT_Data.$settingsByShipId" />
+						<debug_text text="'global.$kAAIT_Data.$byShipId.keys.count (pre): ' + global.$kAAIT_Data.$byShipId.keys.count" chance="@global.$kAAIT_Data.$debugChance" />
+						<do_for_each name="$idCode_inList" valuename="$data_inList" in="global.$kAAIT_Data.$byShipId" reverse="true">
+							<debug_text text="$idCode_inList + ': ' + $data_inList" chance="@global.$kAAIT_Data.$debugChance" />
+							<do_if value="
+								(not @$data_inList.$kAAIT_data) or
+								(not @$data_inList.$kAAIT_data.$defensibleTarget.exists) or
+								(not @$data_inList.$kAAIT_data.$bigEnemies.count) or
+								(not @$data_inList.$kAAIT_data.$bigEnemies.{1}.exists) or
+								(
+									@$data_inList.$kAAIT_data.$ship.exists and
+									@$data_inList.$kAAIT_data.$orderLocation_space.exists and
+									@$data_inList.$kAAIT_data.$ship.sector != @$data_inList.$kAAIT_data.$orderLocation_space
+								)
+							">
+								<debug_text text="$idCode_inList + ' has no attack data. removing.'" chance="@global.$kAAIT_Data.$debugChance" />
+								<do_if value="@$data_inList.$ship.exists">
+									<remove_from_group group="global.$kAAIT_Data.$ships" object="$data_inList.$ship" />
+									<debug_text text="$idCode_inList + ' removing ship from list.'" chance="@global.$kAAIT_Data.$debugChance" />
+								</do_if>
+								<remove_value name="global.$kAAIT_Data.$byShipId.{$idCode_inList}" />
+							</do_if>
+						</do_for_each>
+						<debug_text text="'global.$kAAIT_Data.$byShipId.keys.count (post): ' + global.$kAAIT_Data.$byShipId.keys.count" chance="@global.$kAAIT_Data.$debugChance" />
+						<run_actions ref="DebugData" chance="@global.$kAAIT_Data.$debugChance">
+							<param name="Data" value="global.$kAAIT_Data.$byShipId" />
+							<param name="Prefix" value="'kAAIT_SettingsByShip_CleanUpOnReload global.$kAAIT_Data.$byShipId'" />
 						</run_actions>
 						<reset_cue cue="this" />
 					</actions>
@@ -301,26 +343,26 @@
 							</do_if>
 						</do_for_each>
 						<do_if value="
-							(not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}?) or
-							(not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user?)
+							(not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?) or
+							(not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user?)
 						">
 							<set_value name="$isAllow_Avoid" exact="true" />
 							<set_value name="$isDisallow_Avoid" exact="true" />
 						</do_if>
-						<do_elseif value="@global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user">
+						<do_elseif value="@global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user">
 							<set_value name="$isDisallow_Avoid" exact="true" />
 						</do_elseif>
 						<do_else>
 							<set_value name="$isAllow_Avoid" exact="true" />
 						</do_else>
 						<do_if value="
-							(not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}?) or
-							(not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user?)
+							(not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?) or
+							(not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user?)
 						">
 							<set_value name="$isAllow_stepForwardWithdraw" exact="true" />
 							<set_value name="$isDisallow_stepForwardWithdraw" exact="true" />
 						</do_if>
-						<do_elseif value="@global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user">
+						<do_elseif value="@global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user">
 							<set_value name="$isDisallow_stepForwardWithdraw" exact="true" />
 						</do_elseif>
 						<do_else>
@@ -412,7 +454,7 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Data.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" exact="true" />
+						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" exact="true" />
 						<do_for_each name="$order" in="$ship.orders">
 							<do_if value="$order.$allowothertargets?">
 								<!-- <set_value name="$order.$allowothertargets" exact="true" /> -->
@@ -440,7 +482,7 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Data.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<remove_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" />
+						<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" />
 						<do_for_each name="$order" in="$ship.orders">
 							<do_if value="$order.$allowothertargets?">
 								<!-- <set_value name="$order.$allowothertargets" exact="false" /> -->
@@ -476,11 +518,11 @@
 						<do_if value="$ship.defaultorder.$kAAITParam_isAvoidHighRisk?">
 							<edit_order_param order="$ship.defaultorder" param="'kAAITParam_isAvoidHighRisk'" value="true" />
 						</do_if>
-						<do_if value="not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}?">
-							<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}" exact="table[]" />
+						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
+							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
 						</do_if>
-						<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="true" />
-						<add_to_group groupname="kAAIT_SettingsByShip.$ships" object="$ship" />
+						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="true" />
+						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -515,11 +557,11 @@
 								<cancel_order order="$order" />
 							</do_if>
 						</do_for_each>
-						<do_if value="not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}?">
-							<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}" exact="table[]" />
+						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
+							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
 						</do_if>
-						<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="false" />
-						<add_to_group groupname="kAAIT_SettingsByShip.$ships" object="$ship" />
+						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="false" />
+						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -549,11 +591,11 @@
 						<do_if value="$ship.defaultorder.$kAAITParam_isStepForwardWithdraw?">
 							<edit_order_param order="$ship.defaultorder" param="'kAAITParam_isStepForwardWithdraw'" value="true" />
 						</do_if>
-						<do_if value="not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}?">
-							<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}" exact="table[]" />
+						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
+							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
 						</do_if>
-						<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="true" />
-						<add_to_group groupname="kAAIT_SettingsByShip.$ships" object="$ship" />
+						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="true" />
+						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -588,11 +630,11 @@
 								<cancel_order order="$order" />
 							</do_if>
 						</do_for_each>
-						<do_if value="not global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}?">
-							<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}" exact="table[]" />
+						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
+							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
 						</do_if>
-						<set_value name="global.$kAAIT_Data.$settingsByShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="false" />
-						<add_to_group groupname="kAAIT_SettingsByShip.$ships" object="$ship" />
+						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="false" />
+						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -1117,18 +1159,18 @@
 					<debug_text text="'$dps: ' + player.target.dps.all" />
 				</do_elseif>
 				<do_elseif value="event.param3.$text == 'debug aait attackers'">
-					<!-- <debug_text text="@global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_attackers" /> -->
+					<!-- <debug_text text="@global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_attackers" /> -->
 					<run_actions ref="DebugData">
 						<param name="Data" value="@global.$kAAIT_Data.$ships" />
 						<param name="Prefix" value="'global.$kAAIT_Data.$ships'" />
 					</run_actions>
 					<run_actions ref="DebugData">
-						<param name="Data" value="@global.$kAAIT_Data.$settingsByShipId" />
-						<param name="Prefix" value="'global.$kAAIT_Data.$settingsByShipId'" />
+						<param name="Data" value="@global.$kAAIT_Data.$byShipId" />
+						<param name="Prefix" value="'global.$kAAIT_Data.$byShipId'" />
 					</run_actions>
 				</do_elseif>
 				<do_elseif value="event.param3.$text == 'debug aait target'">
-					<debug_text text="@global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_target + ' ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_target.knownname + ' ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_target.idcode + ' ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_target.defensible + ' ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_target.defensible.knownname + ' ' + @global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_target.defensible.idcode" />
+					<debug_text text="@global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_target + ' ' + @global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_target.knownname + ' ' + @global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_target.idcode + ' ' + @global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_target.defensible + ' ' + @global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_target.defensible.knownname + ' ' + @global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_target.defensible.idcode" />
 				</do_elseif>
 				<reset_cue cue="this" />
 			</actions>
@@ -1284,7 +1326,7 @@
 				<debug_text text="'maxcombatrange.missiles.all: ' + $ship.maxcombatrange.missiles.all" />
 				<debug_text text="'maxcombatrange.turrets: ' + $ship.maxcombatrange.turrets" />
 				<run_actions ref="DebugData">
-					<param name="Data" value="@global.$kAAIT_Data.$settingsByShipId.{'$' + @$ship.idcode}" />
+					<param name="Data" value="@global.$kAAIT_Data.$byShipId.{'$' + @$ship.idcode}" />
 				</run_actions>
 				<reset_cue cue="this" />
 			</actions>
@@ -1386,7 +1428,7 @@
 				<debug_text text="@event.param3" />
 				<do_if value="event.param3.$text == 'debug aait data'">
 					<debug_text text="player.target + ': ' + player.target.knownname + ', ' + player.target.idcode" />
-					<do_for_each name="$prop" valuename="$value" in="global.$kAAIT_Data.$settingsByShipId.{'$' + player.target.idcode}.$kAAIT_data">
+					<do_for_each name="$prop" valuename="$value" in="global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$kAAIT_data">
 						<debug_text text="$prop + ': ' + $value" />
 					</do_for_each>
 				</do_if>
@@ -1446,8 +1488,8 @@
 					</do_if>
 				</do_elseif>
 				<do_elseif value="event.param3.$text == 'debug aait ships'">
-					<debug_text text="'kAAIT_SettingsByShip.$ships.count: ' + kAAIT_SettingsByShip.$ships.count" />
-					<do_for_each name="$ship" in="kAAIT_SettingsByShip.$ships">
+					<debug_text text="'global.$kAAIT_Data.$ships.count: ' + global.$kAAIT_Data.$ships.count" />
+					<do_for_each name="$ship" in="global.$kAAIT_Data.$ships">
 						<debug_text text="'isplayerowned: ' + $ship.isplayerowned + ' $ship: ' + $ship.knownname + ' ' + $ship.idcode" />
 					</do_for_each>
 				</do_elseif>
