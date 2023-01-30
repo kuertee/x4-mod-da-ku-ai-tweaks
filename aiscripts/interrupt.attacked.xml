@@ -15,7 +15,7 @@
         <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
         <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" comment="not performing a kAAIT order" />
         <check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isInited" comment="not inited by kAAIT" />
-        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler flee event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
     </check_all>
   </replace>
 <!-- add. purpose: block event.
@@ -35,9 +35,16 @@
         <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
         <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" comment="not performing a kAAIT order" />
         <check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isInited" comment="not inited by kAAIT" />
-        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler auto event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
     </check_all>
 	</replace>
+<!-- purpose: debug out response.
+  <handler name="AttackHandler">
+    <conditions>
+-->
+  <add sel="//handler[@name=&quot;AttackHandler&quot;]//conditions">
+    <debug_text text="@this.assignedcontrolled.idcode + ' $fleerespond: ' + @$fleerespond + ' $attackrespond: ' + @$attackrespond" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+  </add>
 <!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
   <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
 -->
@@ -59,22 +66,6 @@
   </add>
   <add sel="//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
   <!-- DeadAir Diffs -->
-  <!-- kuertee note: the new <check_all comment="flee"> is:
-    <check_all comment="flee">
-      <check_value value="not event.object.isunit"/>
-      <check_any>
-      	<check_all> start REPLACE <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
-		      <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
-          ... my stuff ...
-	      </check_all> end REPLACE <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
-        <check_all>
-          <check_all> start REPLACE <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
-            <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
-            ... my stuff ...
-          </check_all> end REPLACE <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
-	        <check_any>
-	        	... egosoft stuff continues
-	-->
   <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[1]">
     <check_value value="event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine"/>
   </add>
