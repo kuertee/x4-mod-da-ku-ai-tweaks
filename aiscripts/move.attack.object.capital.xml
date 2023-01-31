@@ -170,10 +170,21 @@
 		<label name="kAAIT_label_move_to_engage_position" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<set_value name="$kAAIT_engagePosDist" exact="$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_engagePosition_mult" />
-		<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $kAAIT_engagePosDist">
-			<create_order object="this.assignedcontrolled" id="'kAAIT_MoveEngagePosition'" immediate="true">
+		<do_if value="
+			this.assignedcontrolled.bboxdistanceto.{$target} gt $kAAIT_engagePosDist and
+			(
+				(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage.isoperational) or
+				(
+					$target != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage and
+					@$target.defensible != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage
+				)
+			)
+		">
+			<!-- <create_order object="this.assignedcontrolled" id="'kAAIT_MoveEngagePosition'" immediate="true">
 				<param name="target" value="$target"/>
-			</create_order>
+			</create_order> -->
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$target" />
+			<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
 			<wait min="5s" max="10s" />
 		</do_if>
 		<resume label="fight" />

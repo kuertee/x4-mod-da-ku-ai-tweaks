@@ -33,7 +33,10 @@
 		<handler comment="target attacked">
 			<conditions>
 				<event_object_attacked object="$target" />
-				<check_value value="this.sector == $target.sector" />
+				<check_any>
+					<check_value value="not $target.isclass.station" />
+					<check_value value="this.assignedcontrolled.cansee.{$target}" />
+				</check_any>
 				<check_value value="event.param.owner == this.owner" />
 				<check_value value="event.param.isclass.ship" />
 				<check_value value="not event.param.isunit" />
@@ -42,6 +45,7 @@
 				<check_value value="not @$isReposition" />
 			</conditions>
 			<actions>
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage" exact="$target" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<abort_called_scripts resume="finish" />
 			</actions>
@@ -63,7 +67,7 @@
 
 			<label name="start" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="$target" />
 
 			<label name="move_to_target" />
 			<do_if value="this.sector != $target.sector">
