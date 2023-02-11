@@ -15,7 +15,7 @@
         <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
         <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" comment="not performing a kAAIT order" />
         <check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isInited" comment="not inited by kAAIT" />
-        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler flee event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
     </check_all>
   </replace>
 <!-- add. purpose: block event.
@@ -35,9 +35,16 @@
         <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
         <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" comment="not performing a kAAIT order" />
         <check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isInited" comment="not inited by kAAIT" />
-        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler auto event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
     </check_all>
 	</replace>
+<!-- purpose: debug out response.
+  <handler name="AttackHandler">
+    <conditions>
+-->
+  <add sel="//handler[@name=&quot;AttackHandler&quot;]//conditions">
+    <debug_text text="@this.assignedcontrolled.idcode + ' $fleerespond: ' + @$fleerespond + ' $attackrespond: ' + @$attackrespond" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+  </add>
 <!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
   <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
 -->
@@ -58,4 +65,67 @@
     </do_if>
   </add>
   <add sel="//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
+  <!-- DeadAir Diffs -->
+  <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[1]">
+    <check_value value="event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine"/>
+  </add>
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]/check_value[@value='((this.skill.morale * 6) + ((event.object.primarypurpose == purpose.fight) * 20) + (event.object.shieldpercentage * 2)) lt 120']/@value">(event.object.primarypurpose == purpose.fight) and (event.object.shieldpercentage lt (10 + 10 * event.object.isclass.[class.ship_l, class.ship_xl] + 20 * event.object.isclass.[class.ship_m] + 30 * event.object.isclass.[class.ship_s]))</replace>
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]/check_value[@value='((event.object.combinedskill)hp - ((event.object.shield + event.object.hull) / [event.param.dps.all, 1hp].max)) gt 70']/@value">(event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine) and (event.object.shieldpercentage lt 80)</replace>
+  <add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]">
+    <check_value value="(event.object.primarypurpose != purpose.fight and event.object.primarypurpose != purpose.trade and event.object.primarypurpose != purpose.mine) and (event.object.shieldpercentage lt 60)"/>
+  </add>
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='fight']/check_any/check_all/check_any/check_value[1]/@value">(@event.object.order.id != 'Attack') and (((this.trueowner == faction.xenon) or (this.trueowner == faction.khaak)) and (not (event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine)))</replace>
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='fight']/check_any/check_all/check_any/check_value[@value='((event.param.hull + event.param.shield) / [event.object.dps.all, 1hp].max) lt ((event.object.hull + event.object.shield) / [event.param.dps.all, 1hp].max)']/@value">((event.param.hull + event.param.shield) / [event.object.dps.all, 1hp].max) lt ((event.object.hull + event.object.shield) / [event.param.dps.all, 1hp].max) and (not (event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine))</replace>
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='call for help']/check_value[@value='event.object.zone.policefaction and (event.object.relationto.{event.object.zone.policefaction} ge 0)']/@value">event.object.zone.policefaction and (event.object.relationto.{event.object.zone.policefaction} ge [0,event.param.relationto.{event.object.zone.policefaction}].max)</replace>
+  <replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/actions/do_if[@value='event.object.hull']/do_elseif[@value='@$fleerespond']/do_else/do_any">
+    <do_if value="true">
+      <do_if value="event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine">
+        <set_value name="$stations" exact="[]"/>
+        <find_station name="$stations" functional="true" space="event.object.sector" sortbydistanceto="event.object">
+          <match_relation_to object="event.object" relation="dock" comparison="ge"/>
+          <match_relation_to object="event.param" relation="enemy" comparison="le"/>
+        </find_station>
+        <do_if value="@$stations.count">
+          <do_all exact="$stations.count" counter="$a">
+            <do_if value="(event.object.distanceto.{$stations.{$a}} le event.param.distanceto.{$stations.{$a}}) or (event.object.distanceto.{$stations.{$a}} lt event.object.maxradarrange)">
+              <break/>
+            </do_if>
+            <do_elseif value="$a == $stations.count">
+              <clear_list list="$stations"/>
+            </do_elseif>
+          </do_all>
+          <remove_value name="$a"/>
+        </do_if>
+        <do_if value="not @$stations.count">
+          <find_station name="$stations" functional="true" space="event.object.sector" sortbydistanceto="event.object">
+            <match_relation_to object="event.object" relation="dock" comparison="ge"/>
+          </find_station>
+          <do_if value="@$stations.count">
+            <do_all exact="$stations.count" counter="$a">
+              <do_if value="(event.object.distanceto.{$stations.{$a}} le event.param.distanceto.{$stations.{$a}}) or (event.object.distanceto.{$stations.{$a}} lt event.object.maxradarrange)">
+                <break/>
+              </do_if>
+              <do_elseif value="$a == $stations.count">
+                <clear_list list="$stations"/>
+              </do_elseif>
+            </do_all>
+            <remove_value name="$a"/>
+          </do_if>
+        </do_if>
+        <do_if value="@$stations.count">
+          <set_value name="$flee" exact="'dock'"/>
+        </do_if>
+        <do_else>
+          <set_value name="$flee" exact="'boost'"/>
+        </do_else>
+        <remove_value name="$stations"/>
+      </do_if>
+      <do_else>
+        <set_value name="$flee" exact="'boost'" weight="20"/>
+        <set_value name="$flee" exact="'maneuver'" weight="20"/>
+        <set_value name="$flee" exact="'highway'" weight="30"/>
+        <set_value name="$flee" exact="'dock'" weight="30"/>
+      </do_else>
+    </do_if>
+  </replace>
 </diff>

@@ -432,6 +432,7 @@
 								<event_object_attacked object="$primarytarget" />
 								<event_object_attacked_object object="$primarytarget" />
 							</check_any>
+							<check_value value="this.assignedcontrolled.bboxdistanceto.{$primarytarget} le this.assignedcontrolled.maxradarrange * 0.5" />
 							<check_any>
 								<check_all>
 									<check_value value="event.param == this.assignedcontrolled" />
@@ -696,6 +697,9 @@
 -->
 	<replace sel="//run_script[@name=&quot;'order.fight.attack.object'&quot;]">
 		<label name="kAAITLabel_just_fight" />
+		<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}">
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}" exact="table[]" />
+		</do_if>
 		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel" exact="[]" />
 		<do_for_each name="$ordergroup" in="$ORDERS" reverse="true">
 			<do_for_each valuename="$kAAIT_orders" in="$ORDERS.{$ordergroup}" reverse="true">
@@ -707,7 +711,7 @@
 				</do_for_each>
 			</do_for_each>
 		</do_for_each>
-		<create_order object="this.assignedcontrolled" id="'Attack'">
+		<create_order object="this.assignedcontrolled" id="'Attack'" immediate="true">
 	        <param name="primarytarget" value="$primarytarget"/>
 			<param name="pursuedistance" value="this.assignedcontrolled.maxradarrange" />
 			<param name="pursuetargets" value="true" />

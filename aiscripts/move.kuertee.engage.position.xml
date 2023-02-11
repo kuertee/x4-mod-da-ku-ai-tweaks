@@ -33,7 +33,10 @@
 		<handler comment="target attacked">
 			<conditions>
 				<event_object_attacked object="$target" />
-				<check_value value="this.sector == $target.sector" />
+				<check_any>
+					<check_value value="not $target.isclass.station" />
+					<check_value value="this.assignedcontrolled.cansee.{$target}" />
+				</check_any>
 				<check_value value="event.param.owner == this.owner" />
 				<check_value value="event.param.isclass.ship" />
 				<check_value value="not event.param.isunit" />
@@ -42,6 +45,10 @@
 				<check_value value="not @$isReposition" />
 			</conditions>
 			<actions>
+				<do_if value="not @global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}">
+					<include_interrupt_actions ref="kAAIT_Init" />
+				</do_if>
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage" exact="$target" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<abort_called_scripts resume="finish" />
 			</actions>
@@ -57,13 +64,14 @@
 	<attention min="unknown">
 		<actions>
 			<include_interrupt_actions ref="kAAIT_Init" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 
 			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just restart." />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 
 			<label name="start" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="$target" />
 
 			<label name="move_to_target" />
 			<do_if value="this.sector != $target.sector">
@@ -104,15 +112,16 @@
 				<set_value name="$module_yaw_deg" exact="$module_rotFromDefensible.yaw * 180 / pi" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $module_yaw_deg: ' + $module_yaw_deg" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<!-- <set_value name="$yaw_deg" exact="$module_yaw_deg + [-90, -75, -60, -45, -30, -15, 0, 15, 30, 45, 60, 75, 90].random + $random_jitter" /> -->
-				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count">
+				<!-- <do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count">
 					<set_value name="$angle_max" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count * 5" />
 					<set_value name="$angle_this" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.indexof.{this.assignedcontrolled}" />
 					<set_value name="$random_jitter" exact="$angle_max * 0.5 - $angle_this * 5" />
 				</do_if>
-				<do_else>
+				<do_else> -->
 					<set_value name="$random_jitter" min="-5" max="5" />
-				</do_else>
+				<!-- </do_else> -->
 				<set_value name="$yaw_deg" exact="$ship_yaw_deg + ($module_yaw_deg - $ship_yaw_deg) * 0.5 + $random_jitter" />
+				<!-- <set_value name="$yaw_deg" exact="$module_yaw_deg + $random_jitter" /> -->
 				<debug_text text="@this.assignedcontrolled.idcode + ' $yaw_deg: ' + $yaw_deg" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_test_target_isInTheWay" exact="$target.defensible" />
 				<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$target" />
@@ -138,6 +147,9 @@
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
 			<set_value name="$pitch" exact="$pitch_deg * pi / 180" />
+			<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_max?">
+				<include_interrupt_actions ref="kAAIT_GetCombatRange" />
+			</do_if>
 			<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_engagePosition_mult?">
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 			</do_if>

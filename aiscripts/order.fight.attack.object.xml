@@ -246,7 +246,7 @@
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
 			<debug_text text="@this.assignedcontrolled.idcode + ' target out of range. move to engage if station. otherwise use move generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="
-				(not @$kAAITParam_isFromTactical) and
+				this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 1.75 and
 				(
 					$primarytarget.isclass.station or
 					(
@@ -265,6 +265,13 @@
 							(not this.isplayerowned) and
 							global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
 						)
+					)
+				) and
+				(
+					(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage.isoperational) or
+					(
+						$primarytarget != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage and
+						@$primarytarget.defensible != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage
 					)
 				)
 			">
@@ -322,4 +329,6 @@
 			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</do_if>
 	</add>
+	<!-- DeadAir Diffs -->
+	<replace sel="/aiscript/attention[@min='unknown']/actions/wait[@exact='[((100 - this.assignedcontrolled.combinedskill) / 400)s, 1ms].max']/@exact">[1ms, 2ms].random</replace>
 </diff>
