@@ -44,43 +44,48 @@
 			<actions name="kAAIT_GetIsMoveToEngage">
 				<set_value name="$kAAIT_result_isMovetoEngage" exact="false" />
 				<do_if value="
-					this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+					(
+						this.assignedcontrolled.type != shiptype.carrier or
+						(
+							(
+								this.isplayerowned and
+								global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
+							) or
+							(
+								(not this.isplayerowned) and
+								global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
+							)
+						)
+					) and
 					(@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetHighRisk or @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetPotentialHighRisk) and
 					(not @$primarytarget.travel.active) and
 					(not @$target.travel.active)
 				">
 					<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-					<do_if value="
+					<set_value name="$kAAIT_engagePosDist" exact="
+						[
+							this.assignedcontrolled.maxradarrange * 0.5,
+							$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_engagePosition_mult
+						].min" />
+					<do_if value="$target.isrealclass.module and $target != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget">
+						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
+					</do_if>
+					<do_elseif value="
 						global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze and
 						(
 							(
 								global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget.isclass.station and
-								$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange * 0.5
+								$kAAIT_distToTarget gt $kAAIT_engagePosDist + 10km
 							) or
 							(
 								global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget.isclass.ship and
 								(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget.isclass.ship.travel.active) and
-								$kAAIT_distToTarget gt this.assignedcontrolled.maxradarrange
+								$kAAIT_distToTarget gt $kAAIT_engagePosDist + 10km
 							)
 						)
 					">
 						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-						<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget_stoppedKamikaze: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-						<do_if value="
-							@$primarytarget.isclass.module or
-							@$target.isclass.module
-						">
-							<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget?">
-								<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isFirstModuleTarget" exact="true" />
-							</do_if>
-							<do_else>
-								<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isFirstModuleTarget" exact="false" />
-							</do_else>
-							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" exact="if @$primarytarget.isclass.module then $primarytarget else $target" />
-							<debug_text text="@this.assignedcontrolled.idcode + ' FIRST $moduleTarget: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-						</do_if>
-					</do_if>
+					</do_elseif>
 				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $kAAIT_result_isMovetoEngage: ' + $kAAIT_result_isMovetoEngage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</actions>
@@ -170,41 +175,22 @@
 		<label name="kAAIT_label_move_to_engage_position" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<set_value name="$kAAIT_engagePosDist" exact="$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_engagePosition_mult" />
-		<do_if value="
-			this.assignedcontrolled.bboxdistanceto.{$target} gt $kAAIT_engagePosDist or
-			$target != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_skipMoveToEngage">
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$target" />
-			<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
-			<wait min="5s" max="10s" />
-		</do_if>
+		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$target" />
+		<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
+		<wait min="5s" max="10s" />
 		<resume label="fight" />
 
 		<label name="kAAIT_label_step_forward" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_step_forward'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<set_value name="$isTargetBlocked" exact="false" />
 		<do_if value="
-			($target.isclass.station or $target.defensible.isclass.station) and
-			(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isFirstModuleTarget)
-		">
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isFirstModuleTarget" exact="true" />
+			$target.isrealclass.module and
+			$target != global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget
+		" comment="can move to engage instead of step forward">
 			<include_interrupt_actions ref="kAAIT_GetIsTargetBlocked" />
 		</do_if>
 		<do_if value="@$isTargetBlocked">
-			<do_if value="
-				this.assignedcontrolled.type != shiptype.carrier or
-				(
-					(
-						this.isplayerowned and
-						global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
-					) or
-					(
-						(not this.isplayerowned) and
-						global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
-					)
-				)
-			">
-				<resume label="kAAIT_label_move_to_engage_position" />
-			</do_if>
+			<resume label="kAAIT_label_move_to_engage_position" />
 		</do_if>
 		<do_else>
 			<create_order object="this.assignedcontrolled" id="'kAAIT_MoveStepForward'" immediate="true">
@@ -216,6 +202,7 @@
 
 		<label name="kAAIT_label_avoid" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$target" />
 		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
 		<resume label="fight" />
@@ -226,108 +213,17 @@
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
-			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetHighRisk">
-				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed">
-					<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} le 10km">
-						<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-						<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-						<do_if value="$kAAIT_result_isAvoid">
-							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-							<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
-								<!-- do not withdraw here if against ship. allow kAAIT_Handler_AvoidWithdrawOrJustFight to order the withdrawal --> 
-								<do_if value="$kAAIT_test_target_isAvoid.isclass.station">
-									<resume label="kAAITLabel_withdraw" />
-								</do_if>
-							</do_if>
-							<do_else>
-								<resume label="kAAIT_label_avoid" />
-							</do_else>
-						</do_if>
-					</do_if>
-				</do_if>
-			</do_if>
-			<set_value name="$isTargetBlocked" exact="false" />
-			<do_if value="
-				($target.isclass.station or $target.defensible.isclass.station) and
-				(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isFirstModuleTarget)
-			">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isFirstModuleTarget" exact="true" />
-				<include_interrupt_actions ref="kAAIT_GetIsTargetBlocked" />
-			</do_if>
-			<do_if value="$isTargetBlocked">
-				<do_if value="
-					this.assignedcontrolled.type != shiptype.carrier or
-					(
-						(
-							this.isplayerowned and
-							global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
-						) or
-						(
-							(not this.isplayerowned) and
-							global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
-						)
-					)
-				">
-					<resume label="kAAIT_label_move_to_engage_position" />
-				</do_if>
+			<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+			<do_if value="$kAAIT_result_isAvoid">
+				<resume label="kAAIT_label_avoid" />
 			</do_if>
 		</do_if>
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 			<do_if value="$kAAIT_result_isMovetoEngage">
-				<do_if value="
-					this.assignedcontrolled.type != shiptype.carrier or
-					(
-						(
-							this.isplayerowned and
-							global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
-						) or
-						(
-							(not this.isplayerowned) and
-							global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
-						)
-					)
-				">
-					<resume label="kAAIT_label_move_to_engage_position" />
-				</do_if>
+				<resume label="kAAIT_label_move_to_engage_position" />
 			</do_if>
-			<do_elseif value="$target.isclass.module">
-				<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget?">
-					<do_if value="$target != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget"
-						comment="only move to engage position AGAIN if there was a previous module target">
-						<debug_text text="@this.assignedcontrolled.idcode + ' NEW $moduleTarget: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" exact="$target" />
-						<do_if value="
-							this.assignedcontrolled.type != shiptype.carrier or
-							(
-								(
-									this.isplayerowned and
-									global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
-								) or
-								(
-									(not this.isplayerowned) and
-									global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
-								)
-							)
-						">
-							<resume label="kAAIT_label_move_to_engage_position" />
-						</do_if>
-					</do_if>
-					<do_else>
-						<debug_text text="@this.assignedcontrolled.idcode + ' SAME $moduleTarget: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-					</do_else>
-				</do_if>
-				<do_else>
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" exact="$target" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' FIRST $moduleTarget: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				</do_else>
-			</do_elseif>
-			<do_else>
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-				<do_if value="$target.isclass.module">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" exact="$target" />
-				</do_if>
-			</do_else>
 		</do_if>
 
 		<label name="kAAITLabel_just_fight" />

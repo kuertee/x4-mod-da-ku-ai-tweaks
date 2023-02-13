@@ -90,7 +90,11 @@
 					<create_orientation name="$rotFromBigEnemy" orientation="look_at" refposition="$posShip" comment="get vector from enemy because that's the direction of the withdraw">
 						<position value="$posBigEnemy" />
 					</create_orientation>
-					<set_value name="$yaw_fromTargetToSelf" exact="$yaw_fromTargetToSelf + ($rotFromBigEnemy.yaw * 180 / pi - $yaw_fromTargetToSelf) * 0.5" />
+					<!-- <set_value name="$yaw_fromTargetToSelf" exact="$yaw_fromTargetToSelf + ($rotFromBigEnemy.yaw * 180 / pi - $yaw_fromTargetToSelf) * 0.5" /> -->
+					<set_value name="$kAAIT_yaw_from" exact="$yaw_fromTargetToSelf" />
+					<set_value name="$kAAIT_yaw_to" exact="$rotFromBigEnemy.yaw * 180 / pi" />
+					<include_interrupt_actions ref="kAAIT_GetMidYaw" />
+					<set_value name="$yaw_fromTargetToSelf" exact="$kAAIT_yaw_mid" />
 				</do_for_each>
 			</do_if>
 			<set_value name="$yaw_toWithdraw_deg" exact="null" />
@@ -365,8 +369,10 @@
 					<resume label="move" />
 				</do_else>
 			</do_elseif>
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" />
+			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data?">
+				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget_stoppedKamikaze" />
+				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$moduleTarget" />
+			</do_if>
 
 			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just finish." />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />

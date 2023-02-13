@@ -150,7 +150,7 @@
 				<set_value name="$yaw_deg" exact="$kAAIT_result_yawDeg" />
 				<set_value name="$pitch_deg" exact="$kAAIT_result_pitchDeg" />
 			</do_if>
-			<do_elseif value="$target.isclass.module">
+			<do_elseif value="$target.isrealclass.module">
 				<debug_text text="@this.assignedcontrolled.idcode + ' MOVING AROUND STATION TO TARGET MODULE'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 				<create_position name="$posStation" space="$orderLocation_space" object="$target.defensible" />
 				<create_orientation name="$module_rotFromDefensible" orientation="look_at" refposition="$posTarget">
@@ -158,7 +158,11 @@
 				</create_orientation>
 				<set_value name="$pitch_deg" exact="$module_rotFromDefensible.pitch * 180 / pi" />
 				<set_value name="$module_yaw_deg" exact="$module_rotFromDefensible.yaw * 180 / pi" />
-				<set_value name="$yaw_deg" exact="$ship_yaw_deg + ($module_yaw_deg - $ship_yaw_deg) * 0.5" />
+				<!-- <set_value name="$yaw_deg" exact="$ship_yaw_deg + ($module_yaw_deg - $ship_yaw_deg) * 0.5" /> -->
+				<set_value name="$kAAIT_yaw_from" exact="$ship_yaw_deg" />
+				<set_value name="$kAAIT_yaw_to" exact="$module_yaw_deg" />
+				<include_interrupt_actions ref="kAAIT_GetMidYaw" />
+				<set_value name="$yaw_deg" exact="$kAAIT_yaw_mid" />
 			</do_elseif>
 			<do_else>
 				<include_interrupt_actions ref="kAAIT_GetDestination" />
@@ -209,7 +213,11 @@
 					<create_orientation name="$rotFromBigEnemy" orientation="look_at" refposition="$posShip" comment="get vector from enemy because that's the direction of the withdraw">
 						<position value="$posBigEnemy" />
 					</create_orientation>
-					<set_value name="$yaw_deg" exact="$yaw_deg + ($rotFromBigEnemy.yaw * 180 / pi - $yaw_deg) * 0.5" />
+					<!-- <set_value name="$yaw_deg" exact="$yaw_deg + ($rotFromBigEnemy.yaw * 180 / pi - $yaw_deg) * 0.5" /> -->
+					<set_value name="$kAAIT_yaw_from" exact="$yaw_deg" />
+					<set_value name="$kAAIT_yaw_to" exact="$rotFromBigEnemy.yaw * 180 / pi" />
+					<include_interrupt_actions ref="kAAIT_GetMidYaw" />
+					<set_value name="$yaw_deg" exact="$kAAIT_yaw_mid" />
 				</do_for_each>
 			</do_if>
 			<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
