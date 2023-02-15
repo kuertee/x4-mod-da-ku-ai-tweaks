@@ -67,90 +67,66 @@
 				</do_if>
 			</do_if>
 			<label name="start"/>
-			<set_value name="$kAAIT_detailedDebugChance" exact="0" />
+			<set_value name="$kAAIT_detailedDebugChance" exact="100" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$count_stepForward" exact="0" />
-			<set_value name="$orderLocation_space" exact="this.sector" />
-			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
-			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
-			<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip" comment="get vector from target ship because that's the direction of the withdraw">
-				<position value="$posTarget" />
-			</create_orientation>
-			<set_value name="$pitch_fromTarget" exact="$rotFromTarget.pitch * 180 / pi" />
-			<set_value name="$pitch_toWithdraw_deg" min="-15" max="15" />
-			<set_value name="$yaw_fromTargetToSelf" exact="$rotFromTarget.yaw * 180 / pi" />
-			<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-			<set_value name="$isWithdrawFromMultiple" exact="0" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$bigEnemies.count: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$bigEnemies.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$bigEnemies.count"
-				comment="get average of withdraw vectors from all big enemies">
-				<set_value name="$isWithdrawFromMultiple" exact="1" />
-				<do_for_each name="$kAAIT_bigEnemy" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$bigEnemies">
-					<create_position name="$posBigEnemy" space="$orderLocation_space" object="$kAAIT_bigEnemy" />
-					<create_orientation name="$rotFromBigEnemy" orientation="look_at" refposition="$posShip" comment="get vector from enemy because that's the direction of the withdraw">
-						<position value="$posBigEnemy" />
-					</create_orientation>
-					<!-- <set_value name="$yaw_fromTargetToSelf" exact="$yaw_fromTargetToSelf + ($rotFromBigEnemy.yaw * 180 / pi - $yaw_fromTargetToSelf) * 0.5" /> -->
-					<set_value name="$kAAIT_yaw_from" exact="$yaw_fromTargetToSelf" />
-					<set_value name="$kAAIT_yaw_to" exact="$rotFromBigEnemy.yaw * 180 / pi" />
-					<include_interrupt_actions ref="kAAIT_GetMidYaw" />
-					<set_value name="$yaw_fromTargetToSelf" exact="$kAAIT_yaw_mid" />
-				</do_for_each>
-			</do_if>
-			<set_value name="$yaw_toWithdraw_deg" exact="null" />
-			<set_value name="$ally" exact="null" />
-			<do_if value="$target.isclass.station">
-				<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTargetToSelf" />
-			</do_if>
-			<do_else>
-				<do_if value="
-					this.assignedcontrolled.bboxdistanceto.{$target} le 10km and
-					$target == @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget and
-					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget.isclass.ship and
-					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count"
-					comment="withdraw angle at 60 deg of ally to enemy">
-					<sort_group group="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
-					<do_for_each name="$ally" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl">
-						<do_if value="
-							$ally != this.assignedcontrolled and
-							$ally.primarypurpose == purpose.fight and
-							$ally.type == shiptype.carrier and
-							$ally.isoperational and
-							$ally.bboxdistanceto.{$target} gt 5km and
-							$ally.order.id != 'kAAIT_MoveAvoid' and
-							$ally.order.id != 'kAAIT_MoveWithdraw'
-						">
-							<create_position name="$pos_ally" space="$orderLocation_space" object="$ally" comment="get vectors based on target because the create_position below will be from the target" />
-							<create_orientation name="$rot_toAlly" orientation="look_at" refposition="$pos_ally" comment="get vector from target ship because the eariler vector is based on that">
-								<position value="$posShip" />
-							</create_orientation>
-							<set_value name="$yaw_toAlly" exact="$rot_toAlly.yaw * 180 / pi" />
-							<set_value name="$yaw_adj" exact="$yaw_toAlly - $yaw_fromTargetToSelf" />
-							<do_if value="$yaw_adj gt -67 and $yaw_adj le 67" comment="withdraw and ally vectors are too near each other, add 45 to withdraw vector">
-								<do_if value="$yaw_adj le 0">
-									<set_value name="$yaw_adj" exact="$yaw_adj * 0.5 + (45 + 45 * $isWithdrawFromMultiple)" />
-								</do_if>
-								<do_else>
-									<set_value name="$yaw_adj" exact="$yaw_adj * 0.5 - (45 + 45 * $isWithdrawFromMultiple)" />
-								</do_else>
-							</do_if>
-							<do_else>
-								<set_value name="$yaw_adj" exact="$yaw_adj * 0.5" comment="vector halfway between withdraw and ally vectors" />
-							</do_else>
-							<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTargetToSelf + $yaw_adj" />
-							<break />
-						</do_if>
-					</do_for_each>
-				</do_if>
-				<do_if value="$yaw_toWithdraw_deg == null" comment="no vector determined, get random vector">
-					<set_value name="$yaw_toWithdraw_deg" exact="$yaw_fromTargetToSelf" />
-				</do_if>
-			</do_else>
-			<set_value name="$yaw" exact="$yaw_toWithdraw_deg * pi / 180" />
-			<set_value name="$pitch" exact="$pitch_toWithdraw_deg * pi / 180" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget.knownname + ' ' + @this.kAAIT_data.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 
 			<label name="move" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL move'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+			<set_value name="$isShortAvoidance" exact="false" />
+			<do_if value="$dist_shipToTarget gt this.assignedcontrolled.maxradarrange">
+				<resume label="finish" />
+			</do_if>
+			<set_value name="$orderLocation_space" exact="this.sector" />
+			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
+			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
+			<set_value name="$kAAIT_target_avoid" exact="$target" />
+			<include_interrupt_actions ref="GetAvoidPosVectorAndObject" />
+			<set_value name="$pos_avoidFrom" exact="$kAAIT_result_pos_avoidFrom" />
+			<set_value name="$yaw_avoid" exact="$kAAIT_result_yaw_avoidFrom" />
+			<set_value name="$pitch_avoid" exact="$kAAIT_result_pitch_avoidFrom" />
+			<set_value name="$target_nearestAvoid" exact="$kAAIT_result_target_nearestAvoid" />
+			<set_value name="$dist_avoidExtra" exact="$posTarget.distanceto.{$pos_avoidFrom}" comment="add this to the distance to avoid. if pos_avoidFrom is far from target_nearestAvoid, the avoid distance could be too short" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $dist_avoidExtra: ' + $dist_avoidExtra" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+			<!-- start: add other yaws -->
+			<do_if value="
+				$target.isclass.ship and
+				$target == @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget and
+				$dist_shipToTarget le global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_withdraw and
+				@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl.count"
+				comment="withdraw to ally">
+				<sort_group group="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
+				<do_for_each name="$ally" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTargetEntity.$kAAIT_attackers_lxl">
+					<do_if value="
+						$ally != this.assignedcontrolled and
+						$ally.primarypurpose == purpose.fight and
+						$ally.type != shiptype.carrier and
+						$ally.isoperational and
+						$ally.bboxdistanceto.{$target} gt 5km and
+						(not $ally.order.$kAAITParam_iskAAITOrder)
+					">
+						<create_position name="$posAlly" space="$orderLocation_space" object="$ally" />
+						<create_orientation name="$rot_shipToAlly" orientation="look_at" refposition="$posAlly">
+							<position value="$pos_avoidFrom" />
+						</create_orientation>
+						<set_value name="$yaw_shipToAlly" exact="$rot_shipToAlly.yaw * 180 / pi" />
+						<set_value name="$kAAIT_yaw_from" exact="$yaw_avoid" />
+						<set_value name="$kAAIT_yaw_to" exact="$yaw_shipToAlly" />
+						<include_interrupt_actions ref="kAAIT_GetMidYaw" />
+						<set_value name="$yaw_avoid" exact="$kAAIT_yaw_mid" />
+						<break />
+					</do_if>
+				</do_for_each>
+			</do_if>
+			<!-- end: add other yaws -->
+			<!-- start: finalise vector -->
+			<set_value name="$yaw_avoid" exact="$yaw_avoid * pi / 180" />
+			<set_value name="$pitch_adj" min="-15" max="15" />
+			<set_value name="$pitch_avoid" exact="($pitch_avoid + $pitch_adj) * pi / 180" />
+			<!-- end: finalise vector -->
+			<!-- start: get distance -->
 			<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_withdraw?">
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
 			</do_if>
@@ -170,14 +146,13 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$distance_attackFrom (maxradarrange - not fighter or large target): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</do_elseif>
 			<do_else>
-				<set_value name="$combatRange_mid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_min + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_max - global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_min) * 0.5" />
+				<set_value name="$combatRange_mid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$combatRange_mid" />
 				<do_if value="@$target.isclass.station">
 					<set_value name="$dist_adjByShields" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_withdraw" />
 				</do_if>
 				<do_else>
 					<set_value name="$dist_adjByShields" exact="(100 - this.assignedcontrolled.shieldpercentage) / 100 * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_withdraw" />
 				</do_else>
-				<!-- <set_value name="$dist_adjByShields" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_withdraw" /> -->
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" exact="$combatRange_mid + $dist_adjByShields" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$distance_attackFrom (mid combat range (' + $combatRange_mid + ') + shield-based (' + (100 - this.assignedcontrolled.shieldpercentage) + ') withdraw distance (' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$skill_distance_withdraw + ')): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="$target.isclass.[class.ship_l, class.ship_xl]">
@@ -185,40 +160,29 @@
 						exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * 1.5" />
 				</do_if>
 			</do_else>
-			<do_if value="$target.isclass.ship">
-				<do_if value="$dist_targetToAlly? and @$dist_targetToAlly le 5km" comment="there's an lxl ally near the target, increase withdraw distance. shorter, original dist allows allies to near target.">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" exact="[global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * 1.5, this.assignedcontrolled.maxradarrange].min" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$distance_attackFrom (target is ship, withdraw distance * 1.5): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				</do_if>
-			</do_if>
 			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom lt @$distance_attackFrom_saved">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" exact="$distance_attackFrom_saved" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$distance_attackFrom (use saved distance): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$distance_attackFrom: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" exact="$dist_avoidExtra" operation="add" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$distance_attackFrom ($dist_avoidExtra added): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<!-- end: get distance -->
+
 			<create_position name="$orderLocation_pos"
-				x="$posTarget.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * sin ($yaw) * cos ($pitch)"
-				y="$posTarget.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * sin ($pitch)"
-				z="$posTarget.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * cos ($yaw) * cos ($pitch)"
+				x="$pos_avoidFrom.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * sin ($yaw_avoid) * cos ($pitch_avoid)"
+				y="$pos_avoidFrom.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * sin ($pitch_avoid)"
+				z="$pos_avoidFrom.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom * cos ($yaw_avoid) * cos ($pitch_avoid)"
 			/>
-			<set_value name="$distance_attackFrom_saved" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" />
-			<!-- <create_position name="$orderLocation_pos" x="$orderLocation_pos.x" y="$posShip.y" z="$orderLocation_pos.z" /> -->
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_space" exact="$orderLocation_space" />
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_pos" exact="$orderLocation_pos" />
-
-			<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange">
-				<resume label="finish" />
-			</do_if>
-
-			<set_value name="$dist_toWithdrawDest" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
-			<set_value name="$dist_targetToWithdrawDest" exact="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
+			<set_value name="$distance_attackFrom_saved" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$distance_attackFrom" />
 
 			<label name="move_locked_destination" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL move_locked_destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<remove_value name="$isJustFight" />
 			<remove_value name="$isCancelWithdrawal" />
 			<remove_value name="$isRequestHelp" />
-			<!-- <remove_value name="$isRedoVector" /> -->
 			<debug_text text="@this.assignedcontrolled.idcode + ' move_to start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
@@ -256,18 +220,12 @@
 						<check_value value="this.assignedcontrolled.engines.all.count" />
 						<check_value value="this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25" />
 						<check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" />
-						<!-- <debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" /> -->
 						<set_value name="$dist_toWithdrawDest_current" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
 						<set_value name="$dist_targetToWithdrawDest_current" exact="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
 						<check_all>
 							<check_value value="$target.isclass.ship" />
 							<check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
 							<check_any>
-								<!-- <check_all>
-									<check_value value="$target.shieldpercentage le 0" comment="target has low shields, just fight it" />
-									<set_value name="$isCancelWithdrawal" exact="true" />
-									<set_value name="$isRequestHelp" exact="true" comment="request for help also - cancel all withdrawals of other ships" />
-								</check_all> -->
 								<!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
 									fight: shield gt skill-withdraw-value.
 									withdraw: shield gt 5, shield le skill-withdraw-value, distance to target < 10km.
@@ -278,39 +236,37 @@
 									<set_value name="$isJustFight" exact="'good shields (gt skill-withdraw)'" />
 								</check_all>
 								<check_all comment="too far from target">
+									<check_value value="event.name == 'event_object_changed_zone'" />
 									<check_value value="$target.isclass.ship" />
 									<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
 									<set_value name="$isCancelWithdrawal" exact="'too far from target'" />
 								</check_all>
-								<!-- <check_all comment="ship has no shield, but good hull">
-									<check_value value="$target.isclass.ship" />
-									<check_value value="this.assignedcontrolled.shieldpercentage le 5" comment="still have low shields. 5 = margin of error to 0 shields" />
-									<check_value value="this.assignedcontrolled.hullpercentage gt 50" />
-									<set_value name="$isCancelWithdrawal" exact="'poor shield (le 5), good hull (gt 75)'" />
-								</check_all> -->
 								<check_all comment="ship has low chance of surviving">
+									<check_value value="event.name == 'event_object_attacked'" />
 									<check_value value="this.assignedcontrolled.shieldpercentage le 5" comment="still have low shields. 5 = margin of error to 0 shields" />
 									<check_value value="this.assignedcontrolled.hullpercentage le 50" />
 									<set_value name="$isJustFight" exact="'poor shield (le 5), poor hull (le 25)'" />
 									<set_value name="$isRequestHelp" exact="true" />
 								</check_all>
 								<check_all comment="help requested">
+									<check_value value="event.name == 'event_object_signalled'" comment="help signal received" />
 									<check_value value="$target.isclass.ship" />
 									<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt 10km" />
-									<check_value value="event.name == 'event_object_signalled'" comment="help signal received" />
 									<set_value name="$isCancelWithdrawal" exact="'help request acknowledged'" />
 								</check_all>
 								<check_all comment="too far from ally">
+									<check_any>
+										<check_value value="event.name == 'event_object_changed_zone'" />
+										<check_all>
+											<check_value value="event.name == 'event_object_attacked'" />
+											<check_value value="event.object == $target" />
+										</check_all>
+									</check_any>
 									<check_value value="$target.isclass.ship" />
 									<check_value value="@$ally.isoperational" />
 									<check_value value="this.assignedcontrolled.bboxdistanceto.{$ally} gt this.assignedcontrolled.maxradarrange * 0.25" />
 									<set_value name="$isCancelWithdrawal" exact="'too far from ally'" />
 								</check_all>
-								<!-- <check_all comment="has gotten away from target">
-									<check_value value="$target.isclass.ship" />
-									<check_value value="this.assignedcontrolled.bboxdistanceto.{$target} gt this.assignedcontrolled.maxradarrange * 0.25" />
-									<set_value name="$isCancelWithdrawal" exact="'has escaped pursuer'" />
-								</check_all> -->
 							</check_any>
 						</check_all>
 					</conditions>
@@ -332,7 +288,6 @@
 				</interrupt>
 			</wait>
 			<debug_text text="@this.assignedcontrolled.idcode + ' wait end'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $isRedoVector: ' + $isRedoVector" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" /> -->
 			<do_if value="
 				(not @$isJustFight) and
 				(not @$isCancelWithdrawal) and
@@ -378,32 +333,14 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 
 			<label name="finish" />
-			<!-- <do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" comment="limit withdrawing ships to 2 per commander">
-				<do_if value="@this.assignedcontrolled.commander.isclass.ship">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_data.$counter_withdrawing" operation="subtract" exact="1" />
-				</do_if>
-				<do_elseif value="@this.assignedcontrolled.subordinates.count">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$counter_withdrawing" operation="subtract" exact="1" />
-				</do_elseif>
-			</do_if> -->
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<stop_moving object="this.assignedcontrolled" />
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isWithdrawing" exact="false" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_data.$isWithdrawing: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isWithdrawing" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<!-- <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_space" /> -->
-			<!-- <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_pos" /> -->
 			<include_interrupt_actions ref="kAAIT_Deinit" />
 		</actions>
 	</attention>
 	<on_abort>
-		<!-- <do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" comment="limit withdrawing ships to 2 per commander">
-			<do_if value="@this.assignedcontrolled.commander.isclass.ship">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_data.$counter_withdrawing" operation="subtract" exact="1" />
-			</do_if>
-			<do_elseif value="@this.assignedcontrolled.subordinates.count">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$counter_withdrawing" operation="subtract" exact="1" />
-			</do_elseif>
-		</do_if> -->
 		<do_if value="@this.assignedcontrolled.isoperational">
 			<stop_moving object="this.assignedcontrolled" />
 		</do_if>

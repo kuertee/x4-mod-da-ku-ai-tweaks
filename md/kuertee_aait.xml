@@ -1474,6 +1474,13 @@
 							$icon = null,
 							$callback = DebugSignalResupply
 						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'debug_destroy_target',
+							$section = 'main',
+							$text = 'debug: destroy the target',
+							$icon = null,
+							$callback = DebugDestroyTarget
+						]" />
 					</do_if>
 				</do_if>
 				<reset_cue cue="this" />
@@ -1579,6 +1586,35 @@
 				<set_value name="$interact_target" exact="@event.param.$object" />
 				<debug_text text="'interact_target: ' + $interact_target + ', ' + $interact_target.knownname + ', ' + $interact_target.idcode" />
 				<signal_objects object="$interact_target" param="'resupply'" param3="100" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="DebugDestroyTarget" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<run_actions ref="DebugData">
+					<param name="Data" value="global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}" />
+					<param name="Prefix" value="'global.$kAAIT_Data.$byShipId.{$' + @$interact_target.idcode + '}'" />
+				</run_actions>
+				<set_value name="$target" exact="@global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}.$kAAIT_data.$moduleTarget" />
+				<do_if value="not $target">
+					<set_value name="$target" exact="@global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}.$kAAIT_data.$defensibleTarget" />
+				</do_if>
+				<do_if value="not $target">
+					<set_value name="$target" exact="@$interact_target.order.$primarytarget" />
+				</do_if>
+				<do_if value="not $target">
+					<set_value name="$target" exact="@$interact_target.nextorder.$primarytarget" />
+				</do_if>
+				<debug_text text="'$target (pre destruction): ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ')'" />
+				<do_if value="$target">
+					<set_object_hull object="$target" exact="1" />
+					<!-- <destroy_object object="$target" /> -->
+				</do_if>
+				<debug_text text="'$target (post destruction): ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ')'" />
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
