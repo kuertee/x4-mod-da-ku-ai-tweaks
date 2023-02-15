@@ -48,11 +48,6 @@
 		</handler>
 	</interrupts>
 	<init>
-		<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data?">
-			<include_interrupt_actions ref="kAAIT_RegisterShip" />
-		</do_if>
-		<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed" />
-		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isAvoiding" exact="true" />
 		<!-- required for disengage handler -->
 		<set_value name="$pursuetargets" exact="false" />
 		<set_value name="$pursuedistance" exact="this.assignedcontrolled.maxradarrange" />
@@ -64,6 +59,8 @@
 				<resume label="finish" />
 			</do_if>
 			<include_interrupt_actions ref="kAAIT_Init" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed" />
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isAvoiding" exact="true" />
 			<do_if value="
 				@this.assignedcontrolled.nextorder.id != 'Repair' and
 				@this.assignedcontrolled.nextorder.id != 'RestockSubordinates' and
@@ -121,6 +118,7 @@
 				<set_value name="$kAAIT_yaw_to" exact="$yaw_shipToCommander" />
 				<include_interrupt_actions ref="kAAIT_GetMidYaw" />
 				<set_value name="$yaw_avoid" exact="$kAAIT_yaw_mid" />
+				<set_value name="$pos_avoidFrom" exact="$posCommander" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $yaw_avoid (adjusted to move behind commander): ' + $yaw_avoid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			</do_if>
 			<do_elseif value="$target.isrealclass.module">
