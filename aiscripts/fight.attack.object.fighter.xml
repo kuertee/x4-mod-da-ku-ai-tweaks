@@ -50,10 +50,10 @@
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_pos" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
 	</add>
 <!--
@@ -62,20 +62,18 @@
 		<do_if value="$target.isoperational">
 -->
 	<add pos="before" sel="//do_while[@value=&quot;$target.isoperational&quot;]//do_if[@value=&quot;$target.isoperational&quot;][1]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
-			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetHighRisk">
-				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed">
-					<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-					<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-					<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-						<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
-							<resume label="kAAITLabel_withdraw" />
-						</do_if>
-						<do_else>
-							<resume label="kAAIT_label_avoid" />
-						</do_else>
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk">
+				<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
+				<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+					<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
+						<resume label="kAAITLabel_withdraw" />
 					</do_if>
+					<do_else>
+						<resume label="kAAIT_label_avoid" />
+					</do_else>
 				</do_if>
 			</do_if>
 		</do_if>
@@ -88,7 +86,7 @@
 		<label name="kAAITLabel_withdraw" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveWithdraw'" immediate="true">
-			<param name="target" value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+			<param name="target" value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 		</create_order>
 		<resume label="finish"/>
 	</add>
@@ -98,9 +96,9 @@
 	<add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;finish&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
-		<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data">
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_pos" />
+		<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData">
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
 	</add>
 <!--
@@ -132,10 +130,10 @@
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<include_interrupt_actions ref="kAAIT_Init" />
 		</do_if>
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_pos" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
 	</add>
 <!--
@@ -144,20 +142,18 @@
 		<do_if value="$target.isoperational">
 -->
 	<add pos="before" sel="//do_while[@value=&quot;$target.isoperational and not $isdead&quot;]//do_if[@value=&quot;$target.isoperational&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isIgnoreKAAIT)">
-			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$isTargetHighRisk">
-				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$time_avoidAllowed">
-					<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
-					<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-					<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-						<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
-							<resume label="kAAITLabel_withdraw" />
-						</do_if>
-						<do_else>
-							<resume label="kAAIT_label_avoid" />
-						</do_else>
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk">
+				<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
+				<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+					<do_if value="$kAAIT_result_avoidEnemy == $kAAIT_test_target_isAvoid">
+						<resume label="kAAITLabel_withdraw" />
 					</do_if>
+					<do_else>
+						<resume label="kAAIT_label_avoid" />
+					</do_else>
 				</do_if>
 			</do_if>
 		</do_if>
@@ -170,7 +166,7 @@
 		<label name="kAAITLabel_withdraw" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<create_order object="this.assignedcontrolled" id="'kAAIT_MoveWithdraw'" immediate="true">
-			<param name="target" value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$defensibleTarget" />
+			<param name="target" value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 		</create_order>
 		<resume label="finish"/>
 	</add>
@@ -180,9 +176,9 @@
 	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
-		<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data">
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_pos" />
+		<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData">
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
 	</add>
 	<!--
@@ -196,9 +192,9 @@
 -->
 	<add sel="//on_abort">
 		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
-		<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data">
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_data.$orderLocation_pos" />
+		<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData">
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
 	</add>
 	<!-- DeadAir Diffs -->
