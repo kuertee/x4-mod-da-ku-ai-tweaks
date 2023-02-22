@@ -198,8 +198,10 @@
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
+			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}?">
+				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
+			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' @this.$escortgroup.count: ' + @this.$escortgroup.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detail_debugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="@this.$escortgroup.count">
 				<set_value name="$loctarget" exact="$target"/>
@@ -241,15 +243,9 @@
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<debug_text text="@this.assignedcontrolled.idcode + ' target out of range. move to engage if station. otherwise use move generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="
-				this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+				$primarytarget.isclass.station and
 				this.assignedcontrolled.bboxdistanceto.{$target} gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max and
-				(
-					$primarytarget.isclass.station or
-					(
-						$primarytarget.isclass.[class.ship_l, class.ship_xl] and
-						(not @$primarytarget.travel.active)
-					)
-				) and
+				this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
 				(
 					this.assignedcontrolled.type != shiptype.carrier or
 					(

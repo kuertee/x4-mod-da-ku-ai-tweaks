@@ -488,7 +488,6 @@
 							</do_if>
 						</do_if>
 						<do_elseif value="$kAAIT_eventType == 'withdraw'">
-							<set_value name="$kAAIT_isInFront" exact="false" />
 							<is_in_quadrant result="$kAAIT_isInFront" object="$kAAIT_attacker" target="this.assignedcontrolled" front="true" />
 							<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isInFront: ' + @$kAAIT_isInFront" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<do_if value="
@@ -573,6 +572,7 @@
 							withdraw: shield gt 5, shield le skill-withdraw-value, distance to target < 10km.
 							fight: shield le 5, hull le 50.
 						-->
+						<is_in_quadrant result="$kAAIT_isInFront" object="$kAAIT_test_target_isAvoid" target="this.assignedcontrolled" front="true" />
 						<set_value name="$kAAIT_isTakeRisk" exact="
 							this.assignedcontrolled.primarypurpose == purpose.fight and
 							(
@@ -593,6 +593,12 @@
 											this.assignedcontrolled.ammostorage.missile.count
 										)
 									)
+								) or
+								(
+									$kAAIT_test_target_isAvoid.isclass.ship and
+									(not $kAAIT_isInFront) and
+									this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isAvoid} gt 10km and
+									this.assignedcontrolled.shieldpercentage gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip * 0.75
 								) or
 								(
 									$kAAIT_test_target_isAvoid.isclass.ship and
