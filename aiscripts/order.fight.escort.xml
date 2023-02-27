@@ -110,7 +110,18 @@
 			<do_if value="this.sector == $target.sector">
 				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidAllowed">
 					<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-					<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+					<do_if value="
+						@$kAAIT_result_avoidEnemy.isoperational and
+						@$target.order.$primarytarget != $kAAIT_result_avoidEnemy and
+						@$target.order.$primarytarget.defensible != $kAAIT_result_avoidEnemy and
+						(
+							$kAAIT_result_avoidEnemy.isclass.station or
+							(
+								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+								(not this.assignedcontrolled.isunit) and
+								(not this.assignedcontrolled.islasertower)
+							)
+						)">
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
 						<remove_value name="$kAAIT_result_avoidEnemy" />
 						<resume label="kAAIT_label_avoid" />
@@ -180,11 +191,24 @@
 	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;500ms&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<do_if value="this.sector == $target.sector">
-				<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-					<remove_value name="$kAAIT_result_avoidEnemy" />
-					<resume label="kAAIT_label_avoid" />
+				<do_if value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidAllowed">
+					<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
+					<do_if value="
+						@$kAAIT_result_avoidEnemy.isoperational and
+						@$target.order.$primarytarget != $kAAIT_result_avoidEnemy and
+						@$target.order.$primarytarget.defensible != $kAAIT_result_avoidEnemy and
+						(
+							$kAAIT_result_avoidEnemy.isclass.station or
+							(
+								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+								(not this.assignedcontrolled.isunit) and
+								(not this.assignedcontrolled.islasertower)
+							)
+						)">
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+						<remove_value name="$kAAIT_result_avoidEnemy" />
+						<resume label="kAAIT_label_avoid" />
+					</do_if>
 				</do_if>
 			</do_if>
 		</do_if>

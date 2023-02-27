@@ -203,19 +203,19 @@
 				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' @this.$escortgroup.count: ' + @this.$escortgroup.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detail_debugChance then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="@this.$escortgroup.count">
-				<set_value name="$loctarget" exact="$target"/>
-				<do_if value="not $loctarget">
-					<set_value name="$loctarget" exact="$primarytarget" />
+			<do_if value="this.assignedcontrolled.subordinates.count">
+				<set_value name="$kAAIT_target" exact="$target"/>
+				<do_if value="not $kAAIT_target">
+					<set_value name="$kAAIT_target" exact="$primarytarget" />
 				</do_if>
-				<do_if value="$loctarget.defensible">
-					<set_value name="$loctarget" exact="$loctarget.defensible"/>
+				<do_if value="$kAAIT_target.defensible">
+					<set_value name="$kAAIT_target" exact="$kAAIT_target.defensible"/>
 				</do_if>
-				<debug_text text="@this.assignedcontrolled.idcode + ' @$loctarget: ' + @$loctarget.knownname + ', ' + @$loctarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detail_debugChance then @global.$kAAIT_Data.$debugChance else 0" />
-				<do_for_each name="$locsub" in="this.$escortgroup" reverse="true">
-					<do_if value="($locsub.assignment == assignment.attack) and not $locsub.subordinategroupdockoverride">
-						<create_order object="$locsub" id="'Attack'">
-							<param name="primarytarget" value="$loctarget"/>
+				<debug_text text="@this.assignedcontrolled.idcode + ' @$kAAIT_target: ' + @$kAAIT_target.knownname + ', ' + @$kAAIT_target.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detail_debugChance then @global.$kAAIT_Data.$debugChance else 0" />
+				<do_for_each name="$subordinate_inList" in="this.assignedcontrolled.subordinates">
+					<do_if value="$subordinate_inList.assignment == assignment.attack">
+						<create_order object="$subordinate_inList" id="'Attack'">
+							<param name="primarytarget" value="$kAAIT_target"/>
 							<param name="secondarytargets" value="@$secondarytargetgroup.list"/>
 							<param name="checkrelation" value="$checkrelation"/>
 							<param name="escort" value="$escort"/>
@@ -229,10 +229,8 @@
 							<param name="internalorder" value="true"/>
 							<param name="debugchance" value="@$debugchance"/>
 						</create_order>
-						<remove_from_group group="this.$escortgroup" object="$locsub"/>
 					</do_if>
 				</do_for_each>
-				<remove_value name="$loctarget"/>
 			</do_if>
 		</do_if>
 	</add>

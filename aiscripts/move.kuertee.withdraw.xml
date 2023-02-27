@@ -244,7 +244,7 @@
 									fight: shield le 5, hull le 50.
 								-->
 								<check_all comment="good shields">
-									<check_value value="this.assignedcontrolled.shieldpercentage gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip" />
+									<check_value value="this.assignedcontrolled.shieldpercentage gt $target.shieldpercentage * (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0)" />
 									<set_value name="$isJustFight" exact="'good shields (gt skill-withdraw)'" />
 								</check_all>
 								<check_all comment="too far from target">
@@ -303,14 +303,6 @@
 			<do_if value="not @this.assignedcontrolled.isoperational">
 				<resume label="finish" />
 			</do_if>
-			<do_if value="(not @$isCancelWithdrawal) and $target.isclass.ship and this.assignedcontrolled.bboxdistanceto.{$target} gt 10km">
-				<is_in_quadrant result="$isInFront" object="$target" target="this.assignedcontrolled" front="true" />
-				<set_value name="$isCancelWithdrawal" exact="
-					(not $isInFront) and
-					this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isAvoid} gt 10km and
-					this.assignedcontrolled.shieldpercentage gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip * 0.75
-				" />
-			</do_if>
 			<do_if value="
 				(not @$isJustFight) and
 				(not @$isCancelWithdrawal) and
@@ -323,7 +315,7 @@
 					(
 						$target.isclass.ship and
 						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip and
-						this.assignedcontrolled.shieldpercentage le @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip
+						this.assignedcontrolled.shieldpercentage le $target.shieldpercentage * (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0)
 					) or
 					(
 						$target.isclass.station and

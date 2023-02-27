@@ -9,34 +9,13 @@ Dead Air's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai
 
 Updates
 =======
-v6.0.0004, 17 Feb 2023:
--Note: Renew any important big attack operations (e.g. Remove All Orders, Attack) that are active after a game is loaded. You only need to do this once. There's no need to renew non-importanat attack operations. Their data will renew soon after load.
--Tweak: The Avoid behaviour determination is delayed by 0.5 seconds. This prevents it from getting triggered immediately after a Remove All Orders. This allows new orders to be issued without the Avoid behaviour present in the Behaviour queue. Note that this is only useful when the game is paused. Half-a-second is simply not enough time for issuing new orders without the Avoid behaviour getting instantiated.
--Tweak: Vector determination for avoid and withdraw behaviours. E.g. All nearby high-risk enemies are considered when deciding which direction to avoid and withdraw from. Previously, only the nearest high-risk enemy factored into the avoid/withdraw vector. Watch these vidoes: https://youtu.be/UQ2xJnRdsoc (Capital ships move around the station to a better vector to target a module after destroying their previous module target.), https://youtu.be/UQ2xJnRdsoc (Capital ships moving away from a station before attacking a Xenon K.)
--New feature: Cancelling an Avoid order will disable the Avoid behaviour option in Attack orders in the Behaviour queue. This feature in previous versions prevented the use of the behaviour for only 10 seconds. Note that you can still disable the behaviour on a per-ship basis using the Interact Menu.
--New feature: Cancelling a Step forward or Withdraw order will disable the Step forward and Withdraw behaviour options in Attack orders in the Behaviour queue. This feature in previous versions prevented the use of the behaviour for only 10 seconds. Note that you can still disable the behaviour on a per-ship basis using the Interact Menu.
--Bug-fix: Ship preferences for using the Avoid and Step forward/Withdraw behaviours were getting reset at the end of combat.
+v6.0.00041, 28 Feb 2023:
+-Tweak/Bug-fix: Capital ships' avoid/withdraw determination against other capital ships: when shields are lower than their skills-based percentage of their target's shields. In previous versions, the ships withdraw/avoided when their shields are lower than those percentage levels. In this version, they avoid/withdraw when their shields are lower than the percentage levels OF THEIR TARGET. Result: ships will stay in fights against other ships much longer. This follows more closely the more realistic surrender reactions of NPC combatants portrayed in my Oblivion (NPCs Yield) and Skyrim (Fight or Fly) mods.
+-Bug-fix: Ships not using all their missiles/torpedoes. I had to remove a couple of lines of DeadAir's tweaks in fight.attack.object.medium AI because it was preventing use of some missiles/torpedoes.
+-Tweak: Ships with the order.fight.escort AI were avoiding their commander's attack targets.
+-Bug-fix: Ships were still not acquiring their commander's attack orders soon enough.
+-Tweak: Ships were moving to engage positions even when not really required.
 -Note: This version should work with 6.x and 5.x of the base game.
-
-v6.0.0003, 11 Feb 2023:
--NOTE: This version works with BOTH 5.1 and 6.0 beta 3.
--Tweak: Compatibility with 6.0 beta 3. About half a dozen of DeadAir's AI Tweaks had to be removed because of changes in the 6.0 beta of the base game. 90% of his tweaks are still valid.
--Bug-fix: XS, S, and M (XSSM) ships were moving away constantly while avoiding - causing them to move out of sector bounds.
--Bug-fix: XSSM ship behaviours were broken.
--Bug-fix: XSSM ships: Attacking smaller target when avoiding big target now works properly. E.g. finding targets on their side of the station, moving around the station to attack their target that's on the other side, etc.
--Bug-fix: L and XL (LXL) ships move to next module target was broken. I.e. after destroying one module target, LXL ships again move to a vector better suited to their next module target - moving away from the station first when required.
--Tweak: Carriers with ANY subordinates will now maintain distance. The Extension Option, "Carriers attack like destroyers" now works as expected. Previously, even when that option is disabled, carriers were STILL behaving like destroyers IF they had no subordinates that dock on them. In this version, they will only act lke destroyers IF (1) "Carriers attack like destoyers" is enabled; or IF (2) they have no subordinates, AND capital ship wingmen.
--Tweak: Avoid vectors now incoporate the ship's destination's vector. Previously, the vector they choose to avoid was random.
--Tweak: Withdraw vectors now incoporate ALL high-risk enemies nearby. Previously, they move away from the position of ALL nearby high-risk enemies - which somtimes is not ideal.
--Tweak: Move to engage position: Always move to engage position if target is more than 75% of max radar range.
--Bug-fix: Move to engage position: Prevent loop of move to engage position, attack, move to engage position, attack, etc.
--Tweak: Coordinated Attack: Allow sequential Coordinated Attacks. Previously, this order wouldn't chain properly because one of their attack orders would get inserted into their order list incorrectly.
--Bug-fix: Removed changes to order.move.recon.xml because one of the changes has a rare chance of causing the game to stall, making the game unresponsive while still running. May be re-enabled after the bug is tracked down in the future or when DeadAir returns to X4 modding.
--Bug-fix: Data is cleaned when docked and undocked (in case the ship receives damage while docked). Previously data is cleaned when the ship enters a new sector.
--Tweak: Optimised the hull/shield damaged event listener.
--Tweak: Optimised looking for smaller targets instead of avoiding routine.
--Tweak: Optimised avoid or take risk routine.
--Bug-fix: Many other bug-fixes.
 
 Attack AI Tweaks:
 =================
@@ -97,8 +76,11 @@ Note that these behaviours can be controlled by the player several ways. They ar
 	Ships with the "Attack all enemies" setting enabled in the Behaviour menu will attack non-high-risk enemies.
 4. When shield levels fall:
 	Vs ships and stations:
-		XSSM and LXL ships will WITHDRAW when their shields fall a certain percentage based on their pilot's rank.
+		XSSM ships will WITHDRAW when their shields fall below a certain percentage based on their pilot's rank.
 			Vs stations: 75% shields for low-rated pilots. And 90% shields for high-rated pilots.
+		LXL ships will WITHDRAW when their shields fall below a certain percentage of their enemy's shields.
+			Vs stations: 75% shields for low-rated pilots. And 90% shields for high-rated pilots.
+			E.g. if a ship's enemy has 50% shield, the ship will withdraw when the ship's shields fall below 90% of their enemy's shield, which is 45%.
 		The distance of this WITHDRAWAL is based on the level of their shields.
 		Farther when shields are low. Nearer when shields are still high.
 		Ships will try to draw their targets towards an ally when WITHDRAWING.
@@ -200,6 +182,35 @@ Japanese localisation by Arkblade.
 
 History
 =======
+v6.0.0004, 17 Feb 2023:
+-Note: Renew any important big attack operations (e.g. Remove All Orders, Attack) that are active after a game is loaded. You only need to do this once. There's no need to renew non-importanat attack operations. Their data will renew soon after load.
+-Tweak: The Avoid behaviour determination is delayed by 0.5 seconds. This prevents it from getting triggered immediately after a Remove All Orders. This allows new orders to be issued without the Avoid behaviour present in the Behaviour queue. Note that this is only useful when the game is paused. Half-a-second is simply not enough time for issuing new orders without the Avoid behaviour getting instantiated.
+-Tweak: Vector determination for avoid and withdraw behaviours. E.g. All nearby high-risk enemies are considered when deciding which direction to avoid and withdraw from. Previously, only the nearest high-risk enemy factored into the avoid/withdraw vector. Watch these vidoes: https://youtu.be/UQ2xJnRdsoc (Capital ships move around the station to a better vector to target a module after destroying their previous module target.), https://youtu.be/UQ2xJnRdsoc (Capital ships moving away from a station before attacking a Xenon K.)
+-New feature: Cancelling an Avoid order will disable the Avoid behaviour option in Attack orders in the Behaviour queue. This feature in previous versions prevented the use of the behaviour for only 10 seconds. Note that you can still disable the behaviour on a per-ship basis using the Interact Menu.
+-New feature: Cancelling a Step forward or Withdraw order will disable the Step forward and Withdraw behaviour options in Attack orders in the Behaviour queue. This feature in previous versions prevented the use of the behaviour for only 10 seconds. Note that you can still disable the behaviour on a per-ship basis using the Interact Menu.
+-Bug-fix: Ship preferences for using the Avoid and Step forward/Withdraw behaviours were getting reset at the end of combat.
+-Note: This version should work with 6.x and 5.x of the base game.
+
+v6.0.0003, 11 Feb 2023:
+-NOTE: This version works with BOTH 5.1 and 6.0 beta 3.
+-Tweak: Compatibility with 6.0 beta 3. About half a dozen of DeadAir's AI Tweaks had to be removed because of changes in the 6.0 beta of the base game. 90% of his tweaks are still valid.
+-Bug-fix: XS, S, and M (XSSM) ships were moving away constantly while avoiding - causing them to move out of sector bounds.
+-Bug-fix: XSSM ship behaviours were broken.
+-Bug-fix: XSSM ships: Attacking smaller target when avoiding big target now works properly. E.g. finding targets on their side of the station, moving around the station to attack their target that's on the other side, etc.
+-Bug-fix: L and XL (LXL) ships move to next module target was broken. I.e. after destroying one module target, LXL ships again move to a vector better suited to their next module target - moving away from the station first when required.
+-Tweak: Carriers with ANY subordinates will now maintain distance. The Extension Option, "Carriers attack like destroyers" now works as expected. Previously, even when that option is disabled, carriers were STILL behaving like destroyers IF they had no subordinates that dock on them. In this version, they will only act lke destroyers IF (1) "Carriers attack like destoyers" is enabled; or IF (2) they have no subordinates, AND capital ship wingmen.
+-Tweak: Avoid vectors now incoporate the ship's destination's vector. Previously, the vector they choose to avoid was random.
+-Tweak: Withdraw vectors now incoporate ALL high-risk enemies nearby. Previously, they move away from the position of ALL nearby high-risk enemies - which somtimes is not ideal.
+-Tweak: Move to engage position: Always move to engage position if target is more than 75% of max radar range.
+-Bug-fix: Move to engage position: Prevent loop of move to engage position, attack, move to engage position, attack, etc.
+-Tweak: Coordinated Attack: Allow sequential Coordinated Attacks. Previously, this order wouldn't chain properly because one of their attack orders would get inserted into their order list incorrectly.
+-Bug-fix: Removed changes to order.move.recon.xml because one of the changes has a rare chance of causing the game to stall, making the game unresponsive while still running. May be re-enabled after the bug is tracked down in the future or when DeadAir returns to X4 modding.
+-Bug-fix: Data is cleaned when docked and undocked (in case the ship receives damage while docked). Previously data is cleaned when the ship enters a new sector.
+-Tweak: Optimised the hull/shield damaged event listener.
+-Tweak: Optimised looking for smaller targets instead of avoiding routine.
+-Tweak: Optimised avoid or take risk routine.
+-Bug-fix: Many other bug-fixes.
+
 v5.1.0314, 6 Dec 2022:
 -Tweak: Better performance.
 -Tweak: More reactive withdrawals by listening to "hits to shield and hull events". Previously, the mod only listened to "attacked events" - which occurred milliseconds to a second AFTER hits to shield and hull events - too late sometimes.
