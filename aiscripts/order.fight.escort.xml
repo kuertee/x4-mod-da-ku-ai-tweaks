@@ -72,11 +72,10 @@
 	</add>
 	<add sel="//signal_objects[@param=&quot;'resupply'&quot;]" type="@chance">$kAAIT_restockChance</add>
 <!--
-	Yb    dP 88 .dP"Y8 88 88""Yb 88     888888
-	 Yb  dP  88 `Ybo." 88 88__dP 88     88__
+	  Yb    dP 88 .dP"Y8 88 88""Yb 88     888888
+	   Yb  dP  88 `Ybo." 88 88__dP 88     88__
 		YbdP   88 o.`Y8b 88 88""Yb 88  .o 88""
 		 YP    88 8bodP' 88 88oodP 88ood8 888888
- -->
 -->
 	<add pos="before" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;start&quot;]">
 		<resume label="start" />
@@ -98,6 +97,16 @@
 			<param name="position" value="$kAAIT_orderLocation_pos" />
 			<param name="kAAITParam_iskAAITOrder" value="true" />
 		</run_script>
+	</add>
+	<!-- <add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;start&quot;]">
+		<set_value name="$debugchance" exact="100" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add> -->
+<!-- add. purpose: HACK: copy previous commander's default order back to commander.
+	why: by default, the new commander doesn't acquire the previous commander's default order after the previous commander's death.
+	<do_if value="not $endontargetdeath and @this.assignedcontrolled.commander.isoperational">
+-->
+	<add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;start&quot;]">
+		<include_interrupt_actions ref="kAAIT_CheckDefaultOrderOfCommander" />
 	</add>
 <!-- add after. purpose: check if need to avoid high-risk in the way to the target
 	<attention min="visible">
@@ -143,10 +152,17 @@
 			</do_if>
 		</do_if>
 	</add>
-<!-- add after. purpose: finish.
-	<label name="finish" />
+<!-- add. purpose: HACK: copy previous commander's default order back to commander.
+	why: by default, the new commander doesn't acquire the previous commander's default order after the previous commander's death.
+	<do_if value="not $endontargetdeath and @this.assignedcontrolled.commander.isoperational">
 -->
-	<add pos="after" sel="//attention[@min=&quot;visible&quot;]//label[@name=&quot;finish&quot;]">
+	<add pos="prepend" sel="//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;not $endontargetdeath and @this.assignedcontrolled.commander.isoperational&quot;]">
+		<include_interrupt_actions ref="kAAIT_CheckDefaultOrderOfCommander" />
+	</add>
+<!-- add after. purpose: finish.
+	<wait exact="1ms" />
+-->
+	<add pos="after" sel="//attention[@min=&quot;visible&quot;]//wait[@exact=&quot;1ms&quot;]">
 		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
 <!--
@@ -181,6 +197,16 @@
 			<param name="position" value="$kAAIT_orderLocation_pos" />
 			<param name="kAAITParam_iskAAITOrder" value="true" />
 		</run_script>
+	</add>
+	<!-- <add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;start&quot;]">
+		<set_value name="$debugchance" exact="100" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add> -->
+<!-- add. purpose: HACK: copy previous commander's default order back to commander.
+	why: by default, the new commander doesn't acquire the previous commander's default order after the previous commander's death.
+	<do_if value="not $endontargetdeath and @this.assignedcontrolled.commander.isoperational">
+-->
+	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;start&quot;]">
+		<include_interrupt_actions ref="kAAIT_CheckDefaultOrderOfCommander" />
 	</add>
 <!-- add after. purpose: check if need to avoid high-risk in the way to the target
 	<attention min="unknown">
@@ -226,10 +252,17 @@
 			</do_if>
 		</do_if>
 	</add>
-<!-- add after. purpose: finish.
-	<label name="finish" />
+<!-- add. purpose: HACK: copy previous commander's default order back to commander.
+	why: by default, the new commander doesn't acquire the previous commander's default order after the previous commander's death.
+	<do_if value="not $endontargetdeath and @this.assignedcontrolled.commander.isoperational">
 -->
-	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
+	<add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;not $endontargetdeath and @this.assignedcontrolled.commander.isoperational&quot;]">
+		<include_interrupt_actions ref="kAAIT_CheckDefaultOrderOfCommander" />
+	</add>
+<!-- add after. purpose: finish.
+	<wait exact="1ms" />
+-->
+	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//wait[@exact=&quot;1ms&quot;]">
 		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</add>
 <!-- add. purpose: clean-up.
@@ -308,6 +341,28 @@
 	</add>
 	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//label[@name=&quot;finish&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<!-- <create_order id="'AssignCommander'" object="this.assignedcontrolled" immediate="true"> -->
+	<add pos="before" sel="(//create_order[@id=&quot;'AssignCommander'&quot;][@object=&quot;this.assignedcontrolled&quot;])[1]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' AssignCommander (1)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<add pos="before" sel="(//create_order[@id=&quot;'AssignCommander'&quot;][@object=&quot;this.assignedcontrolled&quot;])[2]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' AssignCommander (2)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<add pos="before" sel="(//create_order[@id=&quot;'AssignCommander'&quot;][@object=&quot;this.assignedcontrolled&quot;])[3]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' AssignCommander (3)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<add pos="before" sel="(//create_order[@id=&quot;'AssignCommander'&quot;][@object=&quot;this.assignedcontrolled&quot;])[4]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' AssignCommander (4)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<add pos="before" sel="(//create_order[@id=&quot;'AssignCommander'&quot;][@object=&quot;this.assignedcontrolled&quot;])[5]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' AssignCommander (5)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<add pos="before" sel="(//create_order[@id=&quot;'AssignCommander'&quot;][@object=&quot;this.assignedcontrolled&quot;])[6]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' AssignCommander (6)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<add pos="before" sel="(//create_order[@id=&quot;'AssignCommander'&quot;][@object=&quot;this.assignedcontrolled&quot;])[7]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' AssignCommander (7)'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
 	</add>
 	<!-- DeadAir Diffs -->
 	<replace sel="/aiscript/attention[@min='visible']/actions/do_if[@value='@$target.pilot.$attacktarget.canbeattacked']/shoot_at[@tolerance='12deg']/@tolerance">4.0deg</replace>

@@ -27,7 +27,7 @@
 						<reset_cue cue="kAAIT2_OnLuaLoaderReady" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="21">
+				<cue name="kAAIT2_Config" namespace="this" version="22">
 					<actions>
 						<set_value name="global.$kAAIT_Data" exact="this" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
@@ -63,6 +63,9 @@
 						<create_group groupname="global.$kAAIT_Data.$ships" />
 						<set_value name="global.$kAAIT_Data.$byShipId" exact="table[]" />
 						<set_value name="global.$kAAITByShipId" exact="global.$kAAIT_Data.$byShipId" comment="shortcut to $byShipId" />
+						<!-- commander defaulr order data
+						in the base game, the replacement commander doesn't acquire the previous commander's default order. this leaves all subordinates to be dumb - sometimes only responding to threads after they've attacked. -->
+						<set_value name="global.$kAAIT_Data.$defaultOrdersByShipId" exact="table[]" />
 					</actions>
 					<patch sinceversion="5">
 						<debug_text text="'sinceversion 5, state: ' + this.state" />
@@ -178,6 +181,10 @@
 							<param name="Prefix" value="'patch 21: should be the same: global.$kAAITByShipId'" />
 						</run_actions>
 					</patch>
+					<patch sinceversion="22">
+						<debug_text text="'patch sinceversion 22, state: ' + this.state" />
+						<set_value name="global.$kAAIT_Data.$defaultOrdersByShipId" exact="table[]" />
+					</patch>
 				</cue>
 			</cues>
 		</cue>
@@ -291,6 +298,9 @@
 						</check_any>
 					</conditions>
 					<actions>
+						<do_if value="global.$kAAIT.$debugChance_idCode?">
+							<remove_value name="global.$kAAIT.$debugChance_idCode" />
+						</do_if>
 						<debug_text text="'global.$kAAIT_Data.$ships.count (pre): ' + global.$kAAIT_Data.$ships.count" chance="@global.$kAAIT_Data.$debugChance" />
 						<do_for_each name="$ship_inList" in="global.$kAAIT_Data.$ships" reverse="true">
 							<do_if value="not @global.$kAAIT_Data.$byShipId.{'$' + $ship_inList.idcode}">
@@ -1465,6 +1475,57 @@
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
+		<cue name="DebugSignalResupply" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<debug_text text="'interact_target: ' + $interact_target + ', ' + $interact_target.knownname + ', ' + $interact_target.idcode" />
+				<signal_objects object="$interact_target" param="'resupply'" param3="100" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="DebugDestroyTarget" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<run_actions ref="DebugData">
+					<param name="Data" value="global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}" />
+					<param name="Prefix" value="'global.$kAAIT_Data.$byShipId.{$' + @$interact_target.idcode + '}'" />
+				</run_actions>
+				<set_value name="$target" exact="@global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}.$attackData.$moduleTarget" />
+				<do_if value="not $target">
+					<set_value name="$target" exact="@global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}.$attackData.$defensibleTarget" />
+				</do_if>
+				<do_if value="not $target">
+					<set_value name="$target" exact="@$interact_target.order.$primarytarget" />
+				</do_if>
+				<do_if value="not $target">
+					<set_value name="$target" exact="@$interact_target.nextorder.$primarytarget" />
+				</do_if>
+				<debug_text text="'$target (pre destruction): ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ')'" />
+				<do_if value="$target">
+					<set_object_hull object="$target" exact="1" />
+					<!-- <destroy_object object="$target" /> -->
+				</do_if>
+				<debug_text text="'$target (post destruction): ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ')'" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
+		<cue name="DebugDestroy" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<debug_text text="'interact_target: ' + $interact_target + ', ' + $interact_target.knownname + ', ' + $interact_target.idcode" />
+				<destroy_object object="$interact_target" />
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
 		<cue name="kAAIT_Debug_InteractMenu" namespace="this">
 			<conditions>
 				<event_cue_signalled cue="md.Interact_Menu_API.Get_Actions" />
@@ -1538,9 +1599,16 @@
 							$callback = DebugSignalResupply
 						]" />
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'debug_destroy',
+							$section = 'main',
+							$text = 'debug: destroy this ship',
+							$icon = null,
+							$callback = DebugDestroy
+						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
 							$id = 'debug_destroy_target',
 							$section = 'main',
-							$text = 'debug: destroy the target',
+							$text = 'debug: destroy target of ship',
 							$icon = null,
 							$callback = DebugDestroyTarget
 						]" />
@@ -1638,46 +1706,6 @@
 					<estimate_travel_time result="$kuertee_eta" start="player.ship" target="player.target" ship="player.ship" />
 					<debug_text text="'$kuertee_eta: ' + $kuertee_eta" />
 				</do_elseif>
-				<reset_cue cue="this" />
-			</actions>
-		</cue>
-		<cue name="DebugSignalResupply" namespace="this">
-			<conditions>
-				<event_cue_signalled />
-			</conditions>
-			<actions>
-				<set_value name="$interact_target" exact="@event.param.$object" />
-				<debug_text text="'interact_target: ' + $interact_target + ', ' + $interact_target.knownname + ', ' + $interact_target.idcode" />
-				<signal_objects object="$interact_target" param="'resupply'" param3="100" />
-				<reset_cue cue="this" />
-			</actions>
-		</cue>
-		<cue name="DebugDestroyTarget" namespace="this">
-			<conditions>
-				<event_cue_signalled />
-			</conditions>
-			<actions>
-				<set_value name="$interact_target" exact="@event.param.$object" />
-				<run_actions ref="DebugData">
-					<param name="Data" value="global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}" />
-					<param name="Prefix" value="'global.$kAAIT_Data.$byShipId.{$' + @$interact_target.idcode + '}'" />
-				</run_actions>
-				<set_value name="$target" exact="@global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}.$attackData.$moduleTarget" />
-				<do_if value="not $target">
-					<set_value name="$target" exact="@global.$kAAIT_Data.$byShipId.{'$' + @$interact_target.idcode}.$attackData.$defensibleTarget" />
-				</do_if>
-				<do_if value="not $target">
-					<set_value name="$target" exact="@$interact_target.order.$primarytarget" />
-				</do_if>
-				<do_if value="not $target">
-					<set_value name="$target" exact="@$interact_target.nextorder.$primarytarget" />
-				</do_if>
-				<debug_text text="'$target (pre destruction): ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ')'" />
-				<do_if value="$target">
-					<set_object_hull object="$target" exact="1" />
-					<!-- <destroy_object object="$target" /> -->
-				</do_if>
-				<debug_text text="'$target (post destruction): ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ')'" />
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
