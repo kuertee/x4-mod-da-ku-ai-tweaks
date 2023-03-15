@@ -282,10 +282,14 @@
 							<do_else>
 								<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}" />
 							</do_else>
+							<!-- <do_elseif value="not @event.object.order.$kAAITParam_iskAAITOrder" comment="kuda orders will clean themselves up after they complete">
+								<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}" />
+							</do_elseif> -->
 						</do_if>
 						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}?">
 							<remove_from_group group="global.$kAAIT_Data.$ships" object="event.object" />
 						</do_if>
+						<debug_text text="'event.object.order.$kAAITParam_iskAAITOrder (post): ' + @event.object.order.$kAAITParam_iskAAITOrder" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						<debug_text text="'global.$kAAIT_Data.$byShipId.{$' + event.object.idcode + '} (post): ' + @global.$kAAIT_Data.$byShipId.{'$' + event.object.idcode}" chance="if @event.object.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					</actions>
 				</cue>
@@ -298,9 +302,11 @@
 						</check_any>
 					</conditions>
 					<actions>
+						<!-- <set_value name="global.$kAAIT_Data.$debugChance" exact="100" /> -->
 						<do_if value="global.$kAAIT.$debugChance_idCode?">
 							<remove_value name="global.$kAAIT.$debugChance_idCode" />
 						</do_if>
+						<debug_text text="event.name" chance="@global.$kAAIT_Data.$debugChance" />
 						<debug_text text="'global.$kAAIT_Data.$ships.count (pre): ' + global.$kAAIT_Data.$ships.count" chance="@global.$kAAIT_Data.$debugChance" />
 						<do_for_each name="$ship_inList" in="global.$kAAIT_Data.$ships" reverse="true">
 							<do_if value="not @global.$kAAIT_Data.$byShipId.{'$' + $ship_inList.idcode}">
@@ -316,29 +322,41 @@
 						<debug_text text="'global.$kAAIT_Data.$byShipId.keys.count (pre): ' + global.$kAAIT_Data.$byShipId.keys.count" chance="@global.$kAAIT_Data.$debugChance" />
 						<do_for_each name="$idCode_inList" valuename="$data_inList" in="global.$kAAIT_Data.$byShipId" reverse="true">
 							<debug_text text="$idCode_inList + ': ' + $data_inList" chance="@global.$kAAIT_Data.$debugChance" />
-							<do_for_each name="$key" in="$data_inList.keys.list">
+							<set_value name="$isCleanThisShip" exact="true" />
+							<do_if value="@$data_inList.$ship.isclass.ship">
+								<do_for_each name="$order" in="$data_inList.$ship.orders">
+									<do_if value="$order.id == 'Attack' or $order.id == 'TacticalOrder' or @$order.$kAAITParam_iskAAITOrder">
+										<set_value name="$isCleanThisShip" exact="false" />
+										<break />
+									</do_if>
+								</do_for_each>
+							</do_if>
+							<debug_text text="$idCode_inList + ' $isCleanThisShip: ' + $isCleanThisShip" chance="@global.$kAAIT_Data.$debugChance" />
+							<do_if value="$isCleanThisShip">
+								<do_for_each name="$key" in="$data_inList.keys.list">
+									<do_if value="
+										not [
+											'$kAAIT_isAllowOtherTargets_user',
+											'$kAAIT_isAvoidHighRisk_user',
+											'$kAAIT_isStepForwardWithdraw_user',
+											'$ship'
+										].indexof.{$key}">
+										<remove_value name="$data_inList.{$key}" />
+									</do_if>
+								</do_for_each>
 								<do_if value="
-									not [
-										'$kAAIT_isAllowOtherTargets_user',
-										'$kAAIT_isAvoidHighRisk_user',
-										'$kAAIT_isStepForwardWithdraw_user',
-										'$ship'
-									].indexof.{$key}">
-									<remove_value name="$data_inList.{$key}" />
+									(not global.$kAAIT_Data.$byShipId.{$idCode_inList}.keys.count) or
+									(
+										global.$kAAIT_Data.$byShipId.{$idCode_inList}.keys.count == 1 and
+										global.$kAAIT_Data.$byShipId.{$idCode_inList}.$ship?
+									)
+								">
+									<do_if value="@global.$kAAIT_Data.$ships.indexof.{$data_inList.$ship}">
+										<remove_from_group group="global.$kAAIT_Data.$ships" object="$data_inList.$ship" />
+									</do_if>
+									<remove_value name="global.$kAAIT_Data.$byShipId.{$idCode_inList}" />
+									<debug_text text="$idCode_inList + ' removing ship from list.'" chance="@global.$kAAIT_Data.$debugChance" />
 								</do_if>
-							</do_for_each>
-							<do_if value="
-								(not global.$kAAIT_Data.$byShipId.{$idCode_inList}.keys.count) or
-								(
-									global.$kAAIT_Data.$byShipId.{$idCode_inList}.keys.count == 1 and
-									global.$kAAIT_Data.$byShipId.{$idCode_inList}.$ship?
-								)
-							">
-								<do_if value="@global.$kAAIT_Data.$ships.indexof.{$data_inList.$ship}">
-									<remove_from_group group="global.$kAAIT_Data.$ships" object="$data_inList.$ship" />
-								</do_if>
-								<remove_value name="global.$kAAIT_Data.$byShipId.{$idCode_inList}" />
-								<debug_text text="$idCode_inList + ' removing ship from list.'" chance="@global.$kAAIT_Data.$debugChance" />
 							</do_if>
 						</do_for_each>
 						<debug_text text="'global.$kAAIT_Data.$ships.count (post data clean-up): ' + global.$kAAIT_Data.$ships.count" chance="@global.$kAAIT_Data.$debugChance" />
@@ -1371,12 +1389,14 @@
 			<actions>
 				<set_value name="$ship" exact="@event.param.$object" />
 				<debug_text text="'$ship: ' + $ship.knownname + ' (' + $ship.idcode + ')'" />
+				<debug_text text="'$escortgroup: ' + @$ship.assignedaipilot.$escortgroup" />
 				<debug_text text="'assignedaipilot: ' + @$ship.assignedaipilot.knownname" />
 				<debug_text text="'defencenpc: ' + @$ship.defencenpc.knownname" />
 				<set_value name="$entity" exact="$ship.assignedaipilot" />
 				<do_if value="not $entity">
 					<set_value name="$entity" exact="$ship.defencenpc" />
 				</do_if>
+				<debug_text text="'entity: ' + @$entity.knownname + ' exists: ' + @$entity.exists + ' isoperational: ' + @$entity.isoperational" />
 				<do_if value="@$entity.$kAAIT_attackers_timeAdded">
 					<run_actions ref="DebugData">
 						<param name="Data" value="(player.age - @$entity.$kAAIT_attackers_timeAdded) + ' seconds ago'" />

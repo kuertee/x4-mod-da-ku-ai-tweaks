@@ -154,57 +154,32 @@
 			<check_value value="@event.param.$primarytarget != $primarytarget" />
 		</check_all>
 	</replace>
+<!-- add. purpose: add handlers.
+	<interrupts>
+-->
+	<add pos="prepend" sel="//interrupts">
+		<handler ref="kAAIT_Handler_OrderNewSubordinateToAttack" />
+	</add>
 <!-- add. purpose: debug
 	<init>
 -->
 	<add pos="prepend" sel="//init">
 		<!-- <set_value name="$debugchance" exact="100" /> -->
-		<set_value name="$kAAIT_detail_debugChance" exact="100" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 <!-- add after.
-	purpose: send attack command to subordinates immediately.
-	purpose: check start avoid. i.e. gravidar events not soon enough if already near a big enemy
+	purpose: init, check avoidance.
+	but do not actually avoid until just before the actual attack (<run_script name="$DefensibleScript">)
+	so that other operations (e.g. order subordinates) can occur.
 	<label name="start" />
 -->
 	<add pos="after" sel="//label[@name=&quot;start&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
-			<!-- send attack orders to subordinates immediately -->
-			<do_if value="this.assignedcontrolled.subordinates.count">
-				<set_value name="$kAAIT_target" exact="$primarytarget" />
-				<do_if value="$kAAIT_target.defensible">
-					<set_value name="$kAAIT_target" exact="$kAAIT_target.defensible"/>
-				</do_if>
-				<debug_text text="@this.assignedcontrolled.idcode + ' @$kAAIT_target: ' + @$kAAIT_target.knownname + ', ' + @$kAAIT_target.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detail_debugChance then @global.$kAAIT_Data.$debugChance else 0" />
-				<do_for_each name="$subordinate_inList" in="this.assignedcontrolled.subordinates">
-					<do_if value="$subordinate_inList.assignment == assignment.attack">
-						<set_value name="$kAAIT_target_attack" exact="$kAAIT_target" />
-						<!-- <include_interrupt_actions ref="kAAIT_Order_AttackOther" /> -->
-						<do_if value="not @global.$kAAITByShipId.{'$' + @$subordinate_inList.idcode}.$attackData.$defensibleTarget.isoperational">
-							<set_value name="$kAAIT_isAttacking" exact="false" />
-							<do_for_each name="$kAAIT_order" in="$subordinate_inList.orders">
-								<do_if value="$kAAIT_order.id == 'Attack'">
-									<set_value name="$kAAIT_isAttacking" exact="true" />
-									<break />
-								</do_if>
-							</do_for_each>
-							<do_if value="not $kAAIT_isAttacking">
-								<create_order object="$subordinate_inList" id="'Attack'" immediate="true">
-									<param name="primarytarget" value="$kAAIT_target_attack" />
-									<param name="secondarytargets" value="$secondarytargets" />
-									<param name="pursuedistance" value="$subordinate_inList.maxradarrange" />
-									<param name="pursuetargets" value="$pursuetargets" />
-									<!-- <param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
-									<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" /> -->
-									<param name="debugchance" value="@$debugchance"/>
-								</create_order>
-							</do_if>
-						</do_if>
-					</do_if>
-				</do_for_each>
-			</do_if>
 			<!-- init and test avoidance -->
 			<include_interrupt_actions ref="kAAIT_Init" />
+			<do_if value="not $primarytarget_orig?">
+				<set_value name="$primarytarget_orig" exact="$primarytarget" />
+			</do_if>
 			<do_if value="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]">
 				<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 			</do_if>
@@ -212,17 +187,13 @@
 				<set_value name="$kAAIT_test_target_isAvoid" exact="null" comment="defaults to find big enemies nearby" />
 			</do_else>
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
-			</do_if>
 		</do_if>
 	</add>
 <!-- add. purpose: debug
 	<do_if value="not $target">
 -->
 	<add pos="before" sel="//do_if[@value=&quot;not $target&quot;]">
-		<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ' canbeattacked: ' + @$target.canbeattacked" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detail_debugChance then @global.$kAAIT_Data.$debugChance else 0" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ' canbeattacked: ' + @$target.canbeattacked" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 <!-- add before. purpose: update primarytarget
 	<do_else>
@@ -238,11 +209,68 @@
 -->
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
-			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}?">
-				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
-				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
+		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
+		</do_if>
+	</add>
+<!--
+	remove then add.
+	purpose: order subordinates FIRST before moving to within attack distance of target.
+	why? because most often the commander will be attacking on its own before its subordinates catch up.
+-->
+	<remove sel="//do_if[@value=&quot;this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance&quot;]" />
+	<add pos="before" sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]">
+		<set_value name="$kAAIT_isOrderSubordinatesNow" exact="
+			this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange * 2
+		" />
+	</add>
+	<add sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]" type="@chance">if $kAAIT_isOrderSubordinatesNow then 100 else 0</add>
+	<add pos="after" sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]">
+		<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance">
+			<!-- ... and i am allowed to pursue, -->
+			<do_if value="$pursuetargets or ($refobject.bboxdistanceto.{$target} le $pursuedistance)">
+				<debug_text text="'target out of range and we are allowed to pursue. distance to target: %skm pursuing.'.[$refobject.bboxdistanceto.{$target} / 1000]" chance="$debugchance"/>
+				<!-- pursue. -->
+				<!-- switched move.generic condition to seeing the target rather than being in the same zone. if target is in sight, rely on combat movement. -->
+				<do_if value="not this.assignedcontrolled.cansee.{$target}">
+					<run_script name="'move.generic'" result="$movesuccess">
+						<param name="destination" value="$target"/>
+						<param name="activepatrol" value="$allowothertargets and not $boardingbehavior"/>
+						<param name="targetclasses" value="$targetclasses"/>
+						<param name="recallsubordinates" value="false"/>
+						<param name="radius" value="$radius"/>
+						<param name="radiusanchorpos" value="$radiusanchorpos"/>
+						<param name="radiusanchorspace" value="$radiusanchorspace"/>
+						<param name="strictblacklist" value="$internalorder"/>
+						<param name="pursuetargets" value="$pursuetargets"/>
+						<param name="escort" value="$escort"/>
+						<param name="pursuedistance" value="$pursuedistance"/>
+						<param name="stopondetect" value="$target"/>
+						<param name="debugchance" value="$debugchance"/>
+					</run_script>
+					<!-- Target can be destroyed while flying to it -->
+					<do_if value="not $target.exists or $target.iswreck">
+						<debug_text text="'target was destroyed while we were in pursuit. breaking off attack.'" chance="$debugchance"/>
+						<resume label="acquirenewtarget"/>
+					</do_if>
+					<do_elseif value="not $movesuccess">
+						<do_if value="@this.assignedcontrolled.order.isrunning">
+							<set_order_failed order="this.assignedcontrolled.order" text="{1045, 101}" comment="Unable to reach destination."/>
+						</do_if>
+						<debug_text text="'Unable to move to target possibly due to blacklist. breaking off attack.'" chance="$debugchance"/>
+						<resume label="acquirenewtarget"/>
+					</do_elseif>
+					<resume label="fight"/>
+				</do_if>
 			</do_if>
+			<!-- ... if i am not allowed to pursue, -->
+			<do_else>
+				<!-- break off attack. -->
+				<debug_text text="'target is either not in the same sector or not within my operational range and i am not authorized to pursue. breaking off attack.\n  my sector: %s\n target sector: %s\n distance to target: %s\n max distance in 10 minutes: %s\n pursue distance: %s'.[this.sector, $target.sector, $refobject.distanceto.{$target}, this.ship.maxspeed*600, $pursuedistance]" chance="$debugchance"/>
+				<set_value name="$target" exact="null"/>
+				<resume label="acquirenewtarget"/>
+			</do_else>
 		</do_if>
 	</add>
 <!-- add before. purpose: debug.
@@ -299,11 +327,19 @@
 	<run_script name="$DefensibleScript">
 -->
 	<add pos="before" sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
+		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_avoidEnemy: ' + @$kAAIT_result_avoidEnemy.knownname + ', ' + @$kAAIT_result_avoidEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+			</do_if>
+		</do_if>
 		<debug_text text="@this.assignedcontrolled.idcode + ' run_script ' + $DefensibleScript" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 	<add sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
 		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 		<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
+		<param name="kAAITParam_isAIOrder" value="this.assignedcontrolled.order.istemporary" />
 	</add>
 <!-- add after. purpose: cleanup.
 	<label name="finish" />

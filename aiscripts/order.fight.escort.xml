@@ -139,6 +139,25 @@
 			</do_if>
 		</do_if>
 	</add>
+<!-- add after.
+	purpose: signal commander of this new subordinate.
+	why? because if the commander is already attacking when this new subordinate is added,
+	this subordinate will never get the commander's attack order until after the commander is finished its DefensibleScript
+	and has run through its order.fight.attack.object script - which is sometimes too late.
+	this signal will tell the commander a new subordinate has been added and will give this new subordinates its orders even
+	during the commander's DefensibleScript. see kAAIT_Handler_OrderNewSubordinateToAttack.
+	<attention min="visible">
+		...
+		<do_if value="$target.isoperational">
+			...
+			<do_if value="@this.assignedcontrolled.order.id != 'SupplyFleet'">
+				<add_to_group groupname="$leaderpilot.$escortgroup" object="this.ship" />
+-->
+	<add pos="after" sel="//attention[@min=&quot;visible&quot;]//do_if[@value=&quot;$target.isoperational&quot;]//add_to_group[@groupname=&quot;$leaderpilot.$escortgroup&quot;][@object=&quot;this.ship&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+			<signal_objects object="this.assignedcontrolled.commander" param="'new_subordinate'" param2="this.assignedcontrolled" />
+		</do_if>
+	</add>
 <!-- add before. purpose: do not create formation if commander is attacking.
 	<create_formation leader="$target" follower="this.assignedcontrolled" formation="$currentformation" param="$formationparam" maxshipsperline="$maxshipsperline" rollmembers="$rollmembers" rollformation="$rollformation"/>
 -->
@@ -238,6 +257,23 @@
 				</do_if>
 			</do_if>
 		</do_if>
+	</add>
+<!-- add after.
+	purpose: signal commander of this new subordinate.
+	why? because if the commander is already attacking when this new subordinate is added,
+	this subordinate will never get the commander's attack order until after the commander is finished its DefensibleScript
+	and has run through its order.fight.attack.object script - which is sometimes too late.
+	this signal will tell the commander a new subordinate has been added and will give this new subordinates its orders even
+	during the commander's DefensibleScript. see kAAIT_Handler_OrderNewSubordinateToAttack.
+	<attention min="unknown">
+		...
+		<do_if value="$target.isoperational">
+			...
+			<do_if value="@this.assignedcontrolled.order.id != 'SupplyFleet'">
+				<add_to_group groupname="$leaderpilot.$escortgroup" object="this.ship" />
+-->
+	<add pos="after" sel="//attention[@min=&quot;unknown&quot;]//do_if[@value=&quot;$target.isoperational&quot;]//add_to_group[@groupname=&quot;$leaderpilot.$escortgroup&quot;][@object=&quot;this.ship&quot;]">
+		<signal_objects object="this.assignedcontrolled.commander" param="'new_subordinate'" param2="this.assignedcontrolled" />
 	</add>
 <!-- add before. purpose: do not create formation if commander is attacking.
 	<create_formation leader="$target" follower="this.assignedcontrolled" formation="$currentformation" param="$formationparam" maxshipsperline="$maxshipsperline" rollmembers="$rollmembers" rollformation="$rollformation"/>

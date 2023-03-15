@@ -62,6 +62,7 @@
 	</init>
 	<attention min="unknown">
 		<actions>
+			<set_value name="$kAAIT_detailedDebugChance" exact="100" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ', ' + @$target.isoperational + ', ' + @$target.hullpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.knownname + ' ' + @this.kAAIT_data.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="not @$target.isoperational">
@@ -86,7 +87,6 @@
 				<wait min="1s" max="3s" />
 			</do_if>
 			<label name="start"/>
-			<set_value name="$kAAIT_detailedDebugChance" exact="100" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 			<set_value name="$isShortAvoidance" exact="false" />
@@ -186,9 +186,9 @@
 			<!-- end: finalise vector -->
 			<!-- start: get distance -->
 			<set_value name="$pitch_avoid" exact="($pitch_avoid + $pitch_adj) * pi / 180" />
-			<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw?">
+			<!-- <do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw?">
 				<include_interrupt_actions ref="kAAIT_GetSkillVars" />
-			</do_if>
+			</do_if> -->
 			<do_if value="$isShortAvoidance">
 				<set_value name="$distAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw * 0.5" />
 			</do_if>
@@ -278,6 +278,7 @@
 				<resume label="finish" />
 			</do_if>
 			<do_if value="not @$kAAIT_isCancelAvoidance">
+				<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.isoperational: ' + @this.assignedcontrolled.isoperational" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw">
 					<resume label="finish" />
 				</do_if>
@@ -331,7 +332,7 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
-			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
+			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" exact="false" />
 				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
 				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
@@ -346,6 +347,8 @@
 		</do_if>
 		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" exact="false" />
+		</do_if>
+		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
