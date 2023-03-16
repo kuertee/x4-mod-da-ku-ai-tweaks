@@ -215,19 +215,26 @@
 		</do_if>
 	</add>
 <!--
-	remove then add.
-	purpose: order subordinates FIRST before moving to within attack distance of target.
-	why? because most often the commander will be attacking on its own before its subordinates catch up.
+	purpose: swap "move to target" then "order subordinates" to "order subordinates" then "move to target" (for kuda-enabled ships only).
+	how? by setting a chance var that disables the use of the "move to target"
+	then adding a copy of the "move to target" to after the "order subordinates" that IS enabled (with the chance var).
+	why? because more of than not, the commander will be attacking (note the subordinates do not have their attack orders without the functions swapped)
+	into the target without his subordinates.
+	result: the subordinates WILL get the attack order before the commander moves into attack.
+	note: the functions are only swapped on two conditions: (1) the ship is kuda-enabled, (2) the target is within 2 x maxradar range.
+	reasoning: if the ship has acquired the attack order against the target, then the ship already "knows" of the target.
+	there's no point in holding back subordinates' attack orders simply because the "cansee.{$target}" (i.e. in the ship's gravidar) property is false.
+	the base-game implementation assumes the subordinates will stick to formation, but that is more often not the case.
 -->
-	<remove sel="//do_if[@value=&quot;this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance&quot;]" />
 	<add pos="before" sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]">
-		<set_value name="$kAAIT_isOrderSubordinatesNow" exact="
-			this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange * 2
-		" />
+		<set_value name="$kAAIT_isOrderThenMove" exact="false" />
+		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+			<set_value name="$kAAIT_isOrderThenMove" exact="this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange * 2" />
+		</do_if>
 	</add>
-	<add sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]" type="@chance">if $kAAIT_isOrderSubordinatesNow then 100 else 0</add>
+	<add sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]" type="@chance">if $kAAIT_isOrderThenMove then 0 else 100</add>
 	<add pos="after" sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]">
-		<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance">
+		<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance" chance="if $kAAIT_isOrderThenMove then 100 else 0">
 			<!-- ... and i am allowed to pursue, -->
 			<do_if value="$pursuetargets or ($refobject.bboxdistanceto.{$target} le $pursuedistance)">
 				<debug_text text="'target out of range and we are allowed to pursue. distance to target: %skm pursuing.'.[$refobject.bboxdistanceto.{$target} / 1000]" chance="$debugchance"/>
