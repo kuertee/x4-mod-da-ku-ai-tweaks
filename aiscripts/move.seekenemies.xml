@@ -1,5 +1,18 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
+<!-- purpose: set allowothertargets from ship settings
+  <param name="allowothertargets" default="true"/>
+-->
+  <replace sel="//params/param[@name=&quot;allowothertargets&quot;]">
+    <param name="allowothertargets" default="
+      if this.ship.isplayerowned
+      then (
+        if global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAllowOtherTargets_user?
+        then global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAllowOtherTargets_user
+        else true
+      ) else true" />
+    </replace>
+  <!-- DeadAir Diffs -->
   <replace sel="/aiscript/attention[@min='unknown']/actions/move_to/interrupt/conditions/check_any/check_all[2]/check_value[@value='event.param2.zone.policefaction == this.trueowner']/@value">(event.param2.zone.policefaction == this.trueowner) or (event.param2.sector.policefaction == this.trueowner) or (event.param2.sector.owner == this.trueowner)</replace>
   <replace sel="/aiscript/attention[@min='unknown']/actions/move_to/interrupt/conditions/check_any/check_all[2]/check_value[@value='not this.hasrelation.enemy.{event.param2.zone.policefaction}']/@value">not (this.hasrelation.enemy.{event.param2.zone.policefaction} or this.hasrelation.enemy.{event.param2.sector.policefaction})</replace>
   <replace sel="/aiscript/attention[@min='unknown']/actions/move_to/interrupt/conditions/check_any/check_all[2]/check_value[@value='this.assignedcontrolled.cansee.{event.param2}']/@value">event.param2.sector == this.sector and event.param2.sector.exists</replace>

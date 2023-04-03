@@ -35,6 +35,139 @@
         <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
         <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" comment="not performing a kAAIT order" />
         <!-- <check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isInited" comment="not inited by kAAIT" /> -->
+        <check_any>
+          <check_all       comment="kuda-enabled">
+            <check_value   comment="per-global and per-ship setting are set" value="
+              if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+              (
+                (
+                  this.assignedcontrolled.isplayerowned and
+                  (
+                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+                    this.assignedcontrolled.primarypurpose != purpose.fight
+                  ) and
+                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk and
+                  (
+                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+                  )
+                ) or
+                (
+                  (not this.assignedcontrolled.isplayerowned) and
+                  (
+                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+                    this.assignedcontrolled.primarypurpose != purpose.fight
+                  ) and
+                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk_allFactions
+                ) or
+                (
+                  this.assignedcontrolled.isplayerowned and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip and
+                  (
+                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+                  )
+                ) or
+                (
+                  this.assignedcontrolled.isplayerowned and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation and
+                  (
+                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+                  )
+                ) or
+                (
+                  (not this.assignedcontrolled.isplayerowned) and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip_allFactions
+                ) or
+                (
+                  (not this.assignedcontrolled.isplayerowned) and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation_allFactions
+                )
+              ) then true else false
+            " />
+            <check_any>
+              <check_value   comment="ship is not a fighter" value="this.assignedcontrolled.primarypurpose != purpose.fight" />
+              <check_all     comment="carrier that is not allowed to fight">
+                <check_value comment="ship is a carrier" value="this.assignedcontrolled.type == shiptype.carrier" />
+                <check_any comment="carrier is not allowed to fight">
+                  <check_all>
+                    <check_value value="this.isplayerowned" />
+                    <check_value value="not global.$kAAIT_Data.$isCarriersAttackLikeDestroyers" />
+                  </check_all>
+                  <check_value value="not global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions" />
+                </check_any>
+              </check_all>
+            </check_any>
+          </check_all>
+          <check_all     comment="not kuda-enabled">
+            <check_value value="
+              if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+              (
+                (
+                  this.assignedcontrolled.isplayerowned and
+                  (
+                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+                    this.assignedcontrolled.primarypurpose != purpose.fight
+                  ) and
+                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk and
+                  (
+                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+                  )
+                ) or
+                (
+                  (not this.assignedcontrolled.isplayerowned) and
+                  (
+                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
+                    this.assignedcontrolled.primarypurpose != purpose.fight
+                  ) and
+                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk_allFactions
+                ) or
+                (
+                  this.assignedcontrolled.isplayerowned and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip and
+                  (
+                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+                  )
+                ) or
+                (
+                  this.assignedcontrolled.isplayerowned and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation and
+                  (
+                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+                  )
+                ) or
+                (
+                  (not this.assignedcontrolled.isplayerowned) and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip_allFactions
+                ) or
+                (
+                  (not this.assignedcontrolled.isplayerowned) and
+                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
+                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation_allFactions
+                )
+              ) then false else true
+            " />
+          </check_all>
+        </check_any>
         <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler auto event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
     </check_all>
 	</replace>

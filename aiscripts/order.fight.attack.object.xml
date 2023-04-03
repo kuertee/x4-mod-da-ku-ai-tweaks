@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <diff>
-<!-- add. purpose: kaait data
-	<params>
-		<param name="allowothertargets" default="if this.ship.isplayerowned then false else true" />
+<!-- purpose: set allowothertargets from ship settings
+	<param name="allowothertargets" default="if this.ship.isplayerowned then false else true" type="bool" text="{1041, 10010}" comment="Attack all enemies. Whether the script shall keep running when all primary targets have been destroyed. Default: true for non-player-owned ships" />
 -->
-	<replace sel="//params/param[@name=&quot;allowothertargets&quot;]/@default">if (not this.assignedcontrolled.isplayerowned) then true else (if global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAllowOtherTargets_user? then global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAllowOtherTargets_user else false)</replace>
+	<replace sel="//params/param[@name=&quot;allowothertargets&quot;]">
+	<param name="allowothertargets" default="
+		if this.ship.isplayerowned
+		then (
+			if global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAllowOtherTargets_user?
+			then global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAllowOtherTargets_user
+			else false
+		) else true" type="bool" text="{1041, 10010}" />
+	</replace>
 <!-- add. purpose: kaait data
 	<params>
 -->
@@ -225,14 +232,18 @@
 	reasoning: if the ship has acquired the attack order against the target, then the ship already "knows" of the target.
 	there's no point in holding back subordinates' attack orders simply because the "cansee.{$target}" (i.e. in the ship's gravidar) property is false.
 	the base-game implementation assumes the subordinates will stick to formation, but that is more often not the case.
+	move to target node:
+		<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance">
+	order subordinates node:
+		<do_if value="this.assignedcontrolled.subordinates.count and this.$escortgroup?">
 -->
-	<add pos="before" sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]">
+	<add pos="before" sel="//do_if[@value=&quot;this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance&quot;]">
 		<set_value name="$kAAIT_isOrderThenMove" exact="false" />
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<set_value name="$kAAIT_isOrderThenMove" exact="this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange * 2" />
 		</do_if>
 	</add>
-	<add sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]" type="@chance">if $kAAIT_isOrderThenMove then 0 else 100</add>
+	<add sel="//do_if[@value=&quot;this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance&quot;]" type="@chance">if $kAAIT_isOrderThenMove then 0 else 100</add>
 	<add pos="after" sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]">
 		<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance" chance="if $kAAIT_isOrderThenMove then 100 else 0">
 			<!-- ... and i am allowed to pursue, -->
@@ -280,10 +291,37 @@
 			</do_else>
 		</do_if>
 	</add>
-<!-- add before. purpose: debug.
+<!-- add before. purpose: move to engage pos if required.
+	note: because we're adding another "move to target", 2 of this diff is required.
 	<run_script name="'move.generic'" result="$movesuccess">
 -->
-	<add pos="before" sel="//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
+	<add pos="before" sel="(//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[1]">
+		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+			<debug_text text="@this.assignedcontrolled.idcode + ' target out of range. move to engage if station. otherwise use move generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="
+				$primarytarget.isclass.station and
+				this.assignedcontrolled.bboxdistanceto.{$target} gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max and
+				this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+				(
+					this.assignedcontrolled.type != shiptype.carrier or
+					(
+						(
+							this.isplayerowned and
+							global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
+						) or
+						(
+							(not this.isplayerowned) and
+							global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
+						)
+					)
+				)
+			">
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
+				<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
+			</do_if>
+		</do_if>
+	</add>
+	<add pos="before" sel="(//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[2]">
 		<do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw) and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<debug_text text="@this.assignedcontrolled.idcode + ' target out of range. move to engage if station. otherwise use move generic.'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="
@@ -310,9 +348,13 @@
 		</do_if>
 	</add>
 <!-- add. purpose: pass data to first move to target.
+	note: because we're adding another "move to target", 2 of this diff is required.
 	<run_script name="'move.generic'" result="$movesuccess">
 -->
-	<add sel="//run_script[@name=&quot;'move.generic'&quot;]">
+	<add sel="(//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[1]">
+		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
+	</add>
+	<add sel="(//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[2]">
 		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 	</add>
 <!-- replace. purpose: if ship has commander, find ships from the commander.
@@ -346,7 +388,6 @@
 	<add sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
 		<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
 		<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
-		<param name="kAAITParam_isAIOrder" value="this.assignedcontrolled.order.istemporary" />
 	</add>
 <!-- add after. purpose: cleanup.
 	<label name="finish" />

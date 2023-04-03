@@ -425,16 +425,32 @@
 				<set_value name="$isDisallow_stepForwardWithdraw" exact="false" />
 				<do_for_each name="$ship" in="$interact_ships">
 					<do_if value="$ship.isclass.ship">
-						<do_for_each name="$order" in="$ship.orders">
-							<do_if value="$order.$allowothertargets?">
-								<do_if value="$order.$allowothertargets">
+						<!-- <debug_text text="'$ship.kAAIT_isAllowOtherTargets_user: ' + $ship + ': ' + @global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" /> -->
+						<!-- <do_if value="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user?"> -->
+							<do_if value="@global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user">
+								<set_value name="$isDisallow_attackAllEnemies" exact="true" />
+							</do_if>
+							<do_else>
+								<set_value name="$isAllow_attackAllEnemies" exact="true" />
+							</do_else>
+						<!-- </do_if>
+						<do_else>
+							<set_value name="$isDisallow_attackAllEnemies" exact="true" />
+							<set_value name="$isAllow_attackAllEnemies" exact="true" />
+						</do_else> -->
+						<!-- <do_else>
+							<do_for_each name="$order" in="$ship.orders">
+								<do_if value="
+									(not $order.$allowothertargets?) or
+									$order.$allowothertargets
+								">
 									<set_value name="$isDisallow_attackAllEnemies" exact="true" />
 								</do_if>
-								<do_if value="not $order.$allowothertargets">
+								<do_else>
 									<set_value name="$isAllow_attackAllEnemies" exact="true" />
-								</do_if>
-							</do_if>
-						</do_for_each>
+								</do_else>
+							</do_for_each>
+						</do_else> -->
 						<do_if value="
 							(
 								(not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user?) and
@@ -459,24 +475,25 @@
 						<do_else>
 							<set_value name="$isAllow_Avoid" exact="true" />
 						</do_else>
-						<do_if value="
-							(
-								(not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user?) and
-								$ship.isclass.[class.ship_l, class.ship_xl] and
+						<do_if value="$ship.isclass.[class.ship_l, class.ship_xl]">
+							<do_if value="
 								(
-									global.$kAAIT_Data.$lxl_isStepForward_vShip or
-									global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip or
-									global.$kAAIT_Data.$lxl_isStepForward_vStation or
-									global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation
-								)
-							) or
-							@global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user
-						">
-							<set_value name="$isDisallow_stepForwardWithdraw" exact="true" />
+									(not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user?) and
+									(
+										global.$kAAIT_Data.$lxl_isStepForward_vShip or
+										global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip or
+										global.$kAAIT_Data.$lxl_isStepForward_vStation or
+										global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation
+									)
+								) or
+								@global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user
+							">
+								<set_value name="$isDisallow_stepForwardWithdraw" exact="true" />
+							</do_if>
+							<do_else>
+								<set_value name="$isAllow_stepForwardWithdraw" exact="true" />
+							</do_else>
 						</do_if>
-						<do_else>
-							<set_value name="$isAllow_stepForwardWithdraw" exact="true" />
-						</do_else>
 						<do_if value="
 							$isAllow_attackAllEnemies and
 							$isDisallow_attackAllEnemies and
@@ -488,6 +505,8 @@
 						</do_if>
 					</do_if>
 				</do_for_each>
+				<!-- <debug_text text="'$isAllow_attackAllEnemies: ' + $isAllow_attackAllEnemies" /> -->
+				<!-- <debug_text text="'$isDisallow_attackAllEnemies: ' + $isDisallow_attackAllEnemies" /> -->
 				<do_for_each name="$section" in="$sections">
 					<do_if value="$isAllow_attackAllEnemies">
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
@@ -563,13 +582,13 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Data.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" exact="true" />
 						<do_for_each name="$order" in="$ship.orders">
 							<do_if value="$order.$allowothertargets?">
 								<!-- <set_value name="$order.$allowothertargets" exact="true" /> -->
 								<edit_order_param order="$order" param="'allowothertargets'" value="true" />
 							</do_if>
 						</do_for_each>
+						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" exact="true" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -591,13 +610,14 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Data.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" />
 						<do_for_each name="$order" in="$ship.orders">
 							<do_if value="$order.$allowothertargets?">
 								<!-- <set_value name="$order.$allowothertargets" exact="false" /> -->
 								<edit_order_param order="$order" param="'allowothertargets'" value="false" />
 							</do_if>
 						</do_for_each>
+						<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" />
+						<!-- <set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAllowOtherTargets_user" exact="false" /> -->
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -630,8 +650,25 @@
 						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
 							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
 						</do_if>
-						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="true" />
-						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
+						<do_if value="
+							(
+								$ship.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+								@global.$kAAIT_Data.$xssm_isAvoidHighRisk
+							) or
+							(
+								$ship.isclass.[class.ship_l, class.ship_xl] and
+								(
+									@global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip or
+									@global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation
+								)
+							)
+						">
+							<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" />
+						</do_if>
+						<do_else>
+							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="true" />
+							<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
+						</do_else>
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -669,8 +706,23 @@
 						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
 							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
 						</do_if>
-						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="false" />
-						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
+						<do_if value="
+							(
+								$ship.isclass.[class.ship_xs, class.ship_s, class.ship_m] and
+								(not @global.$kAAIT_Data.$xssm_isAvoidHighRisk)
+							) or
+							(
+								$ship.isclass.[class.ship_l, class.ship_xl] and
+								(not @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip) and
+								(not @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation)
+							)
+						">
+							<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" />
+						</do_if>
+						<do_else>
+							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isAvoidHighRisk_user" exact="false" />
+							<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
+						</do_else>
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -692,19 +744,36 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Data.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<do_for_each name="$order" in="$ship.orders">
-							<do_if value="$order.$kAAITParam_isStepForwardWithdraw?">
-								<edit_order_param order="$order" param="'kAAITParam_isStepForwardWithdraw'" value="true" />
+						<do_if value="$ship.isclass.[class.ship_l, class.ship_xl]">
+							<do_for_each name="$order" in="$ship.orders">
+								<do_if value="$order.$kAAITParam_isStepForwardWithdraw?">
+									<edit_order_param order="$order" param="'kAAITParam_isStepForwardWithdraw'" value="true" />
+								</do_if>
+							</do_for_each>
+							<do_if value="$ship.defaultorder.$kAAITParam_isStepForwardWithdraw?">
+								<edit_order_param order="$ship.defaultorder" param="'kAAITParam_isStepForwardWithdraw'" value="true" />
 							</do_if>
-						</do_for_each>
-						<do_if value="$ship.defaultorder.$kAAITParam_isStepForwardWithdraw?">
-							<edit_order_param order="$ship.defaultorder" param="'kAAITParam_isStepForwardWithdraw'" value="true" />
+							<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
+								<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
+							</do_if>
+							<do_if value="
+								(
+									$ship.isclass.[class.ship_l, class.ship_xl] and
+									(
+										@global.$kAAIT_Data.$lxl_isStepForward_vShip or
+										@global.$kAAIT_Data.$lxl_isStepForward_vStation or
+										@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip or
+										@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation
+									)
+								)
+							">
+								<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" />
+							</do_if>
+							<do_else>
+								<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="true" />
+								<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
+							</do_else>
 						</do_if>
-						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
-							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
-						</do_if>
-						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="true" />
-						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -726,24 +795,38 @@
 				<do_if value="$interact_ships.count">
 					<debug_text text="'$interact_ships: ' + $interact_ships" chance="global.$kAAIT_Data.$debugChance" />
 					<do_for_each name="$ship" in="$interact_ships">
-						<do_for_each name="$order" in="$ship.orders">
-							<do_if value="$order.$kAAITParam_isStepForwardWithdraw?">
-								<edit_order_param order="$order" param="'kAAITParam_isStepForwardWithdraw'" value="false" />
+						<do_if value="$ship.isclass.[class.ship_l, class.ship_xl]">
+							<do_for_each name="$order" in="$ship.orders">
+								<do_if value="$order.$kAAITParam_isStepForwardWithdraw?">
+									<edit_order_param order="$order" param="'kAAITParam_isStepForwardWithdraw'" value="false" />
+								</do_if>
+							</do_for_each>
+							<do_if value="$ship.defaultorder.$kAAITParam_isStepForwardWithdraw?">
+								<edit_order_param order="$ship.defaultorder" param="'kAAITParam_isStepForwardWithdraw'" value="false" />
 							</do_if>
-						</do_for_each>
-						<do_if value="$ship.defaultorder.$kAAITParam_isStepForwardWithdraw?">
-							<edit_order_param order="$ship.defaultorder" param="'kAAITParam_isStepForwardWithdraw'" value="false" />
-						</do_if>
-						<do_for_each name="$order" in="$ship.orders" reverse="true">
-							<do_if value="@$order.$kAAITParam_iskAAITOrder">
-								<cancel_order order="$order" />
+							<do_for_each name="$order" in="$ship.orders" reverse="true">
+								<do_if value="@$order.$kAAITParam_iskAAITOrder">
+									<cancel_order order="$order" />
+								</do_if>
+							</do_for_each>
+							<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
+								<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
 							</do_if>
-						</do_for_each>
-						<do_if value="not global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}?">
-							<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}" exact="table[]" />
+							<do_if value="
+								(
+									(not @global.$kAAIT_Data.$lxl_isStepForward_vShip) and
+									(not @global.$kAAIT_Data.$lxl_isStepForward_vStation) and
+									(not @global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip) and
+									(not @global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation)
+								)
+							">
+								<remove_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" />
+							</do_if>
+							<do_else>
+								<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="false" />
+								<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
+							</do_else>
 						</do_if>
-						<set_value name="global.$kAAIT_Data.$byShipId.{'$' + $ship.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="false" />
-						<add_to_group groupname="global.$kAAIT_Data.$ships" object="$ship" />
 					</do_for_each>
 				</do_if>
 				<reset_cue cue="this" />
@@ -1389,6 +1472,7 @@
 			<actions>
 				<set_value name="$ship" exact="@event.param.$object" />
 				<debug_text text="'$ship: ' + $ship.knownname + ' (' + $ship.idcode + ')'" />
+				<debug_text text="'$ship.type: ' + $ship.type" />
 				<debug_text text="'$escortgroup: ' + @$ship.assignedaipilot.$escortgroup" />
 				<debug_text text="'assignedaipilot: ' + @$ship.assignedaipilot.knownname" />
 				<debug_text text="'defencenpc: ' + @$ship.defencenpc.knownname" />
@@ -1414,8 +1498,17 @@
 				<debug_text text="'size: ' + $ship.size" />
 				<debug_text text="'primarypurpose: ' + $ship.primarypurpose" />
 				<debug_text text="'order: ' + $ship.order.id + ' $kAAITParam_iskAAITOrder: ' + @$ship.order.$kAAITParam_iskAAITOrder" />
+				<debug_text text="'    $ship.order.istemporary: ' + @$ship.order.istemporary" />
+				<debug_text text="'    $ship.order.$kAAITParam_isAvoidHighRisk: ' + @$ship.order.$kAAITParam_isAvoidHighRisk" />
+				<debug_text text="'    $ship.order.$kAAITParam_isStepForwardWithdraw: ' + @$ship.order.$kAAITParam_isStepForwardWithdraw" />
 				<debug_text text="'orders.{1}: ' + @$ship.orders.{1}.id + ' $kAAITParam_iskAAITOrder: ' + @$ship.orders.{1}.$kAAITParam_iskAAITOrder" />
+				<debug_text text="'    $ship.orders.{1}.istemporary: ' + @$ship.orders.{1}.istemporary" />
+				<debug_text text="'    $ship.orders.{1}.$kAAITParam_isAvoidHighRisk: ' + @$ship.orders.{1}.$kAAITParam_isAvoidHighRisk" />
+				<debug_text text="'    $ship.orders.{1}.$kAAITParam_isStepForwardWithdraw: ' + @$ship.orders.{1}.$kAAITParam_isStepForwardWithdraw" />
 				<debug_text text="'defaultorder: ' + @$ship.defaultorder.id + ' $kAAITParam_iskAAITOrder: ' + @$ship.defaultorder.$kAAITParam_iskAAITOrder" />
+				<debug_text text="'    $ship.defaultorder.istemporary: ' + @$ship.defaultorder.istemporary" />
+				<debug_text text="'    $ship.defaultorder.$kAAITParam_isAvoidHighRisk: ' + @$ship.defaultorder.$kAAITParam_isAvoidHighRisk" />
+				<debug_text text="'    $ship.defaultorder.$kAAITParam_isStepForwardWithdraw: ' + @$ship.defaultorder.$kAAITParam_isStepForwardWithdraw" />
 				<create_position name="$pos" space="$ship.sector" object="$ship" />
 				<debug_text text="'$pos: ' + $pos" />
 				<debug_text text="'maxspeed: ' + @$ship.maxspeed" />
@@ -1502,7 +1595,9 @@
 			<actions>
 				<set_value name="$interact_target" exact="@event.param.$object" />
 				<debug_text text="'interact_target: ' + $interact_target + ', ' + $interact_target.knownname + ', ' + $interact_target.idcode" />
-				<signal_objects object="$interact_target" param="'resupply'" param3="100" />
+				<set_object_hull object="$interact_target" exact="5" />
+				<set_value name="$isUrgent" exact="true" />
+				<signal_objects object="$interact_target" param="'resupply'" param2="[$isUrgent]" param3="100" />
 				<reset_cue cue="this" />
 			</actions>
 		</cue>

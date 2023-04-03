@@ -2,8 +2,9 @@
 <diff>
 	<!--
 	  add. purpose: cancel waitforsignal on destination when an order changes.
-	  <interrupts>
-	  <create_order id="'WaitForSignal'" object="$destination" immediate="true">
+	  (1) <interrupts>
+	  (2) <create_order id="'WaitForSignal'" object="$destination" immediate="true">
+	  (3) <on_abort>
 	-->
 	<add sel="//interrupts">
 		<handler comment="cancel wait for signal on destination when an order changes">
@@ -12,23 +13,57 @@
 					<event_object_order_ready object="this.assignedcontrolled" />
 					<event_object_order_cancelled object="this.assignedcontrolled" />
 				</check_any>
-				<check_value value="@$order_waitforsignal" />
-				<check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" />
-				<check_value value="this.assignedcontrolled.order.id != 'Dock'" />
+				<check_value value="@$kAAIT_order_waitforsignal" />
+				<!-- <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" /> -->
+				<check_value value="this.assignedcontrolled.order.id != 'DockAt'" />
 				<check_value value="this.assignedcontrolled.order.id != 'DockAndWait'" />
-				<check_value value="this.assignedcontrolled.order.id != 'Undock'" />
 				<check_value value="this.assignedcontrolled.order.id != 'Repair'" />
 				<check_value value="this.assignedcontrolled.order.id != 'Flee'" />
+				<check_value value="this.assignedcontrolled.order.id != 'Undock'" />
+				<check_value value="this.assignedcontrolled.order != this.assignedcontrolled.defaultorder" />
 			</conditions>
 			<actions>
-				<debug_text text="@this.assignedcontrolled.idcode + ' $order_waitforsignal: ' + $order_waitforsignal + ' cancel wait for signal on destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<debug_text text="$destination.idcode + ' $order_waitforsignal: ' + $order_waitforsignal + ' cancel wait for signal'" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
-				<cancel_order order="$order_waitforsignal" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' ' + event.name + ' this.assignedcontrolled.order.id: ' + this.assignedcontrolled.order.id" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal on destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $destination.idcode: ' + $destination.idcode + ' $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal'" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+				<cancel_order order="$kAAIT_order_waitforsignal" />
+				<set_value name="$kAAIT_ordersToCancel" exact="['DockAt', 'DockAndWait', 'Repair']" />
+				<do_if value="this.assignedcontrolled.order.id == 'DockAt'" comment="if a new order overrode 'DockAt', then allow Repair after that order is done. otherwise, this Dock order was simply cancelled, so remove the Repair order as well.">
+					<set_value name="$kAAIT_ordersToCancel" exact="['DockAt', 'DockAndWait']" />
+				</do_if>
+				<!-- start: when this is changed, ensure that the other cancellation order process in this file is also changed -->
+				<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders" reverse="true">
+					<do_if value="
+						$kAAIT_ordersToCancel.indexof.{$kAAIT_order.id} and
+						$kAAIT_order != this.assignedcontrolled.defaultorder">
+						<debug_text text="@this.assignedcontrolled.idcode + ' $cancel_order ' + $kAAIT_order.id" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+						<cancel_order order="$kAAIT_order" />
+					</do_if>
+				</do_for_each>
+				<!-- end: when this is changed, ensure that the other cancellation order process in this file is also changed -->
 			</actions>
 		</handler>
 	</add>
-	<add sel="//create_order[@id=&quot;'WaitForSignal'&quot;][@object=&quot;$destination&quot;]" type="@name">$order_waitforsignal</add>
+	<add sel="//create_order[@id=&quot;'WaitForSignal'&quot;][@object=&quot;$destination&quot;]" type="@name">$kAAIT_order_waitforsignal</add>
+	<add sel="//on_abort">
+		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal on destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $destination.idcode: ' + $destination.idcode + ' $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal'" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+		<do_if value="@$kAAIT_order_waitforsignal.exists">
+			<cancel_order order="$kAAIT_order_waitforsignal" />
+			<set_value name="$kAAIT_ordersToCancel" exact="['DockAndWait', 'Repair']" comment="this is the Dock order that's been aborted, so cancel all" />
+			<!-- start: when this is changed, ensure that the other cancellation order process in this file is also changed -->
+			<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders" reverse="true">
+				<do_if value="
+					$kAAIT_ordersToCancel.indexof.{$kAAIT_order.id} and
+					$kAAIT_order != this.assignedcontrolled.defaultorder">
+					<debug_text text="@this.assignedcontrolled.idcode + ' $cancel_order ' + $kAAIT_order.id" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
+					<cancel_order order="$kAAIT_order" />
+				</do_if>
+			</do_for_each>
+			<!-- end: when this is changed, ensure that the other cancellation order process in this file is also changed -->
+		</do_if>
+	</add>
 	<!-- DeadAir Diffs -->
 	<!-- disabled: due to convo with deadair re: maxspeed bug -->
-	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='(($thisship.distanceto.{$destination} + $thisship.size / 2.0 + $destination.size / 2.0) gt 10km and ($thisship != player.occupiedship))']/do_if[@value='($thisship.distanceto.{$destination} gt $destination.distanceto.[$destination, $safepos])']/move_to/@travel">@$thisship.travel.active or (($thisship.distanceto.[$destination, $safepos] / [$thisship.maxspeed, 1m].max)s gt 60s) or ($thisship.distanceto.[$destination, $safepos] gt 15km)</replace>
+	<!-- <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='(($thisship.distanceto.{$destination} + $thisship.size / 2.0 + $destination.size / 2.0) gt 10km and ($thisship != player.occupiedship))']/do_if[@value='($thisship.distanceto.{$destination} gt $destination.distanceto.[$destination, $safepos])']/move_to/@travel">@$thisship.travel.active or (($thisship.distanceto.[$destination, $safepos] / [$thisship.maxspeed, 1m].max)s gt 60s) or ($thisship.distanceto.[$destination, $safepos] gt 15km)</replace> -->
 </diff>
