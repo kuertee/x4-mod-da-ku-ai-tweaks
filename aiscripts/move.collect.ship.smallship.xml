@@ -1,4 +1,16 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <add sel="/aiscript/attention[@min='unknown']/actions/move_to" type="@travel">if (this.ship.travel.available and (this.ship.bboxdistanceto.{$target} gt 5km)) then true else false</add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/move_to[@object='this.ship'][@destination='$target']" type="@chance">(not @global.$DATDroneTravelDrive) * 100</add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/move_to[@object='this.ship'][@destination='$target']" pos="after">
+    <move_to object="this.ship" destination="$target" flightbehaviour="flightbehaviour.generic" forcesteering="true" finishonapproach="false" travel="((this.ship.travel.available or this.ship.travel.active) and (this.ship.bboxdistanceto.{$target} ge 2km))" chance="@global.$DATDroneTravelDrive * 100">
+      <interrupt>
+        <conditions>
+          <check_any>
+            <event_object_collided object="this.ship" otherobject="$target"/>
+            <event_object_destroyed object="$target"/>
+          </check_any>
+        </conditions>
+      </interrupt>
+    </move_to>
+  </add>
 </diff>

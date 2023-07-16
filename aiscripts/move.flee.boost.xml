@@ -1,25 +1,29 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <replace sel="/aiscript/params/param[@name='maxdistance']/@default">35km</replace>
-  <replace sel="/aiscript/params/param[@name='maxboostduration']/@default">[(35km / [this.assignedcontrolled.boost.maxspeed, 1m].max)s, 30s].max</replace>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.sector']/find_gravidar_contact">
-    <do_if value="this.ship">
-      <!-- Have to wrap changes in a do_if true for structure-->
-      <!-- if visible, we have to check for all obstacles -->
-      <!-- if not visible, we only care about enemies -->
-      <do_if value="this.attention ge attention.visible">
-        <find_gravidar_contact object="this.ship" class="[class.ship_l, class.ship_xl, class.station]" groupname="$obstacles" multiple="true">
-          <match_context macro="this.sector.macro"/>
-          <match_is_in_view_of vertical="90deg" horizontal="90deg" object="this.ship"/>
-          <match_distance max="[$maxdistance,this.assignedcontrolled.maxradarrange].max" object="this.ship"/>
-        </find_gravidar_contact>
-      </do_if>
-      <do_else>
-        <find_gravidar_contact object="this.ship" class="[class.ship_l, class.ship_xl, class.station]" groupname="$obstacles" multiple="true" mayattack="this.ship">
-          <match_context macro="this.sector.macro"/>
-          <match_distance max="[$maxdistance,this.assignedcontrolled.maxradarrange].max" object="this.ship"/>
-        </find_gravidar_contact>
-      </do_else>
+  <add sel="/aiscript/attention/actions/do_if[@value='this.sector']" pos="before">
+    <set_value name="$maxdistance" exact="40km" chance="global.$DATSmarterFleeBoostTweak * 100"/>
+  </add>
+  <add sel="/aiscript/attention/actions/do_if[@value='this.sector']/find_gravidar_contact[@groupname='$obstacles'][@object='this.ship']" type="@chance">(not global.$DATSmarterFleeBoostTweak) * 100</add>
+  <add sel="/aiscript/attention/actions/do_if[@value='this.sector']/do_if[@value='$attacker.isoperational and not $obstacles.indexof.{$attacker}']" pos="before">
+    <find_gravidar_contact object="this.ship" class="[class.ship_s, class.ship_m, class.ship_l, class.ship_xl, class.station]" groupname="$obstacles" multiple="true" chance="(global.$DATSmarterFleeBoostTweak and (this.attention ge attention.visible)) * 100">
+      <match_context macro="this.sector.macro"/>
+      <match_is_in_view_of vertical="90deg" horizontal="90deg" object="this.ship"/>
+      <match_distance max="[$maxdistance,this.assignedcontrolled.maxradarrange].max" object="this.ship"/>
+    </find_gravidar_contact>
+  </add>
+  <add sel="/aiscript/attention/actions/do_if[@value='this.sector']/do_if[@value='$attacker.isoperational and not $obstacles.indexof.{$attacker}']" pos="before">
+    <find_gravidar_contact object="this.ship" class="[class.ship_s, class.ship_m, class.ship_l, class.ship_xl, class.station]" groupname="$obstacles" multiple="true" mayattack="this.ship" chance="(global.$DATSmarterFleeBoostTweak and (this.attention lt attention.visible)) * 100">
+      <match_context macro="this.sector.macro"/>
+      <match_distance max="[$maxdistance,this.assignedcontrolled.maxradarrange].max" object="this.ship"/>
+    </find_gravidar_contact>
+  </add>
+  <add sel="/aiscript/attention/actions/set_value[@name='$maxboostduration'][@exact='[this.assignedcontrolled.boost.maxduration * 0.9, $maxboostduration].min']" pos="before">
+    <set_value name="$boost" exact="false" chance="(this.isplayerowned and (not global.$DATPlayerAllowBoost)) * 100"/>
+  </add>
+  <add sel="/aiscript/attention/actions/move_to[@object='this.ship']" pos="before">
+    <do_if value="($alreadytravelling or (this.assignedcontrolled.shieldpercentage lt 75) or ($boost == false)) and global.$DATSmarterFleeBoostTweak">
+      <set_value name="$boost" exact="false"/>
+      <set_value name="$maxboostduration" exact="($maxdistance / [this.ship.maxspeed, 1m].max)s"/>
     </do_if>
-  </replace>
+  </add>
 </diff>

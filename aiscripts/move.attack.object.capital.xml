@@ -456,59 +456,120 @@
 			</do_if>
 		</on_abort>
 	</add>
-	<!-- DeadAir Diffs -->
-	<replace sel="/aiscript/params/param[@name='minrange']/@default">if @$target.iscapitalship or $target.isrealclass.station or $target.container.isrealclass.station then ([this.ship.maxcombatrange.all,this.assignedcontrolled.maxradarrange].min * 0.6) else ([this.ship.maxcombatrange.all,this.assignedcontrolled.maxradarrange].min * 0.3)</replace>
-	<replace sel="/aiscript/params/param[@name='maxrange']/@default">if @$target.iscapitalship or $target.isrealclass.station or $target.container.isrealclass.station then ([this.ship.maxcombatrange.all,this.assignedcontrolled.maxradarrange].min * 0.9) else ([this.ship.maxcombatrange.all,this.assignedcontrolled.maxradarrange].min * 0.9)</replace>
-	<remove sel="/aiscript/init/do_if[@value='this.isplayerowned']"/>
-	<replace sel="/aiscript/attention/actions/do_if[@value='not $disable']/do_if[@value='this.ship.dps.missiles.all']">
-		<do_elseif value="this.ship.dps.missiles.all">
-			<set_value name="$bestquadrant" exact="quadrant.front"/>
-			<set_value name="$frontweapon" exact="2"/>
-		</do_elseif>
-	</replace>
-	<remove sel="/aiscript/attention/actions/do_if[@value='not @$frontweapon']"/>
-	<replace sel="/aiscript/attention/actions/do_elseif[@value='@$frontweapon == 1']/set_value[@name='$minoperationalrange'][@exact='[this.assignedcontrolled.maxcombatrange.lasers.all * 0.6, $minrange].min']/@exact">if (@$isstation or @$target.iscapitalship) then ([this.assignedcontrolled.maxcombatrange.lasers.all,this.assignedcontrolled.maxradarrange].min * 0.6) else ([this.assignedcontrolled.maxcombatrange.lasers.all,this.assignedcontrolled.maxradarrange].min * 0.3)</replace>
-	<replace sel="/aiscript/attention/actions/do_elseif[@value='@$frontweapon == 1']/set_value[@name='$maxoperationalrange'][@exact='[this.assignedcontrolled.maxcombatrange.lasers.all * 0.9, $maxrange].min']/@exact">([this.assignedcontrolled.maxcombatrange.lasers.all,this.assignedcontrolled.maxradarrange].min * 0.9)</replace>
-	<replace sel="/aiscript/attention/actions/do_if[@value='$isstation']/set_value[@name='$quadrants'][@exact='[quadrant.left, quadrant.right, quadrant.up, quadrant.down, quadrant.back, quadrant.front]']/@exact">[quadrant.left, quadrant.right, quadrant.back, quadrant.front]</replace>
-	<replace sel="/aiscript/attention/actions/do_else[2]/set_value[@name='$quadrants'][@exact='[quadrant.left, quadrant.right, quadrant.back]']/@exact">[quadrant.left, quadrant.right, quadrant.back, quadrant.front]</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/set_value[@name='$maxeffectivecombatrange'][@exact='this.assignedcontrolled.maxcombatrange.all * 0.8']/@exact">$maxoperationalrange</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='this.assignedcontrolled.dps.lasers.all']">
-		<set_value name="$aimdist" min="$minoperationalrange" max="$maxoperationalrange" profile="bell"/>
-	</replace>
-	<remove sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/set_value[@name='$aimdist'][@min='$maxeffectivecombatrange * (0.4 * (1.0 + (($skill_piloting + $skill_morale)f / 30.0)))']"/>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/set_value[@name='$movethreshold_min'][@exact='[$maxeffectivecombatrange * 0.5, $aimdist - 1m].min']/@exact">if ((@$target.order.id == 'Flee') or @$target.travel.active) then [$minoperationalrange * 0.75, $aimdist - 1m].min else ($minoperationalrange * 0.75)</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/check_object/match_is_in_view_of/@vertical">150deg</replace>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance ge $movethreshold_min']/move_to" type="@boost">false</add>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance ge $movethreshold_min']/move_to" type="@travel">false</add>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/get_safe_pos/@allowyaxis">true</replace>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_if[@value='$distance gt $movethreshold_max']/create_position[@name='$locpos']" pos="before">
-		<create_position name="$targetposition" space="$target.sector" object="$target"/>
+	<!-- DEADAIR DIFFS APPLIED AFTER KUERTEE CHANGES -->
+	<replace sel="/aiscript/attention/actions/set_value[@name='$combinedskill'][@exact='this.assignedcontrolled.combinedskill']/@exact">if global.$DATPilotSkillTweaks then 100 else this.assignedcontrolled.combinedskill</replace>
+	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else/set_value[@name='$boost']/@chance">if this.isplayerowned then ([global.$DATPlayerAllowBoost,$allowboost].min * 100) else ($allowboost * 100)</replace>
+	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/set_value[@name='$boost']/@chance">if this.isplayerowned then ([global.$DATPlayerAllowBoost,$allowboost].min * 100) else ($allowboost * 100)</replace>
+	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $boost? and $allowboost and ($combinedskill ge 80)']/@value">((not $boost?) or (global.$DATTravelTweaks)) and ($allowboost) and ($combinedskill ge 80)</replace>
+	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='((not $boost?) or (global.$DATTravelTweaks)) and ($allowboost) and ($combinedskill ge 80)']/do_if[@value='$timetopos gt 120s']/@value">$timetopos ge (if global.$DATTravelTweaks then 60s else 120s)</replace>
+	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='((not $boost?) or (global.$DATTravelTweaks)) and ($allowboost) and ($combinedskill ge 80)']">
+		<do_if value="global.$DATTravelTweaks and @$travel and (this.assignedcontrolled.bboxdistanceto.{$target} le [@$movethreshold_max,@$maxoperationalrange].max)">
+			<remove_value name="$travel"/>
+		</do_if>
 	</add>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else/set_value[@name='$boost']/@chance">if (this.assignedcontrolled.shieldpercentage gt 75) then $allowboost * 100 else 0</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='@$holdposition']/set_value[@name='$time_waitend'][@exact='player.age + (($updatetime * 4) / (16 - $skill_morale))']/@exact">player.age + (($updatetime * 4) / (16 - [$skill_morale,9].max))</replace>
-	<remove sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='not ($isstation or $frontweapon?)']/@chance"/>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/move_to" type="@boost">false</add>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/move_to" type="@travel">false</add>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/set_value[@name='$distfactor'][@exact='($maxeffectivecombatrange - $distance) / $distance ']" pos="before">
-		<set_value name="$distance" exact="this.assignedcontrolled.bboxdistanceto.{$target}"/>
+	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='$boost?']/do_if[@value='(this.assignedcontrolled.shieldpercentage gt 50) and this.assignedcontrolled.boost.maxduration']" type="@chance">if (this.isplayerowned and (not global.$DATPlayerAllowBoost)) then 0 else 100</add>
+	
+	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='this.assignedcontrolled.attention ge attention.visible']/remove_value[@name='$isinview']" pos="before">
+		<do_if value="global.$DATAttackStationLOSTweak">
+			<!-- Since below is a resume label, best place to clean up is at beginning for reduced code amount -->
+			<remove_value name="$DATThisPosSector"/>
+			<remove_value name="$DATEnemyPosSector"/>
+			<remove_value name="$DATThisPosZone"/>
+			<remove_value name="$DATEnemyPosZone"/>
+			<remove_value name="$DATRot"/>
+			<remove_value name="$DATRotAdjusted"/>
+			<remove_value name="$DATRePos"/>
+			<remove_value name="$DATRePosRot"/>
+			<remove_value name="$DATBeacon"/>
+			<remove_value name="$DATRePosShipRot"/>
+			<remove_value name="$DATupdatetime"/>
+			<remove_value name="$DAlos"/>
+			<remove_value name="$DAisinview"/>
+			<!-- Onto the actual scripting -->
+			<set_value name="$DATRepositionForLOS" exact="false"/>
+			<do_if value="(not @$los) and @$isinview and @$isstation">
+				<set_value name="$DATRepositionForLOS" exact="true"/>
+				<!-- Ships are repositioning when they shouldn't -->
+				<check_line_of_sight name="$DAlos" object="this.assignedcontrolled" target="$target"/>
+				<check_object result="$DAisinview" object="$target">
+					<match_is_in_view_of vertical="9deg" horizontal="9deg" object="this.assignedcontrolled"/>
+				</check_object>
+				<do_if value="@$DAlos and @$DAisinview">
+					<set_value name="$DATRepositionForLOS" exact="false"/>
+					<set_value name="$holdposition"/>
+					<set_value name="$DATRepositionCounter" exact="0"/>
+				</do_if>
+				<do_else>
+					<set_value name="$DATRepositionCounter" exact="1" operation="add"/>
+				</do_else>
+				<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- (not $los) and $isinview'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="$debugchance"/>
+				<!-- Sector Positions -->
+				<create_position name="$DATThisPosSector" space="$target.sector" object="this.ship"/>
+				<create_position name="$DATEnemyPosSector" space="$target.sector" object="$target"/>
+				<!-- Zone Positions -->
+				<create_position name="$DATThisPosZone" space="this.zone" x="$DATThisPosSector.x" y="$DATThisPosSector.y" z="$DATThisPosSector.z" object="this.assignedcontrolled.sector"/>
+				<create_position name="$DATEnemyPosZone" space="$target.zone" x="$DATEnemyPosSector.x" y="$DATEnemyPosSector.y" z="$DATEnemyPosSector.z" object="$target.sector"/>
+				<!-- Transform 15 Deg -->
+				<create_orientation name="$DATRot" refposition="$DATThisPosZone" orientation="look_at">
+					<position value="$DATEnemyPosZone"/>
+				</create_orientation>
+				<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- original yaw: %s (%s) -- pitch: %s (%s) -- roll: %s (%s) -- distance: %s'.[this.ship.knownname,this.ship.idcode,$DATRot.yaw,$DATRot.yaw * 180 / pi,$DATRot.pitch,$DATRot.pitch * 180 / pi,$DATRot.roll,$DATRot.roll * 180 / pi,$target.distanceto.{this.assignedcontrolled}]" context="false" filter="scripts" chance="$debugchance"/>
+				<set_value name="$DATRotAdjusted" exact="rotation.[$DATRot.yaw + 15deg,$DATRot.pitch,$DATRot.roll]"/>
+				<transform_position name="$DATRePos" refposition="$DATEnemyPosZone" refrotation="$DATRotAdjusted">
+					<position z="$movethreshold_max"/>
+				</transform_position>
+				<create_orientation name="$DATRePosRot" refposition="$DATRePos" orientation="look_at">
+					<position value="$DATEnemyPosZone"/>
+				</create_orientation>
+				<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- adjusted yaw: %s (%s) -- pitch: %s (%s) -- roll: %s (%s) -- distance: %s'.[this.ship.knownname,this.ship.idcode,$DATRePosRot.yaw,$DATRePosRot.yaw * 180 / pi,$DATRePosRot.pitch,$DATRePosRot.pitch * 180 / pi,$DATRePosRot.roll,$DATRePosRot.roll * 180 / pi,$target.distanceto.[$target.zone,$DATRePos]]" context="false" filter="scripts" chance="$debugchance"/>
+				<do_if value="true" chance="$debugchance">
+					<!-- Create beacon for testing -->
+					<create_object name="$DATBeacon" zone="$target.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<position value="$DATRePos"/>
+					</create_object>
+					<set_object_name object="$DATBeacon" name="'%s (%s) Rot Beacon'.[this.assignedcontrolled.knownname,this.assignedcontrolled.idcode]"/>
+				</do_if>
+				<!-- Handle obstructions or obstacles? -->
+				<!-- Move -->
+				<do_if value="$DATRePos? and (@$DATRePos != null) and this.assignedcontrolled.maxspeed and ((this.assignedcontrolled.zone == $target.zone) or (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)) and @$DATRepositionForLOS and (@$DATRepositionCounter ge 3)">
+					<!-- reset counter -->
+					<set_value name="$DATRepositionCounter" exact="0"/>
+					<!-- Custom update time -->
+					<!-- might need to account for rotation time to target -->
+					<set_value name="$DATupdatetime" exact="(this.assignedcontrolled.distanceto.[$target.zone, $DATRePos] / [this.assignedcontrolled.maxspeed, 1m].max)s"/>
+					<move_to destination="$target.zone" abortpath="false" object="this.assignedcontrolled" finishonapproach="false" forceposition="false" forcerotation="false" uselocalhighways="false" boost="false" travel="false" chance="(@$DATRepositionForLOS and @$DATupdatetime) * 100">
+						<position value="$DATRePos"/>
+						<interrupt_after_time time="if $DATupdatetime? then $DATupdatetime else 1s"/>
+						<interrupt>
+							<conditions>
+								<check_any>
+									<event_object_destroyed object="$target"/>
+									<check_all>
+										<event_object_attacked object="this.assignedcontrolled"/>
+										<check_value value="not this.assignedcontrolled.maxspeed"/>
+									</check_all>
+								</check_any>
+							</conditions>
+						</interrupt>
+					</move_to>
+					<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- Move Complete'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="(@$DATRepositionForLOS and @$DATupdatetime and $debugchance) * 100"/>
+					<resume label="fight" chance="@$DATRepositionForLOS * 100"/>
+				</do_if>
+				<do_else>
+					<do_if value="not this.assignedcontrolled.maxspeed">
+						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Error Moving: No Engines -- %s (%s) -- this.assignedcontrolled.maxspeed: %s '.[this.ship.knownname,this.ship.idcode,this.assignedcontrolled.maxspeed]" context="false" filter="error" chance="100"/>
+					</do_if>
+					<do_elseif value="not ((this.assignedcontrolled.zone == $target.zone) or (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange))">
+						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Error Moving: Too Far -- %s (%s) -- (this.assignedcontrolled.zone == $target.zone): %s -- (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange): %s'.[this.ship.knownname,this.ship.idcode,(this.assignedcontrolled.zone == $target.zone),(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)]" context="false" filter="error" chance="100"/>
+					</do_elseif>
+					<do_elseif value="((@$DATRepositionForLOS) and (@$DATRepositionCounter lt 3)) or ((not @$DATRepositionForLOS) and (@$DAlos and @$DAisinview))">
+						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Not Moving (Expected) -- %s (%s) -- @$DATRepositionForLOS: %s -- @$DATRepositionCounter: %s -- @$DAlos: %s -- @$DAisinview: %s'.[this.ship.knownname,this.ship.idcode,@$DATRepositionForLOS,@$DATRepositionCounter,@$DAlos,@$DAisinview]" context="false" filter="scripts" chance="100"/>
+					</do_elseif>
+					<do_else>
+						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Error Moving: Unhandled -- %s (%s) -- $DATRePos?: %s -- (@$DATRePos != null): %s -- this.assignedcontrolled.maxspeed: %s -- (this.assignedcontrolled.zone == $target.zone): %s -- (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange): %s -- @$DATRepositionForLOS: %s -- (not @$DAlos): %s -- @$DAisinview: %s -- @$DATRepositionCounter: %s'.[this.ship.knownname,this.ship.idcode,$DATRePos?,(@$DATRePos != null),this.assignedcontrolled.maxspeed,(this.assignedcontrolled.zone == $target.zone),(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange),@$DATRepositionForLOS,(not @$DAlos),@$DAisinview,@$DATRepositionCounter]" context="false" filter="error" chance="100"/>
+					</do_else>
+				</do_else>
+			</do_if>
+		</do_if>
 	</add>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/set_value[@name='$boost']/@chance">if (this.assignedcontrolled.shieldpercentage gt 75) then ($allowboost * 100) else 0</replace>
-	<remove sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_else/do_else/do_else/get_safe_pos/@direction"/>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_else/do_else/do_else/get_safe_pos/@directionobject">this.ship</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_else/do_else/do_else/get_safe_pos/@allowyaxis">true</replace>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_else/do_else/do_else/get_safe_pos" type="@profile">bell</add>
-	<remove sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_else[2]/get_safe_pos/@direction"/>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_else[2]/get_safe_pos/@directionobject">this.ship</replace>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_else[2]/get_safe_pos" type="@profile">bell</add>
-	<remove sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='(@$lastquadranttupdate lt player.age) and not @$frontweapon']/@chance"/>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='(@$lastquadranttupdate lt player.age) and not @$frontweapon']/set_value[@name='$lastquadranttupdate'][@exact='player.age + 30s']/@exact">player.age + 30s + (30s - (30*($combinedskill/100.0)))s</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='(@$lastquadranttupdate lt player.age) and not @$frontweapon']/do_any">
-		<set_value name="$weakquadrant" exact="$weakquadrants.{1}"/>
-	</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $boost? and $allowboost and ($combinedskill ge 80)']/@value">(not $boost? and $allowboost and (this.ship.bboxdistanceto.{$target} gt $maxoperationalrange or this.ship.bboxdistanceto.{$target} lt $minoperationalrange)) or ($allowboost and (this.ship.distanceto.[$target.sector, $pos] gt 15km) and (this.ship.bboxdistanceto.{$target} gt $maxoperationalrange or this.ship.bboxdistanceto.{$target} lt $minoperationalrange))</replace>
-	<remove sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='(not $boost? and $allowboost and (this.ship.bboxdistanceto.{$target} gt $maxoperationalrange or this.ship.bboxdistanceto.{$target} lt $minoperationalrange)) or ($allowboost and (this.ship.distanceto.[$target.sector, $pos] gt 15km) and (this.ship.bboxdistanceto.{$target} gt $maxoperationalrange or this.ship.bboxdistanceto.{$target} lt $minoperationalrange))']/@chance"/>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='$boost?']/do_if[@value='(this.assignedcontrolled.shieldpercentage gt 50) and this.assignedcontrolled.boost.maxduration']/@value">(this.assignedcontrolled.shieldpercentage gt 75) and (this.assignedcontrolled.boost.maxduration)</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='$boost?']/do_if[@value='(this.assignedcontrolled.shieldpercentage gt 75) and (this.assignedcontrolled.boost.maxduration)']/set_value[@name='$updatetime'][@exact='(this.assignedcontrolled.boost.maxduration * (this.assignedcontrolled.shieldpercentage / 100.0) * 0.5)s']/@exact">(this.assignedcontrolled.boost.maxduration * (this.assignedcontrolled.shieldpercentage / 100.0) * 0.25)s</replace>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='this.ship.sector == $target.sector']/do_if[@value='$strafe?']/move_strafe" type="@boost">false</add>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='this.ship.sector == $target.sector']/do_if[@value='$strafe?']/move_strafe" type="@travel">false</add>
 </diff>

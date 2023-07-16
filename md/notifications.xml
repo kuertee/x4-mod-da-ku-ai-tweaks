@@ -1,15 +1,58 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='DistressDroneReportsAttack']/actions/set_value[@name='$oldrelation'][@exact='@$reporter.trueowner.relationto.{$attacker.owner}']/@exact">@$reporter.trueowner.relationto.{$attacker.trueowner}</replace>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='DistressDroneReportsAttack']/actions/set_value[@name='$newrelation'][@exact='$attackedobject.relationto.{$attacker.owner}']/@exact">$attackedobject.relationto.{$attacker.trueowner}</replace>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='PlayerKills']/actions/do_if[@value='@$object.type == shiptype.escapepod']/set_value[@name='$podowner'][@exact='$object.owner']/@exact">$object.trueowner</replace>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='(player.age ge event.param.{5} + IllegalActivity.$timeout) or (event.param.{9} and not event.param.{9}.exists)']/do_if[@value='$object.isclass.ship and not $object.isclass.ship_l and not $object.isclass.ship_xl and not $object.zone.isclass.highway']/find_station[@name='$stations']/match_relation_to/@faction">$object.trueowner</replace>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='$tradenpc and @$tradenpc.page != 0 and not @$tradenpc.owner.hasrelation.kill.{faction.player}']/do_if[@value='@$responsetype and (player.age ge ($responderdata.{6} + @$responseinterval))']/do_elseif[@value='$responsetype == 2']/do_if[@value='$lawnpc']/do_if[1]/@value">not ($lawnpc.hasrelation.enemy.{$object} or $object.zone.policefaction.hasrelation.enemy.{$object.trueowner} or ($object.zone.policefaction.relationto.{$object.trueowner} lt $object.zone.policefaction.relationto.{faction.player})) and (event.param.{2} != 'boarding started')</replace>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='$tradenpc and @$tradenpc.page != 0 and not @$tradenpc.owner.hasrelation.kill.{faction.player}']/do_if[@value='@$responsetype and (player.age ge ($responderdata.{6} + @$responseinterval))']/do_elseif[@value='$responsetype == 2']/do_if[@value='$lawnpc']/do_elseif[@value='@$lawnpc.hasrelation.enemy.{$object}']/@value">@$lawnpc.hasrelation.enemy.{$object} or @$object.zone.policefaction.hasrelation.enemy.{$object.trueowner} or ($object.zone.policefaction.relationto.{$object.trueowner} lt $object.zone.policefaction.relationto.{faction.player})</replace>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_else[2]/do_if/find_station[@name='$stations']/match_relation_to/@faction">$object.trueowner</replace>
-  <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='IllegalActivityRetaliate']/actions/do_if[@value='$lawnpc']/do_if[@value='not event.param.{6}']/do_if[@value='not $lawnpc.hasrelation.enemy.{event.param.{2}.{1}}']/@value">not ($lawnpc.hasrelation.enemy.{event.param.{2}.{1}} or $lawnpc.owner.hasrelation.enemy.{event.param.{2}.{1}.trueowner} or ($lawnpc.owner.relationto.{faction.player} gt $lawnpc.owner.relationto.{event.param.{2}.{1}.trueowner}))</replace>
-  <!-- start: 6.x invalid node: -->
-  <!-- <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='PlayerOwnedAttacked']/conditions/check_value[@value='not event.object.commander or event.object.commander == player.occupiedship']/@value">(not event.object.commander) or ((event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine or event.object.primarypurpose == purpose.build) and event.object.isclass.ship) or (event.object.commander == player.occupiedship)</replace> -->
-  <!-- <replace sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='PlayerOwnedAttacked']/conditions/check_value[@value='(event.object.hullpercentage + event.object.shieldpercentage) lt (95 + (55 * (event.object.maxshield != 0)))']/@value">(event.object.hullpercentage + event.object.shieldpercentage) lt (95 + (80 * (event.object.maxshield != 0)))</replace> -->
-  <!-- end: 6.x invalid node: -->
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='DistressDroneReportsAttack']/actions/set_value[@name='$relchange'][@exact='$newrelation - $oldrelation']" pos="before">
+    <do_if value="md.$DATIllegalActivity" comment="DA">
+      <set_value name="$oldrelation" exact="@$reporter.trueowner.relationto.{$attacker.trueowner}"/>
+      <set_value name="$newrelation" exact="$attackedobject.relationto.{$attacker.trueowner}"/>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='PlayerKills']/actions/do_if[@value='@$object.type == shiptype.escapepod']/add_faction_relation[@value='$newrelation - $oldrelation']" pos="before">
+    <do_if value="md.$DATIllegalActivity" comment="DA">
+      <set_value name="$podowner" exact="$object.trueowner"/>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='(player.age ge event.param.{5} + IllegalActivity.$timeout) or (event.param.{9} and not event.param.{9}.exists)']/do_if[@value='$object.isclass.ship and not $object.isclass.ship_l and not $object.isclass.ship_xl and not $object.zone.isclass.highway']/find_station[@name='$stations']" type="@chance">(not md.$DATIllegalActivity) * 100</add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='(player.age ge event.param.{5} + IllegalActivity.$timeout) or (event.param.{9} and not event.param.{9}.exists)']/do_if[@value='$object.isclass.ship and not $object.isclass.ship_l and not $object.isclass.ship_xl and not $object.zone.isclass.highway']/set_value[@name='$beststation'][@exact='null']" pos="before">
+    <find_station name="$stations" multiple="true" space="$refobject.sector" chance="md.$DATIllegalActivity * 100" comment="DA">
+      <match owner="faction.player" negate="true"/>
+      <match owner="null" negate="true"/>
+      <match_relation_to faction="$object.trueowner" comparison="not" relation="enemy"/>
+      <match_distance object="$refobject" max="30km" comment="Note: also radar range has to be checked below"/>
+    </find_station>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='$tradenpc and @$tradenpc.page != 0 and not @$tradenpc.owner.hasrelation.kill.{faction.player}']/do_if[@value='@$responsetype and (player.age ge ($responderdata.{6} + @$responseinterval))']/do_elseif[@value='$responsetype == 2']/do_if[@value='$lawnpc']/set_value[@name='$usecase']" pos="before">
+    <do_if value="md.$DATIllegalActivity and ($lawnpc.hasrelation.enemy.{$object} or $object.zone.policefaction.hasrelation.enemy.{$object.trueowner} or ($object.zone.policefaction.relationto.{$object.trueowner} lt $object.zone.policefaction.relationto.{faction.player})) and (event.param.{2} != 'boarding started')" comment="DA">
+      <set_value name="$relchange" exact="0"/>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='$tradenpc and @$tradenpc.page != 0 and not @$tradenpc.owner.hasrelation.kill.{faction.player}']/do_if[@value='@$responsetype and (player.age ge ($responderdata.{6} + @$responseinterval))']/do_elseif[@value='$responsetype == 2']/do_if[@value='$lawnpc']/signal_cue_instantly[@cue='md.NPC_UseCases.UseCase']" pos="before">
+    <do_elseif value="md.$DATIllegalActivity and (@$object.zone.policefaction.hasrelation.enemy.{$object.trueowner} or ($object.zone.policefaction.relationto.{$object.trueowner} lt $object.zone.policefaction.relationto.{faction.player}))" comment="DA">
+      <set_value name="$usecase" exact="'$IllegalActivity_Station_Retaliate_Refuse'"/>
+    </do_elseif>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_else[2]/do_if/find_station[@name='$stations']" type="@chance">(not md.$DATIllegalActivity) * 100</add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_else[2]/do_if/set_value[@name='$beststation'][@exact='null']" pos="before">
+    <find_station name="$stations" multiple="true" space="player.sector" chance="md.$DATIllegalActivity * 100" comment="DA">
+      <match owner="faction.player" negate="true"/>
+      <match owner="null" negate="true"/>
+      <match_relation_to faction="$object.trueowner" relation="enemy"/>
+      <match_distance object="$refobject" max="30km" comment="Note: also radar range has to be checked below"/>
+    </find_station>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='IllegalActivityRetaliate']/actions/do_if[@value='$lawnpc']/do_if[@value='not event.param.{6}']" type="@chance">(not md.$DATIllegalActivity) * 100</add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='IllegalActivityRetaliate']/actions/do_if[@value='$lawnpc']">
+    <do_if value="not event.param.{6}" chance="md.$DATIllegalActivity * 100">
+      <do_if value="not ($lawnpc.hasrelation.enemy.{event.param.{2}.{1}} or $lawnpc.owner.hasrelation.enemy.{event.param.{2}.{1}.trueowner} or $lawnpc.owner.relationto.{faction.player} gt $lawnpc.owner.relationto.{event.param.{2}.{1}.trueowner})" chance="md.$DATIllegalActivity * 100" comment="DA">
+        <set_value name="$reason" exact="event.param.{7}"/>
+        <add_faction_relation faction="faction.player" otherfaction="$lawnpc.owner" value="event.param.{5}" reason="$reason" comment="relchange"/>
+        <signal_objects object="$lawnpc.sector" param="'police'" param2="player.controlled" param3="event.param.{2}.{1}"/>
+      </do_if>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='PlayerOwnedAttacked']/conditions/check_any">
+    <check_all chance="md.$DATUnderAttackNotification * 100">
+      <check_value value="(not event.object.commander) or ((event.object.primarypurpose == purpose.trade or event.object.primarypurpose == purpose.mine or event.object.primarypurpose == purpose.build) and event.object.isclass.ship) or (event.object.commander == player.occupiedship)"/>
+      <check_value value="(event.object.hullpercentage + event.object.shieldpercentage) lt (95 + (80 * (event.object.maxshield != 0)))"/>
+    </check_all>
+  </add>
 </diff>
