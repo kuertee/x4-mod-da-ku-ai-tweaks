@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+  <replace sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/set_value[@name='$JumpCheckRange'][@exact='4']/@exact">if md.$DATBuildCloserToJobZone then 10 else 4</replace>
+  <replace sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count']/do_all[@exact='$PriceOrder.count']/do_if[@value='$DistanceOrder.indexof.{$PriceOrder.{$k}}']/set_value[@name='$ScoredShipyardTable.{$PriceOrder.{$k}}'][@exact='$k + $DistanceOrder.indexof.{$PriceOrder.{$k}}']/@exact">if md.$DATBuildCloserToJobZone then ($k + ([$DistanceOrder.indexof.{$PriceOrder.{$k}},$ShipyardDistanceTable.{$PriceOrder.{$k}}].max * 2)) else ($k + $DistanceOrder.indexof.{$PriceOrder.{$k}})</replace>
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count']/do_if[@value='$ScoredShipyardTable.keys.count']/set_value[@name='$ScoreOrder'][@exact='$ScoredShipyardTable.keys.sorted']" pos="before">
+    <do_if value="md.$DATBuildCloserToJobZone">
+      <set_value name="$SelectedShipyardIndex" exact="1"/>
+      <do_any chance="($ScoredShipyardTable.keys.count gt 1) * 33">
+        <set_value name="$SelectedShipyardIndex" exact="1" weight="66"/>
+        <set_value name="$SelectedShipyardIndex" min="2" max="$ScoredShipyardTable.keys.count" profile="decreasing" weight="33"/>
+      </do_any>
+    </do_if>
+  </add>
+</diff>

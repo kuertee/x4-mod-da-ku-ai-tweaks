@@ -1,0 +1,279 @@
+<?xml version='1.0' encoding='utf-8'?>
+<aiscript xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="lib.target.selection.dat" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+	<params>
+		<param name="primarytarget" comment="Object to attack"/>
+		<param name="secondarytargets" comment="List/Group of objects to attack"/>
+		<param name="escort" comment="A friendly object to stay in pursuedistance range to it and prefer targets near him"/>
+		<param name="pursuedistance" comment="Distance to pursue/escort (if pursuetargets false or 'escort' provided)"/>
+		<param name="pursuetargets" comment="Pursue the target no matter what"/>
+		<param name="list_objectstoignore" default="[]" comment="List of objects to ignore. Only used from move.seekenemies at the moment."/>
+		<param name="allowothertargets" comment="Whether the script shall keep running when all primary targets have been destroyed"/>
+		<param name="checkrelation" comment="Check may attack (faction enemy relation)"/>
+		<param name="targetpurposes" default="[]"/>
+		<param name="targetclasses" default="[]"/>
+		<param name="radius" default="null" comment="disengage if target goes beyond this distance relative to radiusanchorpos in radiusanchorspace"/>
+		<param name="radiusanchorpos" default="null"/>
+		<param name="radiusanchorspace" default="null"/>
+		<param name="engageonlyonline" default="false"/>
+		<param name="debugchance" default="0"/>
+	</params>
+	<attention min="unknown">
+		<actions>
+			<create_group groupname="$targets"/>
+			<do_if value="not $targetclasses.count">
+				<set_value name="$targetclasses" exact="[class.ship_s, class.ship_m, class.ship_l, class.ship_xl, class.station]"/>
+			</do_if>
+			<do_if value="$primarytarget.canbeattacked">
+				<add_to_group groupname="$targets" object="$primarytarget"/>
+			</do_if>
+			<do_elseif value="@$secondarytargets.count">
+				<do_if value="typeof $secondarytargets == datatype.group">
+					<add_to_group groupname="$targets" group="$secondarytargets"/>
+				</do_if>
+				<do_elseif value="typeof $secondarytargets == datatype.list">
+					<add_to_group groupname="$targets" list="$secondarytargets"/>
+				</do_elseif>
+			</do_elseif>
+			<do_elseif value="$allowothertargets">
+				<do_if value="$targets.count == 0">
+					<do_if value="@this.assignedcontrolled.commander.pilot.$attacktarget.canbeattacked">
+						<add_to_group groupname="$targets" object="this.assignedcontrolled.commander.pilot.$attacktarget"/>
+					</do_if>
+				</do_if>
+				<do_if value="$targets.count == 0 and this.sector">
+					<find_gravidar_contact groupname="$targets" multiple="true" docked="false" object="this.ship" class="$targetclasses" masstraffic="false" checkoperational="false" maybeattackedby="if $checkrelation then this.assignedcontrolled else null">
+						<match_context macro="this.sector.macro"/>
+						<match class="class.buildstorage" negate="true"/>
+						<match state="componentstate.wreck" negate="true"/>
+					</find_gravidar_contact>
+				</do_if>
+				<do_if value="$targets.count == 0 and @$escort.exists and this.sector">
+					<find_gravidar_contact groupname="$targets" multiple="true" docked="false" object="this.ship" class="$targetclasses" masstraffic="false" checkoperational="false" maybeattackedby="if $checkrelation then $escort else null">
+						<match_context macro="this.sector.macro"/>
+						<match class="class.buildstorage" negate="true"/>
+						<match state="componentstate.wreck" negate="true"/>
+					</find_gravidar_contact>
+				</do_if>
+			</do_elseif>
+			<label name="selection"/>
+			<set_value name="$selected" exact="0"/>
+			<set_value name="$highest" exact="-1"/>
+			<set_value name="$hastorpedo" exact="false"/>
+			<do_if value="this.assignedcontrolled.isclass.ship_m or this.assignedcontrolled.isclass.ship_s">
+				<do_if value="(this.assignedcontrolled.ammostorage.missile.count) and (this.assignedcontrolled.dps.missiles.all gt 0)">
+					<do_for_each name="$missilelauncher" in="this.assignedcontrolled.weapons.operational.list">
+						<do_if value="(macro.weapon_gen_m_torpedo_01_mk1_macro == $missilelauncher.macro) or (macro.weapon_gen_m_torpedo_01_mk2_macro == $missilelauncher.macro)">
+							<set_value name="$hastorpedo" exact="true"/>
+							<break/>
+						</do_if>
+					</do_for_each>
+				</do_if>
+				<do_else>
+					<set_value name="$hastorpedo" exact="false"/>
+				</do_else>
+			</do_if>
+			<do_all exact="$targets.count" counter="$i">
+				<do_if value="(not $targets.{$i}.canbeattacked) or ($checkrelation and not this.mayattack.{$targets.{$i}}) or (this.trueowner == $targets.{$i}.trueowner) or (@$targets.{$i}.dock)">
+					<continue/>
+				</do_if>
+				<do_elseif value="$targets.{$i}.zone.isclass.highway">
+					<continue/>
+				</do_elseif>
+				<do_elseif value="$targets.{$i}.isclass.buildstorage">
+					<continue/>
+				</do_elseif>
+				<do_elseif value="$list_objectstoignore.indexof.{$targets.{$i}}">
+					<continue/>
+				</do_elseif>
+				<do_elseif value="$radius and $radiusanchorpos and $radiusanchorspace and not $pursuetargets and this.isplayerowned and ($targets.{$i}.distanceto.[$radiusanchorspace, $radiusanchorpos] gt $radius)">
+					<continue/>
+				</do_elseif>
+				<do_elseif value="not $targets.{$i}.isclass.{$targetclasses} and not @$targets.{$i}.container.isclass.{$targetclasses} and (not $targetclasses.indexof.{class.station} or (not $targets.{$i}.isrealclass.station and not @$targets.{$i}.container.isrealclass.station))">
+					<continue/>
+				</do_elseif>
+				<do_elseif value="$targets.{$i}.isclass.spacesuit and not $targetclasses.indexof.{class.spacesuit} and ($targets.{$i} != $primarytarget)">
+					<continue/>
+				</do_elseif>
+				<do_elseif value="$targets.{$i}.isindestructible and (not this.isplayerowned or @this.assignedcontrolled.order.$internalorder)">
+					<do_if value="this.isplayerowned">
+						<set_value name="$rep" exact="player.entity"/>
+					</do_if>
+					<do_elseif value="this.trueowner.representative">
+						<set_value name="$rep" exact="this.trueowner.representative"/>
+					</do_elseif>
+					<do_else>
+						<set_value name="$rep" exact="this"/>
+					</do_else>
+					<do_if value="@$rep.$indestructibleobjects.indexof.{$targets.{$i}}">
+						<continue/>
+					</do_if>
+				</do_elseif>
+				<do_elseif value="$engageonlyonline and not $targets.{$i}.isonlineobject">
+					<continue/>
+				</do_elseif>
+				<do_if value="$escort.exists">
+					<set_value name="$refobject" exact="$escort"/>
+				</do_if>
+				<do_else>
+					<set_value name="$refobject" exact="this.ship"/>
+				</do_else>
+				<set_value name="$distance" exact="$targets.{$i}.distanceto.{$refobject}"/>
+				<do_if value="not $pursuetargets and ($refobject.sector != $targets.{$i}.sector)">
+					<continue/>
+				</do_if>
+				<do_if value="not $pursuetargets and $pursuedistance and ($distance gt $pursuedistance)">
+					<continue/>
+				</do_if>
+				<set_value name="$priority" exact="0.0"/>
+				<do_if value="$targets.{$i} == $primarytarget or $targets.{$i}.container == $primarytarget">
+					<set_value name="$priority" exact="20.0" operation="add"/>
+				</do_if>
+				<do_else>
+					<do_if value="$targetpurposes.count and not $targetpurposes.indexof.{@$targets.{$i}.primarypurpose}">
+						<continue/>
+					</do_if>
+					<do_elseif value="$targetclasses.count">
+						<do_if value="not $targets.{$i}.isclass.{$targetclasses} and ($targets.{$i}.isclass.defensible or not @$targets.{$i}.defensible.isclass.{$targetclasses})">
+							<continue/>
+						</do_if>
+					</do_elseif>
+				</do_else>
+				<do_if value="@$closestmodule.canbeattacked and ($closestmodule == $targets.{$i})">
+					<set_value name="$priority" exact="20.0" operation="add"/>
+				</do_if>
+				<do_elseif value="$distance le this.assignedcontrolled.maxcombatrange.all">
+					<set_value name="$priority" exact="10.0" operation="add"/>
+				</do_elseif>
+				<do_if value="($targets.{$i}.hull + $targets.{$i}.shield) gt 0">
+					<set_value name="$targetdps" exact="@$targets.{$i}.dps.all"/>
+					<do_if value="$targetdps">
+						<set_value name="$priority" exact="[[($targetdps)f / ($targets.{$i}.hull + $targets.{$i}.shield)f,0.5].max,10.0].min" operation="add"/>
+					</do_if>
+					<debug_text text="'DAT lib.target.selection: %s (%s) -- Evaluated dps -- target: %s (%s) -- priority: %s -- dps: %s -- hull + shield: %s -- added priority: %s'.[this.ship.knownname,this.ship.idcode,$targets.{$i}.knownname,@$targets.{$i}.idcode,$priority,$targetdps,$targets.{$i}.hull + $targets.{$i}.shield,[[($targetdps)f / ($targets.{$i}.hull + $targets.{$i}.shield)f,0.5].max,10.0].min]" chance="$debugchance"/>
+					<remove_value name="$targetdps"/>
+				</do_if>
+				<do_if value="this.assignedcontrolled.isclass.ship">
+					<do_if value="this.assignedcontrolled.isclass.ship_xl">
+						<do_if value="(@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station]) or (@$targets.{$i}.isrealclass.station)">
+							<set_value name="$priority" exact="10.0" operation="add"/>
+						</do_if>
+						<do_elseif value="not (@$targets.{$i}.isclass.[class.ship_xs, class.ship_s])">
+							<set_value name="$priority" exact="5.0" operation="add"/>
+						</do_elseif>
+					</do_if>
+					<do_elseif value="this.assignedcontrolled.isclass.ship_l">
+						<do_if value="(@$targets.{$i}.isclass.[class.ship_m, class.ship_l, class.ship_xl]) or (@$targets.{$i}.container.isclass.[class.ship_xl])">
+							<set_value name="$priority" exact="10.0" operation="add"/>
+						</do_if>
+						<do_elseif value="not (@$targets.{$i}.isclass.[class.ship_xs, class.ship_s])">
+							<set_value name="$priority" exact="5.0" operation="add"/>
+						</do_elseif>
+					</do_elseif>
+					<do_elseif value="this.assignedcontrolled.isclass.ship_m">
+						<do_if value="@$hastorpedo">
+							<do_if value="(@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station]) or (@$targets.{$i}.container.isclass.[class.ship_l, class.ship_xl, class.station]) or (@$targets.{$i}.isrealclass.station)">
+								<set_value name="$priority" exact="10.0" operation="add"/>
+							</do_if>
+							<do_elseif value="not (@$targets.{$i}.isclass.[class.ship_xs, class.ship_s])">
+								<set_value name="$priority" exact="5.0" operation="add"/>
+							</do_elseif>
+						</do_if>
+						<do_else>
+							<do_if value="(@$targets.{$i}.isclass.[class.ship_s, class.ship_m, class.ship_l]) or (@$targets.{$i}.container.isclass.[class.ship_l])">
+								<set_value name="$priority" exact="10.0" operation="add"/>
+							</do_if>
+							<do_elseif value="not ((@$targets.{$i}.isclass.[class.ship_xs, class.ship_xl, class.station]) or (@$targets.{$i}.isrealclass.station))">
+								<set_value name="$priority" exact="5.0" operation="add"/>
+							</do_elseif>
+						</do_else>
+					</do_elseif>
+					<do_elseif value="this.assignedcontrolled.isclass.ship_s">
+						<do_if value="@$hastorpedo">
+							<do_if value="(@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station]) or (@$targets.{$i}.container.isclass.[class.ship_l, class.ship_xl, class.station]) or (@$targets.{$i}.isrealclass.station)">
+								<set_value name="$priority" exact="10.0" operation="add"/>
+							</do_if>
+							<do_elseif value="not (@$targets.{$i}.isclass.[class.ship_xs, class.ship_s])">
+								<set_value name="$priority" exact="5.0" operation="add"/>
+							</do_elseif>
+						</do_if>
+						<do_else>
+							<do_if value="(@$targets.{$i}.isclass.[class.ship_xs, class.ship_s, class.ship_m])">
+								<set_value name="$priority" exact="10.0" operation="add"/>
+							</do_if>
+							<do_elseif value="not ((@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station]) or (@$targets.{$i}.isrealclass.station))">
+								<set_value name="$priority" exact="5.0" operation="add"/>
+							</do_elseif>
+						</do_else>
+					</do_elseif>
+				</do_if>
+				<do_elseif value="this.assignedcontrolled.isclass.station">
+					<do_if value="(@$targets.{$i}.isclass.[class.ship_l, class.ship_xl, class.station]) or (@$targets.{$i}.isrealclass.station)">
+						<set_value name="$priority" exact="10.0" operation="add"/>
+					</do_if>
+					<do_elseif value="not (@$targets.{$i}.isclass.[class.ship_xs, class.ship_s])">
+						<set_value name="$priority" exact="5.0" operation="add"/>
+					</do_elseif>
+				</do_elseif>
+				<do_if value="$priority gt $highest">
+					<set_value name="$highest" exact="$priority"/>
+					<set_value name="$selected" exact="$i"/>
+					<debug_text text="'DAT lib.target.selection: %s (%s) -- Switching targets to: %s %s -- priority: %s'.[this.ship.knownname,this.ship.idcode,$targets.{$i}.knownname,@$targets.{$i}.idcode,$priority]" chance="$debugchance"/>
+				</do_if>
+			</do_all>
+			<remove_value name="$hastorpedo"/>
+			<do_if value="$selected == 0">
+				<debug_text text="'DAT lib.target.selection: %s (%s) -- No valid targets left'.[this.ship.knownname,this.ship.idcode]" chance="$debugchance"/>
+				<set_value name="$target" exact="null"/>
+			</do_if>
+			<do_elseif value="$targets.{$selected} != $primarytarget">
+				<set_value name="$target" exact="$targets.{$selected}"/>
+				<debug_text text="'DAT lib.target.selection: %s (%s) -- Changed target to: %s (%s)'.[this.ship.knownname,this.ship.idcode,$target.knownname,@$target.idcode]" chance="$debugchance"/>
+			</do_elseif>
+			<do_else>
+				<set_value name="$target" exact="$primarytarget"/>
+				<debug_text text="'DAT lib.target.selection: %s (%s) -- Stay with primary target: %s (%s)'.[this.ship.knownname,this.ship,$target.knownname,@$target.idcode]" chance="$debugchance"/>
+			</do_else>
+			<do_if value="$target.isrealclass.station or (not this.assignedcontrolled.iscapitalship and @$target.iscapitalship)">
+				<clear_group group="$targets"/>
+				<do_if value="this.ship.iscapitalship">
+					<find_object_component groupname="$targets" object="$target" checkoperational="false" integrated="false" indestructible="false" invulnerable="false" sortbydistanceto="$refobject">
+						<match module="$target.isrealclass.station"/>
+						<match state="componentstate.wreck" negate="true"/>
+					</find_object_component>
+					<do_if value="$target.isrealclass.station">
+						<set_value name="$closestmodule" exact="$targets.{1}"/>
+					</do_if>
+				</do_if>
+				<do_else>
+					<find_object_component name="$component" object="$target" class="[class.shieldgenerator, class.weapon, class.engine]" surfaceelement="true" integrated="false" indestructible="false" invulnerable="false"/>
+					<do_if value="not $component">
+						<find_object_component name="$component" object="$target" checkoperational="false" integrated="false" indestructible="false" invulnerable="false">
+							<match_any>
+								<match surfaceelement="true"/>
+								<match module="$target.isrealclass.station"/>
+							</match_any>
+							<match state="componentstate.wreck" negate="true"/>
+						</find_object_component>
+					</do_if>
+					<do_if value="$component">
+						<add_to_group groupname="$targets" object="$component"/>
+						<do_if value="$target.isrealclass.station">
+							<remove_from_group group="$targets" object="$target" comment="pointless to attack the station itself. station is destroyed when all modules are destroyed."/>
+						</do_if>
+					</do_if>
+					<do_else>
+					</do_else>
+					<remove_value name="$component"/>
+				</do_else>
+				<do_if value="$targets.count">
+					<resume label="selection"/>
+				</do_if>
+				<do_else>
+				</do_else>
+			</do_if>
+			<return>
+				<retval name="target" value="$target"/>
+			</return>
+		</actions>
+	</attention>
+</aiscript>
