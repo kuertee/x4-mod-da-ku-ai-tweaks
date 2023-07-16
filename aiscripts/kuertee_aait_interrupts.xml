@@ -643,13 +643,26 @@
 						<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
 						<set_value name="$kAAIT_dist_toBigEnemy" exact="@this.assignedcontrolled.bboxdistanceto.{$kAAIT_result_bigEnemy}" />
 						<set_value name="$kAAIT_distAttacker" exact="@this.assignedcontrolled.bboxdistanceto.{$kAAIT_attackTarget}" />
-						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_dist_toBigEnemy (' + $kAAIT_dist_toBigEnemy + ') le : $kAAIT_distAttacker (' + $kAAIT_distAttacker + ')' + ($kAAIT_dist_toBigEnemy le $kAAIT_distAttacker)" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<create_position name="$kAAIT_pos_self" space="this.sector" object="this.assignedcontrolled" />
+						<create_position name="$kAAIT_pos_toBigEnemy" space="this.sector" object="$kAAIT_result_bigEnemy" />
+						<create_position name="$kAAIT_pos_toAttacker" space="this.sector" object="$kAAIT_attackTarget" />
+						<create_orientation name="$kAAIT_rot_toBigEnemy" orientation="look_at" refposition="$kAAIT_pos_toBigEnemy">
+							<position value="$kAAIT_pos_self" />
+						</create_orientation>
+						<set_value name="$kAAIT_yaw_toBigEnemy" exact="$kAAIT_rot_toBigEnemy.yaw * 180 / pi" />
+						<create_orientation name="$kAAIT_rot_toAttacker" orientation="look_at" refposition="$kAAIT_pos_toAttacker">
+							<position value="$kAAIT_pos_self" />
+						</create_orientation>
+						<set_value name="$kAAIT_yaw_toAttacker" exact="$kAAIT_rot_toAttacker.yaw * 180 / pi" />
+						<set_value name="$kAAIT_yaw_diff" exact="$kAAIT_yaw_toBigEnemy - $kAAIT_yaw_toAttacker" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_dist_toBigEnemy (' + $kAAIT_dist_toBigEnemy + ') le: $kAAIT_distAttacker (' + $kAAIT_distAttacker + ') ' + ($kAAIT_dist_toBigEnemy le $kAAIT_distAttacker)" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_yaw_toAttacker: ' + $kAAIT_yaw_toAttacker + ' $kAAIT_yaw_toBigEnemy: ' + $kAAIT_yaw_toBigEnemy + ' $kAAIT_yaw_diff: ' + $kAAIT_yaw_diff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						<do_if value="
 							@$kAAIT_result_bigEnemy.isoperational and
 							$kAAIT_result_bigEnemy != @$kAAIT_attackTarget and
 							(
 								(not @$kAAIT_attackTarget.isoperational) or
-								$kAAIT_dist_toBigEnemy le $kAAIT_distAttacker
+								$kAAIT_yaw_diff ge -45 and $kAAIT_yaw_diff le 45 and
 							)">
 							<set_value name="$kAAIT_result_avoidEnemy" exact="$kAAIT_result_bigEnemy" />
 							<set_value name="$kAAIT_result_isAvoid" exact="true" />
