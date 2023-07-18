@@ -118,11 +118,19 @@
 					<position value="$posTarget" />
 				</create_orientation>
 				<set_value name="$ship_yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
-				<set_value name="$yaw_deg" exact="$ship_yaw_deg + [-45, -30, -15, 0, 15, 30, 45].random" />
+				<!-- <set_value name="$yaw_deg" exact="$ship_yaw_deg + [-45, -30, -15, 0, 15, 30, 45].random" /> -->
 				<debug_text text="@this.assignedcontrolled.idcode + ' $ship_yaw_deg: ' + $ship_yaw_deg" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</do_else>
-			<set_value name="$random_jitter" min="-5" max="5" />
-			<set_value name="$yaw_deg" exact="$ship_yaw_deg + $random_jitter" />
+			<!-- <set_value name="$random_jitter" min="-5" max="5" />
+			<set_value name="$yaw_deg" exact="$ship_yaw_deg + $random_jitter" /> -->
+			<set_value name="$shipIndex" exact="this.assignedcontrolled.commander.allsubordinates.indexof.{this.assignedcontrolled}" />
+			<do_if value="$shipIndex / 2 == $shipIndex / 2.0">
+				<set_value name="$positional_jitter" exact="$shipIndex * 5" />
+			</do_if>
+			<do_else>
+				<set_value name="$positional_jitter" exact="$shipIndex * -5" />
+			</do_else>
+			<set_value name="$yaw_deg" exact="$ship_yaw_deg + $positional_jitter" />
 			<!-- <set_value name="$pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" /> -->
 			<set_value name="$pitch_deg" min="-15" max="15" />
 
@@ -175,14 +183,22 @@
 				<position value="$orderLocation_pos"/>
 				<interrupt_after_time time="1s" />
 			</move_to>
+			<set_value name="$isInterrupted" exact="false" />
 			<wait exact="5s">
 				<interrupt>
 					<conditions>
 						<check_any>
-							<event_object_attacked object="this.assignedcontrolled" />
-							<event_object_attacked object="$target" />
-							<event_object_changed_zone object="this.assignedcontrolled" />
-							<event_object_changed_zone object="$target" />
+							<check_all>
+								<event_object_attacked object="this.assignedcontrolled" />
+								<set_value name="$isInterrupted" exact="event.param.size gt this.assignedcontrolled.size * 1.5" />
+							</check_all>
+							<check_all>
+								<check_any>
+									<event_object_changed_zone object="this.assignedcontrolled" />
+									<event_object_changed_zone object="$target" />
+								</check_any>
+								<set_value name="$isInterrupted" exact="true" />
+							</check_all>
 						</check_any>
 					</conditions>
 				</interrupt>
@@ -190,7 +206,13 @@
 			<set_value name="$dist" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="$dist gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom">
-				<resume label="move_to_engage_position" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $isInterrupted: ' + $isInterrupted" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<do_if value="$isInterrupted">
+					<resume label="move_to_engage_position" />
+				</do_if>
+				<do_else>
+					<resume label="move_locked_destination" />
+				</do_else>
 			</do_if>
 
 			<label name="finish" />
