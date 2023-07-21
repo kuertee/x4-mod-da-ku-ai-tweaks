@@ -56,9 +56,9 @@
 	</init>
 	<attention min="unknown">
 		<actions>
-			<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ', ' + @$target.isoperational + ', ' + @$target.hullpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ', ' + @$target.isoperational + ', ' + @$target.hullpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.knownname + ' ' + @this.kAAIT_data.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="not @$target.isoperational">
+			<!-- <do_if value="not @$target.isoperational">
 				<resume label="finish" />
 			</do_if> -->
 			<include_interrupt_actions ref="kAAIT_Init" />
@@ -192,6 +192,11 @@
 						<check_any>
 							<check_all>
 								<event_object_attacked object="this.assignedcontrolled" />
+								<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + event.param + ' ' + event.param.knownname" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+								<check_any>
+									<check_value value="not event.param.isclass.station" />
+									<check_value value="event.param !=  @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
+								</check_any>
 								<set_value name="$isInterrupted" exact="event.param.size gt this.assignedcontrolled.size * 1.5" />
 							</check_all>
 							<check_all>
@@ -205,17 +210,25 @@
 					</conditions>
 				</interrupt>
 			</wait>
+			<debug_text text="@this.assignedcontrolled.idcode + ' $isInterrupted: ' + $isInterrupted" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="$dist gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom">
-				<debug_text text="@this.assignedcontrolled.idcode + ' $isInterrupted: ' + $isInterrupted" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="
+				$target.isrealclass.module and
+				(not $isInterrupted)">
+				<set_value name="$dist" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
+				<do_if value="$dist gt 2.5km">
+					<resume label="move_locked_destination" />
+				</do_if>
+			</do_if>
+			<do_elseif value="$dist gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom">
 				<do_if value="$isInterrupted">
 					<resume label="move_to_engage_position" />
 				</do_if>
 				<do_else>
 					<resume label="move_locked_destination" />
 				</do_else>
-			</do_if>
+			</do_elseif>
 
 			<label name="finish" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />

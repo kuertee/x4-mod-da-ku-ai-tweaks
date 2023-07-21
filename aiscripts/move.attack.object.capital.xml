@@ -531,8 +531,33 @@
 				</do_if>
 				<!-- Handle obstructions or obstacles? -->
 				<!-- Move -->
-				<do_if value="$DATRePos? and (@$DATRePos != null) and this.assignedcontrolled.maxspeed and ((this.assignedcontrolled.zone == $target.zone) or (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)) and @$DATRepositionForLOS and (@$DATRepositionCounter ge 3)">
+				<do_if value="
+					$DATRePos? and
+					(@$DATRePos != null) and
+					this.assignedcontrolled.maxspeed and
+					(
+						(this.assignedcontrolled.zone == $target.zone) or
+						(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)
+					) and @$DATRepositionForLOS and
+					(@$DATRepositionCounter ge 3)">
+				<!-- <do_if value="
+					(not $kAAITParam_isAvoidHighRisk) and
+					(not $kAAITParam_isStepForwardWithdraw) and
+					$DATRePos? and
+					(@$DATRePos != null) and
+					this.assignedcontrolled.maxspeed and
+					(
+						(this.assignedcontrolled.zone == $target.zone) or
+						(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)
+					) and @$DATRepositionForLOS and
+					(@$DATRepositionCounter ge 3)"> -->
 					<!-- reset counter -->
+					<!-- kuertee: start: show move position on the map -->
+					<debug_text text="@this.assignedcontrolled.idcode + ' ======================'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' start move_to DATRePos $target: ' + $target + ' ' + $target.knownname + ' ' + @$target.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" exact="$target.zone" />
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" exact="$DATRePos" />
+					<!-- kuertee: end: show move position on the map -->
 					<set_value name="$DATRepositionCounter" exact="0"/>
 					<!-- Custom update time -->
 					<!-- might need to account for rotation time to target -->
@@ -552,6 +577,8 @@
 							</conditions>
 						</interrupt>
 					</move_to>
+					<debug_text text="@this.assignedcontrolled.idcode + ' end move_to DATRePos $target: ' + $target + ' ' + $target.knownname + ' ' + @$target.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' ===================='" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- Move Complete'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="(@$DATRepositionForLOS and @$DATupdatetime and $debugchance) * 100"/>
 					<resume label="fight" chance="@$DATRepositionForLOS * 100"/>
 				</do_if>
