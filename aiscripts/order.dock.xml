@@ -46,6 +46,21 @@
 			</actions>
 		</handler>
 	</add>
+	<!--
+		purpose: allow kuertee avoid behaviour
+		<label name="start"/>
+	-->
+	<add pos="before" sel="//label[@name=&quot;start&quot;]">
+		<resume label="start" />
+		<label name="kAAIT_label_avoid" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+		<wait min="5s" max="10s" />
+		<resume label="start" />
+	</add>
+	<!--
+		purpose: cancel waitforsignal when order changes
+	-->
 	<add sel="//create_order[@id=&quot;'WaitForSignal'&quot;][@object=&quot;$destination&quot;]" type="@name">$kAAIT_order_waitforsignal</add>
 	<add pos="before" sel="//move_docking">
 		<debug_text text="@this.assignedcontrolled.idcode + ' move_docking'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -54,7 +69,7 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' run_script move.generic'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 	<add sel="//on_abort">
-		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal on destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_order_waitforsignal: ' + @$kAAIT_order_waitforsignal + ' cancel wait for signal on destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $destination.idcode: ' + $destination.idcode + ' $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal'" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="@$kAAIT_order_waitforsignal.exists">
 			<cancel_order order="$kAAIT_order_waitforsignal" />
