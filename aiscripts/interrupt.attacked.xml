@@ -1,191 +1,52 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-<!-- add. purpose: block event.
-      <handler name="AttackHandler">
-        <conditions>
-          <event_object_attacked object="this.defensible"/>
-          ...
-          <check_all comment="flee">
-            <check_value value="not event.object.isunit"/>
-            <check_any>
-              <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
+<!--
+  add. purpose: before actual flee, evaluate for kAAIT-enabled ships.
+  <do_if value="$flee?" >
 -->
-  <replace sel="//check_all[@comment=&quot;flee&quot;]//check_value[@value=&quot;event.object.signal.{'attacked'}.response.id == 'flee'&quot;]">
-    <check_all>
-        <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
-        <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" comment="not performing a kAAIT order" />
-        <check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isInited" comment="not inited by kAAIT" />
-        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler flee event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-    </check_all>
-  </replace>
-<!-- add. purpose: block event.
-      <handler name="AttackHandler">
-        <conditions>
-          <event_object_attacked object="this.defensible"/>
-          ...
-          <check_all comment="flee">
-            <check_value value="not event.object.isunit"/>
-            <check_any>
-              <check_value value="event.object.signal.{'attacked'}.response.id == 'flee'"/>
-              <check_all>
-                <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
--->
-	<replace sel="//check_all[@comment=&quot;flee&quot;]//check_value[@value=&quot;event.object.signal.{'attacked'}.response.id == 'auto'&quot;]">
-    <check_all>
-        <check_value value="event.object.signal.{'attacked'}.response.id == 'auto'"/>
-        <check_value value="not @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder" comment="not performing a kAAIT order" />
-        <!-- <check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isInited" comment="not inited by kAAIT" /> -->
-        <check_any>
-          <check_value value="this.assignedcontrolled.isunit" />
-          <check_value value="this.assignedcontrolled.islasertower" />
-          <check_all       comment="kuda-enabled">
-            <check_value   comment="per-global and per-ship setting are set" value="
-              if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+  <add pos="before" sel="//do_if[@value=&quot;$flee?&quot;]">
+    <do_if value="@$flee">
+      <include_interrupt_actions ref="kAAIT_GetIsAvoidEnabled" />
+      <include_interrupt_actions ref="kAAIT_GetIsWithdrawStepForwardEnabled" />
+      <do_if value="$kAAIT_isAvoidEnabled or $kAAIT_isWithdrawStepForwardEnabled">
+        <set_value name="$kAAIT_attacker" exact="event.param" />
+        <!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
+          fight: shield gt skill-withdraw-value.
+          withdraw: shield gt 5, shield le skill-withdraw-value, distance to target < 10km.
+          fight: shield le 5, hull le 50.
+        -->
+        <include_interrupt_actions ref="kAAIT_GetSkillVars" />
+        <do_if value="
+          (
+            (
+              @$kAAIT_attacker.isclass.station and
+              this.assignedcontrolled.shieldpercentage gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation
+            ) or
+            (
+              @$kAAIT_attacker.isclass.ship and
               (
+                this.assignedcontrolled.shieldpercentage gt @$kAAIT_attacker.shieldpercentage * (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
+                @this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker} gt this.assignedcontrolled.maxradarrange * 0.25 or
                 (
-                  this.assignedcontrolled.isplayerowned and
-                  (
-                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
-                    this.assignedcontrolled.primarypurpose != purpose.fight
-                  ) and
-                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk and
-                  (
-                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
-                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
-                  )
-                ) or
-                (
-                  (not this.assignedcontrolled.isplayerowned) and
-                  (
-                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
-                    this.assignedcontrolled.primarypurpose != purpose.fight
-                  ) and
-                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk_allFactions
-                ) or
-                (
-                  this.assignedcontrolled.isplayerowned and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip and
-                  (
-                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
-                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
-                  )
-                ) or
-                (
-                  this.assignedcontrolled.isplayerowned and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation and
-                  (
-                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
-                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
-                  )
-                ) or
-                (
-                  (not this.assignedcontrolled.isplayerowned) and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip_allFactions
-                ) or
-                (
-                  (not this.assignedcontrolled.isplayerowned) and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation_allFactions
+                  this.assignedcontrolled.shieldpercentage le 5 and
+                  this.assignedcontrolled.hullpercentage le 50
                 )
-              ) then true else false
-            " />
-            <check_any>
-              <check_value   comment="ship is not a fighter" value="this.assignedcontrolled.primarypurpose != purpose.fight" />
-              <check_all     comment="carrier that is not allowed to fight">
-                <check_value comment="ship is a carrier" value="this.assignedcontrolled.type == shiptype.carrier" />
-                <check_any   comment="carrier is not allowed to fight">
-                  <check_all>
-                    <check_value value="this.isplayerowned" />
-                    <check_value value="not global.$kAAIT_Data.$isCarriersAttackLikeDestroyers" />
-                  </check_all>
-                  <check_value value="not global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions" />
-                </check_any>
-              </check_all>
-            </check_any>
-          </check_all>
-          <check_all     comment="not kuda-enabled">
-            <check_value value="
-              if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
-              (
-                (
-                  this.assignedcontrolled.isplayerowned and
-                  (
-                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
-                    this.assignedcontrolled.primarypurpose != purpose.fight
-                  ) and
-                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk and
-                  (
-                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
-                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
-                  )
-                ) or
-                (
-                  (not this.assignedcontrolled.isplayerowned) and
-                  (
-                    this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m] or
-                    this.assignedcontrolled.primarypurpose != purpose.fight
-                  ) and
-                  @global.$kAAIT_Data.$xssm_isAvoidHighRisk_allFactions
-                ) or
-                (
-                  this.assignedcontrolled.isplayerowned and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip and
-                  (
-                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
-                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
-                  )
-                ) or
-                (
-                  this.assignedcontrolled.isplayerowned and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation and
-                  (
-                    (not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
-                    @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
-                  )
-                ) or
-                (
-                  (not this.assignedcontrolled.isplayerowned) and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.ship or @$primarytarget.defensible.isclass.ship) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip_allFactions
-                ) or
-                (
-                  (not this.assignedcontrolled.isplayerowned) and
-                  this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
-                  (@$primarytarget.isclass.station or @$primarytarget.defensible.isclass.station) and
-                  @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation_allFactions
-                )
-              ) then true else false
-            " />
-          </check_all>
-        </check_any>
-        <debug_text text="@this.assignedcontrolled.idcode + ' AttackHandler auto event.name: ' + event.name + ' order: ' + this.assignedcontrolled.order.script + ' order.name: ' + this.assignedcontrolled.order.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-    </check_all>
-	</replace>
-<!-- purpose: debug out response.
-  <handler name="AttackHandler">
-    <conditions>
--->
-  <add sel="//handler[@name=&quot;AttackHandler&quot;]//conditions">
-    <debug_text text="@this.assignedcontrolled.idcode + ' $fleerespond: ' + @$fleerespond + ' $attackrespond: ' + @$attackrespond" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+              )
+            )
+          )" comment="clear ignore flag when ship should fight. e.g. v ship: when no shields, but good hull.">
+          <debug_text text="@this.assignedcontrolled.idcode + ' flee cancelled!'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+          <remove_value name="$flee" />
+          <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT" />
+        </do_if>
+      </do_if>
+    </do_if>
   </add>
 <!-- add. purspose: do not restock if commander has an attack order or there's an enemy nearby.
   <signal_objects object="event.object" param="'resupply'" param2="[false]" param3="$debugchance" delay="10ms" comment="param2 = [urgent?, resupplystationID], param3 = $debugchance"/>
 -->
   <add pos="before" sel="//signal_objects[@param=&quot;'resupply'&quot;]">
     <set_value name="$kAAIT_restockChance" exact="100" />
-    <do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+    <do_if value="@$kAAIT_isAvoidEnabled and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
       <do_if value="this.assignedcontrolled.hullpercentage gt 25">
         <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
         <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
@@ -205,15 +66,15 @@
 	<add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[1]">
 		<check_value value="global.$DATSmarterFleeBoostTweak and ((event.object.primarypurpose == purpose.trade) or (event.object.primarypurpose == purpose.mine))"/>
 	</add>
-	<replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]/check_value[@value='((this.skill.morale * 6) + ((event.object.primarypurpose == purpose.fight) * 20) + (event.object.shieldpercentage * 2)) lt 120']/@value">(not global.$DATSmarterFleeBoostTweak) and (((this.skill.morale * 6) + ((event.object.primarypurpose == purpose.fight) * 20) + (event.object.shieldpercentage * 2)) lt 120)</replace>
-	<replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]/check_value[@value='((event.object.combinedskill)hp - ((event.object.shield + event.object.hull) / [event.param.dps.all, 1hp].max)) gt 70']/@value">(not global.$DATSmarterFleeBoostTweak) and (((event.object.combinedskill)hp - ((event.object.shield + event.object.hull) / [event.param.dps.all, 1hp].max)) gt 70)</replace>
-	<add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]">
+	<replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]/check_value[@value='((this.skill.morale * 6) + ((event.object.primarypurpose == purpose.fight) * 20) + (event.object.shieldpercentage * 2)) lt 120']/@value">(not global.$DATSmarterFleeBoostTweak) and (((this.skill.morale * 6) + ((event.object.primarypurpose == purpose.fight) * 20) + (event.object.shieldpercentage * 2)) lt 120)</replace>
+	<replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]/check_value[@value='((event.object.combinedskill)hp - ((event.object.shield + event.object.hull) / [event.param.dps.all, 1hp].max)) gt 70']/@value">(not global.$DATSmarterFleeBoostTweak) and (((event.object.combinedskill)hp - ((event.object.shield + event.object.hull) / [event.param.dps.all, 1hp].max)) gt 70)</replace>
+	<add     sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]">
 		<check_value value="global.$DATSmarterFleeBoostTweak and ((event.object.primarypurpose == purpose.fight) and (event.object.shieldpercentage lt (10 + (10 * event.object.isclass.[class.ship_l]) + (20 * event.object.isclass.[class.ship_m]) + (30 * event.object.isclass.[class.ship_s]))))"/>
 	</add>
-	<add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]">
+	<add     sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]">
 		<check_value value="global.$DATSmarterFleeBoostTweak and (((event.object.primarypurpose == purpose.trade) or (event.object.primarypurpose == purpose.mine)) and (event.object.shieldpercentage lt 80))"/>
 	</add>
-	<add sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all[2]/check_any[2]">
+	<add     sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='flee']/check_any/check_all/check_any[2]">
 		<check_value value="global.$DATSmarterFleeBoostTweak and ((not [purpose.fight,purpose.trade,purpose.mine].indexof.{event.object.primarypurpose}) and (event.object.shieldpercentage lt 60))"/>
 	</add>
 	<replace sel="/aiscript/interrupts/library/handler[@name='AttackHandler']/conditions/check_any[@comment='fight or flight']/check_all[@comment='call for help']/check_value[@value='event.object.zone.policefaction and (event.object.relationto.{event.object.zone.policefaction} ge 0)']/@value">((not global.$DATPatrolTweaks) and event.object.zone.policefaction and (event.object.relationto.{event.object.zone.policefaction} ge 0)) or ((global.$DATPatrolTweaks) and event.object.zone.policefaction and (event.object.relationto.{event.object.zone.policefaction} ge [0,event.param.relationto.{event.object.zone.policefaction}].max))</replace>
