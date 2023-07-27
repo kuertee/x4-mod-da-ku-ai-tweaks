@@ -6,10 +6,7 @@
 -->
   <add pos="before" sel="//do_if[@value=&quot;$flee?&quot;]">
     <do_if value="@$flee">
-      <set_value name="$kAAIT_attacker" exact="event.param" />
-      <include_interrupt_actions ref="kAAIT_GetIsAvoidEnabled" />
-      <include_interrupt_actions ref="kAAIT_GetIsWithdrawStepForwardEnabled" />
-      <do_if value="$kAAIT_isAvoidEnabled or $kAAIT_isWithdrawStepForwardEnabled">
+      <do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
         <!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
           fight: shield gt skill-withdraw-value.
           withdraw: shield gt 5, shield le skill-withdraw-value, distance to target < 10km.
@@ -46,14 +43,14 @@
 -->
   <add pos="before" sel="//signal_objects[@param=&quot;'resupply'&quot;]">
     <set_value name="$kAAIT_restockChance" exact="100" />
-    <do_if value="@$kAAIT_isAvoidEnabled and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+    <do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
       <do_if value="this.assignedcontrolled.hullpercentage gt 25">
         <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
         <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
         <do_if value="
           @$kAAIT_bigEnemy.isoperational or
-          @this.assignedcontrolled.commaner.order.script == 'order.fight.attack.object' or
           @this.assignedcontrolled.commaner.order.$kAAITParam_iskAAITOrder or
+          @this.assignedcontrolled.commaner.order.script == 'order.fight.attack.object' or
           @this.assignedcontrolled.commaner.order.script == 'order.fight.tactical'">
           <set_value name="$kAAIT_restockChance" exact="0" />
         </do_if>
