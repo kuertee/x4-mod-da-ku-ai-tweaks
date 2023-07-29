@@ -193,6 +193,24 @@
 			<set_value name="$distance_attackFrom_saved" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" />
 
 			<label name="move_locked_destination" />
+			<do_if value="
+				@this.assignedcontrolled.nextorder.script != 'order.repair' and
+				@this.assignedcontrolled.nextorder.script != 'order.restock.subordinates' and
+				@this.assignedcontrolled.nextorder.script != 'order.dock' and
+				@this.assignedcontrolled.nextorder.script != 'order.dock.wait' and
+				(	this.assignedcontrolled.hullpercentage le 25 or
+					(
+						this.assignedcontrolled.hullpercentage le 50 and
+						this.assignedcontrolled.shieldpercentage le 25
+					) or
+					(not this.assignedcontrolled.weapons.all.count) or
+					(not this.assignedcontrolled.engines.all.count) or
+					this.assignedcontrolled.weapons.operational.count / ([this.assignedcontrolled.weapons.all.count, 1].max)f le 0.25 or
+					this.assignedcontrolled.engines.operational.count / ([this.assignedcontrolled.engines.all.count, 1].max)f le 0.25
+				)" comment="resupply if required and not already resupplying.">
+				<signal_objects object="this.assignedcontrolled" param="'resupply'" param2="[false]" param3="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<wait min="1s" max="3s" />
+			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL move_locked_destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<remove_value name="$isJustFight" />
 			<remove_value name="$isCancelWithdrawal" />
@@ -247,7 +265,7 @@
 									fight: shield le 5, hull le 50.
 								-->
 								<check_all comment="good shields">
-									<check_value value="this.assignedcontrolled.shieldpercentage gt $target.shieldpercentage * (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0)" />
+									<check_value value="this.assignedcontrolled.shieldpercentage / ($target.shieldpercentage)f gt (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0)" />
 									<set_value name="$isJustFight" exact="'good shields (gt skill-withdraw)'" />
 								</check_all>
 								<check_all comment="too far from target">

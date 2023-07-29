@@ -22,7 +22,7 @@
             (
               @$kAAIT_attacker.isclass.ship and
               (
-                this.assignedcontrolled.shieldpercentage gt @$kAAIT_attacker.shieldpercentage * (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
+                this.assignedcontrolled.shieldpercentage / @$kAAIT_attacker.shieldpercentage gt (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
                 @this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker} gt this.assignedcontrolled.maxradarrange * 0.25 or
                 (
                   this.assignedcontrolled.shieldpercentage le 5 and
@@ -43,17 +43,12 @@
 -->
   <add pos="before" sel="//signal_objects[@param=&quot;'resupply'&quot;]">
     <set_value name="$kAAIT_restockChance" exact="100" />
-    <do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-      <do_if value="this.assignedcontrolled.hullpercentage gt 25">
-        <include_interrupt_actions ref="kAAIT_GetBigEnemies" />
-        <include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-        <do_if value="
-          @$kAAIT_bigEnemy.isoperational or
-          @this.assignedcontrolled.commaner.order.$kAAITParam_iskAAITOrder or
-          @this.assignedcontrolled.commaner.order.script == 'order.fight.attack.object' or
-          @this.assignedcontrolled.commaner.order.script == 'order.fight.tactical'">
-          <set_value name="$kAAIT_restockChance" exact="0" />
-        </do_if>
+    <do_if value="(@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder) and
+      (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
+      <!-- check for other entries of this text: ship will resupply only on these conditions. -->
+      <include_interrupt_actions ref="kAAIT_GetIsOkToResupply" />
+      <do_if value="not @$kAAIT_isOkToResupply">
+        <set_value name="$kAAIT_restockChance" exact="0" />
       </do_if>
     </do_if>
   </add>

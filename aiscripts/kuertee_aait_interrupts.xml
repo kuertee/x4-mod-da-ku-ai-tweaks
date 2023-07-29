@@ -75,7 +75,7 @@
 						(
 							@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.ship and
 							(
-								this.assignedcontrolled.shieldpercentage gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.shieldpercentage * (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
+								this.assignedcontrolled.shieldpercentage / (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.shieldpercentage)f gt (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
 								@this.assignedcontrolled.bboxdistanceto.{global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget} gt this.assignedcontrolled.maxradarrange * 0.25 or
 								(
 									this.assignedcontrolled.shieldpercentage le 5 and
@@ -309,7 +309,15 @@
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker.knownname (gravidar, avoid): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						</check_all>
 					</check_any>
-					<check_value value="@this.assignedcontrolled.order.script != 'order.assign.commander'" />
+					<check_value value="
+						not [
+							'order.assign.commander',
+							'order.dock',
+							'order.dock.wait',
+							'order.repair',
+							'move.undock',
+							'move.flee'
+						].indexof.{this.assignedcontrolled.order.script}" />
 					<set_value name="$kAAIT_isInterrupted" exact="true" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name + ' @$kAAIT_eventType: ' + @$kAAIT_eventType" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<check_value value="@$kAAIT_eventType" />
@@ -451,7 +459,7 @@
 							-->
 							<check_all comment="good shields: fight. poor shields: withdraw">
 								<check_value value="this.assignedcontrolled.shieldpercentage gt 5" />
-								<check_value value="this.assignedcontrolled.shieldpercentage le $kAAIT_attacker.shieldpercentage * ($kAAIT_shield_withdrawAt / 100)" />
+								<check_value value="this.assignedcontrolled.shieldpercentage / ($kAAIT_attacker.shieldpercentage)f le ($kAAIT_shield_withdrawAt / 100.0)" />
 								<check_value value="this.assignedcontrolled.hullpercentage gt 50" />
 								<check_value value="$kAAIT_distAttacker le this.assignedcontrolled.maxradarrange * 0.25" comment="at this point, $kAAIT_distAttacker is distance from $kAAIT_attacker" />
 							</check_all>
@@ -555,7 +563,16 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
 				<set_value name="$kAAIT_result_isAvoid" exact="false" />
-				<do_if value="not @$attackData.$isAvoiding">
+				<do_if value="
+					(not @$attackData.$isAvoiding) and
+					(not [
+						'order.assign.commander',
+						'order.dock',
+						'order.dock.wait',
+						'order.repair',
+						'move.undock',
+						'move.flee'
+					].indexof.{this.assignedcontrolled.order.script})">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot $kAAIT_test_target_isAvoid: ' + @$kAAIT_test_target_isAvoid.knownname + ' ' + @$kAAIT_test_target_isAvoid.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="(not @$kAAIT_isHighRisk) or (not @$kAAIT_attackTarget)">
 						<set_value name="$kAAIT_isHighRisk" exact="false" />
@@ -632,7 +649,7 @@
 										this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25
 									) and
 									(
-										this.assignedcontrolled.shieldpercentage gt $kAAIT_test_target_isAvoid.shieldpercentage * (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
+										this.assignedcontrolled.shieldpercentage / ($kAAIT_test_target_isAvoid.shieldpercentage)f gt (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
 										this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isAvoid} gt this.assignedcontrolled.maxradarrange * 0.25 or
 										(
 											this.assignedcontrolled.shieldpercentage le 5 and
@@ -1857,6 +1874,38 @@
 				</do_if>
 			</actions>
 
+			<actions name="kAAIT_GetIsOkToResupply">
+				<do_if value="
+					(this.assignedcontrolled.hullpercentage gt 25) or
+					(
+						this.assignedcontrolled.hullpercentage lt 50 and
+						this.assignedcontrolled.shieldpercentage lt 25
+					)
+				">
+					<include_interrupt_actions ref="kAAIT_GetBigEnemies" />
+					<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+					<do_if value="this.assignedcontrolled.commander.isoperational">
+						<do_if value="
+							@$kAAIT_result_bigEnemy.isoperational or
+							@this.assignedcontrolled.commander.order.script == 'order.fight.attack.object' or
+							@this.assignedcontrolled.commander.nextorder.script == 'order.fight.attack.object' or
+							@this.assignedcontrolled.commander.order.script == 'order.fight.tactical' or
+							@this.assignedcontrolled.commander.nextorder.script == 'order.fight.tactical'">
+							<set_value name="$kAAIT_restockChance" exact="0" />
+						</do_if>
+					</do_if>
+					<do_else>
+						<do_if value="
+							@$kAAIT_result_bigEnemy.isoperational or
+							@this.assignedcontrolled.order.script == 'order.fight.attack.object' or
+							@this.assignedcontrolled.nextorder.script == 'order.fight.attack.object' or
+							@this.assignedcontrolled.order.script == 'order.fight.tactical' or
+							@this.assignedcontrolled.nextorder.script == 'order.fight.tactical'">
+							<set_value name="$kAAIT_restockChance" exact="0" />
+						</do_if>
+					</do_else>
+				</do_if>
+			</actions>
 			<!--
 			inputs: $kAAIT_target_avoid
 			outputs: $kAAIT_result_pos_avoidFrom, $kAAIT_result_yaw_avoidFrom, $kAAIT_result_pitch_avoidFrom, $kAAIT_result_target_nearestAvoid, $kAAIT_result_distance_nearestAvoid

@@ -73,20 +73,7 @@
 			<!-- <set_flight_behaviour object="this.assignedcontrolled" flightbehaviour="flightbehaviour.evasive_random" /> -->
 
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" exact="true" />
-			<do_if value="
-				@this.assignedcontrolled.nextorder.script != 'order.repair' and
-				@this.assignedcontrolled.nextorder.script != 'order.restock.subordinates' and
-				@this.assignedcontrolled.nextorder.script != 'order.dock' and
-				@this.assignedcontrolled.nextorder.script != 'order.dock.wait' and
-				(	this.assignedcontrolled.hullpercentage le 25 or
-					(not this.assignedcontrolled.weapons.all.count) or
-					(not this.assignedcontrolled.engines.all.count) or
-					this.assignedcontrolled.weapons.operational.count / ([this.assignedcontrolled.weapons.all.count, 1].max)f le 0.25 or
-					this.assignedcontrolled.engines.operational.count / ([this.assignedcontrolled.engines.all.count, 1].max)f le 0.25
-				)" comment="resupply if required and not already resupplying.">
-				<signal_objects object="this.assignedcontrolled" param="'resupply'" param2="[false]" param3="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<wait min="1s" max="3s" />
-			</do_if>
+
 			<label name="start"/>
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
@@ -251,6 +238,24 @@
 
 			<label name="move_locked_destination" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL move_locked_destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="
+				@this.assignedcontrolled.nextorder.script != 'order.repair' and
+				@this.assignedcontrolled.nextorder.script != 'order.restock.subordinates' and
+				@this.assignedcontrolled.nextorder.script != 'order.dock' and
+				@this.assignedcontrolled.nextorder.script != 'order.dock.wait' and
+				(	this.assignedcontrolled.hullpercentage le 25 or
+					(
+						this.assignedcontrolled.hullpercentage le 50 and
+						this.assignedcontrolled.shieldpercentage le 25
+					) or
+					(not this.assignedcontrolled.weapons.all.count) or
+					(not this.assignedcontrolled.engines.all.count) or
+					this.assignedcontrolled.weapons.operational.count / ([this.assignedcontrolled.weapons.all.count, 1].max)f le 0.25 or
+					this.assignedcontrolled.engines.operational.count / ([this.assignedcontrolled.engines.all.count, 1].max)f le 0.25
+				)" comment="resupply if required and not already resupplying.">
+				<signal_objects object="this.assignedcontrolled" param="'resupply'" param2="[false]" param3="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<wait min="1s" max="3s" />
+			</do_if>
 			<remove_value name="$kAAIT_isCancelAvoidance" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
