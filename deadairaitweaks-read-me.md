@@ -1,5 +1,26 @@
 # DeadAirAITweaks
 
+## Updates for 6.x (8-May-2023 to 8-Jun-2023)
+- Implemented options menu for DA tweaks.
+- New feature: Added handling for capital ships attacking station but not having line of sight due to module wrecks. Ships will rotate 15 degrees around the station at their max range periodically until they have LOS on the module they are trying to attack. Only affects high attention and ships with front weapons.
+- Stage 2:
+ * Reimplemented improvements to move.attack.object.capital, improvements to blind tourist (explore) script order.move.recon, removed DA diffs from order.supply, improved xpath for factiongoal_invade_space change and restricted improvement until game is 2h+ old
+ * Fixed bug that would occasionally cause ships with travel charge time to slowboat long distances.
+- Stage 3:
+ * Added new improvement to flee distance on boost script so if using travel drive, they will flee further.
+ * Added new improvement to flee docking IF vanilla fails to find a place to flee to, will likely change to not requiring vanilla to fail.
+ * Cleaned up changes and added additional changes in move.gate and move.generic resulting in improved speed large ships will travel.
+ * Fixed issue for Kuertee's script in order.fight.escort resulting in X4 6.0HF4.
+ * Added improvement in excessive delay time for vanilla trade script order.trade.routine and trade.find.free.
+ * Added check for missing variables in md script for DA options and made button text red if option is disabled.
+ * Added improvement for job_helper script that makes factions choose closer shipyard more often but comes at the cost potentially of player shipyard/wharf sales (massive improvement to xenon).
+- Stage 4:
+ * Increased number of scripts covered by Player ship boost tweak. Updated attack interrupt changes to be covered by Smarter Flee Tweaks.
+ * Updated targeting selection changes to be covered by Targeting Script Tweaks.
+ * Improved capital attack script for ships without front weapons to use travel drive less when doing angled attack runs.
+- Stage 1:
+ * Removed DA fight.attack.object.bigtarget/capital/fighter/medium/stations, interrupt.attacked, interrupt.npc.usecases, masstraffic.watchdog, move.attack.object.capital, move.flee.dock, order.collect.ship.lockbox, order.dock, order.fight.attack.object, order.fight.board, order.fight.escort, order.fight.lasertower, mining routine range changes, order.move.recon.police, order.plunder, trade.find.free, factiongoal_patrolcoordinationservice, factionsubgoal_buildstation, optional engineer.ai tweaks.
+
 ## Changes to X4 AI (finally updated on 2-Jul-2022)
 - Allows drone travel drive usage logic (if you have a mod that adds it to engine)
 - Rebalances ship/station repairs in optional file. Amount and quality of service personnel matters more.
