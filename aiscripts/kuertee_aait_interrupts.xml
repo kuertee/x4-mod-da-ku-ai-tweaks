@@ -317,7 +317,7 @@
 							'order.repair',
 							'move.undock',
 							'move.flee'
-						].indexof.{this.assignedcontrolled.order.script}" />
+						].indexof.{@this.assignedcontrolled.order.script}" />
 					<set_value name="$kAAIT_isInterrupted" exact="true" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name + ' @$kAAIT_eventType: ' + @$kAAIT_eventType" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<check_value value="@$kAAIT_eventType" />
@@ -572,7 +572,7 @@
 						'order.repair',
 						'move.undock',
 						'move.flee'
-					].indexof.{this.assignedcontrolled.order.script})">
+					].indexof.{@this.assignedcontrolled.order.script})">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_AvoidOrNot $kAAIT_test_target_isAvoid: ' + @$kAAIT_test_target_isAvoid.knownname + ' ' + @$kAAIT_test_target_isAvoid.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="(not @$kAAIT_isHighRisk) or (not @$kAAIT_attackTarget)">
 						<set_value name="$kAAIT_isHighRisk" exact="false" />
@@ -921,6 +921,16 @@
 					<set_value name="$kAAIT_subordinate" exact="event.param2" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_OrderNewSubordinateToAttack $kAAIT_subordinate: ' + $kAAIT_subordinate.knownname + ', ' + $kAAIT_subordinate.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<abort_called_scripts resume="start" />
+				</actions>
+			</handler>
+
+			<handler name="kAAIT_Handler_DebugWithdraw">
+				<conditions>
+					<event_object_signalled object="this.assignedcontrolled" param="'withdraw'" />
+				</conditions>
+				<actions>
+					<set_value name="$kAAIT_isDebugWithdraw" exact="true" />
+					<abort_called_scripts resume="kAAITLabel_withdraw" />
 				</actions>
 			</handler>
 
@@ -1875,6 +1885,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetIsOkToResupply">
+				<set_value name="$kAAIT_isOkToResupply" exact="true" />
 				<do_if value="
 					(this.assignedcontrolled.hullpercentage gt 25) or
 					(
@@ -1891,7 +1902,7 @@
 							@this.assignedcontrolled.commander.nextorder.script == 'order.fight.attack.object' or
 							@this.assignedcontrolled.commander.order.script == 'order.fight.tactical' or
 							@this.assignedcontrolled.commander.nextorder.script == 'order.fight.tactical'">
-							<set_value name="$kAAIT_restockChance" exact="0" />
+							<set_value name="$kAAIT_isOkToResupply" exact="false" />
 						</do_if>
 					</do_if>
 					<do_else>
@@ -1901,10 +1912,12 @@
 							@this.assignedcontrolled.nextorder.script == 'order.fight.attack.object' or
 							@this.assignedcontrolled.order.script == 'order.fight.tactical' or
 							@this.assignedcontrolled.nextorder.script == 'order.fight.tactical'">
-							<set_value name="$kAAIT_restockChance" exact="0" />
+							<set_value name="$kAAIT_isOkToResupply" exact="false" />
 						</do_if>
 					</do_else>
 				</do_if>
+				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isOkToResupply: ' + $kAAIT_isOkToResupply" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+				<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isOkToResupply: ' + $kAAIT_isOkToResupply" /> -->
 			</actions>
 			<!--
 			inputs: $kAAIT_target_avoid

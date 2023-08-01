@@ -7,6 +7,7 @@
 			<param name="debugchance" type="bool" default="0" advanced="true" text="{1041, 10086}" comment="Print debug output">
 				<input_param name="truevalue" value="100"/>
 			</param>
+			<param name="isForced" type="internal" default="false" />
 		</params>
 		<requires>
 			<match shiptype="shiptype.lasertower" negate="true"/>
@@ -324,14 +325,18 @@
 			<do_if value="not @this.assignedcontrolled.isoperational">
 				<resume label="finish" />
 			</do_if>
-			<do_if value="
+			<debug_text text="@this.assignedcontrolled.idcode + ' $isForced: ' + $isForced" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="$isForced and this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 3km">
+				<resume label="move_locked_destination" />
+			</do_if>
+			<do_elseif value="
 				(not @$isJustFight) and
 				(not @$isCancelWithdrawal) and
 				(
 					(
 						(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip) and
 						(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation) and
-						this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 5km
+						this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 3km
 					) or
 					(
 						$target.isclass.ship and
@@ -344,14 +349,14 @@
 						this.assignedcontrolled.shieldpercentage le @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation
 					)
 				)">
-				<do_if value="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 5km">
+				<do_if value="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 10km">
 					<resume label="move_locked_destination" />
 				</do_if>
 				<do_else>
 					<resume label="move" />
 				</do_else>
-			</do_if>
-			<do_elseif value="@$kAAIT_isInterrupted and this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 1km">
+			</do_elseif>
+			<do_elseif value="@$kAAIT_isInterrupted and this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 3km">
 				<remove_value name="$kAAIT_isInterrupted" />
 				<do_if value="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos] gt 10km">
 					<resume label="move_locked_destination" />
