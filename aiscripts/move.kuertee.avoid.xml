@@ -65,7 +65,7 @@
 		<actions>
 			<set_value name="$kAAIT_detailedDebugChance" exact="100" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ', ' + @$target.isoperational + ', ' + @$target.hullpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.knownname + ' ' + @this.kAAIT_data.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.knownname + ' ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="not @$target.isoperational">
 				<resume label="finish" />
 			</do_if>
@@ -306,14 +306,18 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.isoperational: ' + @this.assignedcontrolled.isoperational" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 				<set_value name="$dist_toOrderLocationPos" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $dist_toOrderLocationPos: ' + $dist_toOrderLocationPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="
 					$dist_toOrderLocationPos le $dist_shipToTarget and
-					$dist_shipToTarget gt global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw
-				">
+					$dist_shipToTarget gt global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw">
 					<resume label="finish" />
 				</do_if>
-				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget">
+				<do_if value="
+					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget and
+					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.bboxdistanceto.{$target} gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_mid">
+					<set_value name="$defensibleTarget" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget}" />
 					<set_value name="$distToEnemy" exact="this.assignedcontrolled.bboxdistanceto.{global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget}" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $distToEnemy: ' + $distToEnemy" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="$distToEnemy le this.assignedcontrolled.bboxdistanceto.{$target}" comment="target is closer to avoid object">
 						<resume label="finish" />
 					</do_if>
