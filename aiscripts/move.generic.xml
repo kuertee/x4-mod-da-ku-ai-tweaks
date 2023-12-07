@@ -148,18 +148,29 @@
 		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 		<wait min="5s" max="10s" />
 		<resume label="start" />
+		<label name="kAAITLabel_withdraw" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<include_interrupt_actions ref="kAAIT_Order_Withdraw" />
+		<wait min="5s" max="10s" />
+		<resume label="start" />
 	</add>
 <!-- add after. purpose: check start avoid. i.e. gravidar events sometimes not soon enough if already near a big enemy -->
 	<add pos="after" sel="//label[@name=&quot;start&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<wait exact="0.5s" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational or @$kAAIT_result_withdrawFromEnemy.isoperational">
 				<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
 					<include_interrupt_actions ref="kAAIT_Init" />
 				</do_if>
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+					<resume label="kAAIT_label_avoid" />
+				</do_if>
+				<do_else>
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" exact="$kAAIT_result_withdrawFromEnemy" />
+					<resume label="kAAITLabel_withdraw" />
+				</do_else>
 			</do_if>
 		</do_if>
 	</add>

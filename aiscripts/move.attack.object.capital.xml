@@ -223,9 +223,14 @@
 		<do_if value="@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 			<include_interrupt_actions ref="kAAIT_AvoidOrNot" />
-			<do_if value="$kAAIT_result_isAvoid">
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational"/>
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
 				<resume label="kAAIT_label_avoid" />
 			</do_if>
+			<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational"/>
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" exact="$kAAIT_result_withdrawFromEnemy" />
+				<resume label="kAAITLabel_withdraw" />
+			</do_elseif>
 		</do_if>
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
 			<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
