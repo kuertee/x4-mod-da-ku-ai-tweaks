@@ -212,12 +212,26 @@
 					<event_universe_generated />
 				</conditions>
 				<actions>
-					<do_if value="@global.$kAAIT.exists and global.$kAAIT.version != @$kAAIT_version">
+					<!-- <do_if value="
+						@global.$kAAIT.exists and
+						global.$kAAIT.version != @$kAAIT_version and
+						(
+							@$kAAITParam_iskAAITOrder or
+							@$kAAITParam_isStepForwardWithdraw or
+							(
+								@$kAAITParam_isAvoidHighRisk and
+								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
+							)
+						)
+					" comment="updatge only kaait-affected orders"> -->
+					<do_if value="@global.$kAAIT.exists and global.$kAAIT.version != @$kAAIT_version"
+						comment="but orders that have kaait acquire changes even if they are not used, so update ALL running orders">
 						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_version: ' + @$kAAIT_version + ' != global.$kAAIT.version: ' + global.$kAAIT.version + ' restarting.'" />
-						<create_order id="'Wait'" object="this.assignedcontrolled" immediate="true">
+						<!-- <create_order id="'Wait'" object="this.assignedcontrolled" immediate="true">
 							<param name="timeout" value="0.5s"/>
 							<param name="debugchance" value="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
-						</create_order>
+						</create_order> -->
+						<abort_called_scripts resume="kAAIT_label_start" />
 					</do_if>
 				</actions>
 			</handler>
