@@ -185,7 +185,7 @@
 		<set_value name="$kAAIT_engagePosDist" exact="$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
 		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
 		<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
-		<wait min="5s" max="10s" />
+		<wait min="(0.5)s" max="(1.0)s" />
 		<resume label="fight" />
 
 		<label name="kAAIT_label_step_forward" />
@@ -204,15 +204,14 @@
 			<create_order object="this.assignedcontrolled" id="'kAAIT_MoveStepForward'" immediate="true">
 				<param name="target" value="$target" />
 			</create_order>
-			<wait min="5s" max="10s" />
+			<wait min="(0.5)s" max="(1.0)s" />
 		</do_else>
 		<resume label="fight" />
 
 		<label name="kAAIT_label_avoid" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
 		<include_interrupt_actions ref="kAAIT_Order_Avoid" />
-		<wait min="5s" max="10s" />
+		<wait min="(0.5)s" max="(1.0)s" />
 		<resume label="fight" />
 	</add>
 <!-- add after. purpose: determine custom behaviours.
@@ -228,8 +227,8 @@
 				<resume label="kAAIT_label_avoid" />
 			</do_if>
 			<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational"/>
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" exact="$kAAIT_result_withdrawFromEnemy" />
-				<resume label="kAAITLabel_withdraw" />
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_withdrawFromEnemy" />
+				<resume label="kAAIT_label_withdraw" />
 			</do_elseif>
 		</do_if>
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)">
@@ -239,8 +238,8 @@
 			</do_if>
 		</do_if>
 
-		<label name="kAAITLabel_just_fight" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL just_fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<label name="kAAIT_label_just_fight" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_just_fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
@@ -334,7 +333,7 @@
 			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
 			<do_if value="@$kAAIT_result_bigEnemy != global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget">
 				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy (too near): ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<resume label="kAAITLabel_withdraw" />
+				<resume label="kAAIT_label_withdraw" />
 			</do_if>
 		</do_if>
 	</add>
@@ -420,22 +419,17 @@
 -->
 	<add pos="before" sel="//label[@name=&quot;finish&quot;]">
 		<resume label="finish"/>
-		<label name="kAAITLabel_withdraw" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAITLabel_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+
+		<label name="kAAIT_label_withdraw" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_withdraw'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isoperational) and $kAAIT_attacker.isoperational">
-			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isDebugWithdraw: ' + $kAAIT_isDebugWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<create_order object="this.assignedcontrolled" id="'kAAIT_MoveWithdraw'" immediate="true">
-				<param name="target" value="$kAAIT_attacker" />
-				<param name="isForced" value="@$kAAIT_isDebugWithdraw" />
-			</create_order>
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_attacker" />
 		</do_if>
 		<do_else>
-			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isDebugWithdraw: ' + $kAAIT_isDebugWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<create_order object="this.assignedcontrolled" id="'kAAIT_MoveWithdraw'" immediate="true">
-				<param name="target" value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
-				<param name="isForced" value="@$kAAIT_isDebugWithdraw" />
-			</create_order>
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 		</do_else>
+		<include_interrupt_actions ref="kAAIT_Order_Withdraw" />
+		<wait min="(0.5)s" max="(1.0)s" />
 		<resume label="finish"/>
 	</add>
 <!-- add after finish. purpose: clean-up.
