@@ -226,7 +226,7 @@
 					" comment="update only kaait-affected orders"> -->
 					<do_if value="@global.$kAAIT.exists and global.$kAAIT.version != @$kAAIT_version"
 						comment="but orders that have kaait features acquire the code changes even if they are not used, so update ALL running orders">
-						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_version: ' + @$kAAIT_version + ' != global.$kAAIT.version: ' + global.$kAAIT.version + '. restarting.'" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' (' + this.owner + ') $kAAIT_version: ' + @$kAAIT_version + ' != global.$kAAIT.version: ' + global.$kAAIT.version + '. restarting.'" />
 						<set_value name="$kAAIT_version" exact="global.$kAAIT.version" />
 						<!-- <create_order id="'Wait'" object="this.assignedcontrolled" immediate="true">
 							<param name="timeout" value="0.5s"/>
@@ -668,8 +668,14 @@
 							withdraw: shield gt 5, shield le skill-withdraw-value, distance to target < 10km.
 							fight: shield le 5, hull le 50.
 						-->
-						<set_value name="$kAAIT_isShieldsLow_vsStation" exact="this.assignedcontrolled.shieldpercentage gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation" />
-						<set_value name="$kAAIT_isShieldsLow_vsShip" exact="this.assignedcontrolled.shieldpercentage / ($kAAIT_test_target_isAvoid.shieldpercentage)f gt (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0)" />
+						<set_value name="$kAAIT_isShieldsLow_vsStation" exact="false" />
+						<set_value name="$kAAIT_isShieldsLow_vsShip" exact="false" />
+						<do_if value="$kAAIT_test_target_isAvoid.isclass.station">
+							<set_value name="$kAAIT_isShieldsLow_vsStation" exact="this.assignedcontrolled.shieldpercentage gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation" />
+						</do_if>
+						<do_elseif value="$kAAIT_test_target_isAvoid.isclass.ship">
+							<set_value name="$kAAIT_isShieldsLow_vsShip" exact="this.assignedcontrolled.shieldpercentage / ($kAAIT_test_target_isAvoid.shieldpercentage)f gt (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0)" />
+						</do_elseif>
 						<set_value name="$kAAIT_isTakeRisk" exact="
 							this.assignedcontrolled.primarypurpose == purpose.fight and
 							(
