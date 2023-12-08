@@ -223,9 +223,9 @@
 								this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]
 							)
 						)
-					" comment="updatge only kaait-affected orders"> -->
+					" comment="update only kaait-affected orders"> -->
 					<do_if value="@global.$kAAIT.exists and global.$kAAIT.version != @$kAAIT_version"
-						comment="but orders that have kaait acquire changes even if they are not used, so update ALL running orders">
+						comment="but orders that have kaait features acquire the code changes even if they are not used, so update ALL running orders">
 						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_version: ' + @$kAAIT_version + ' != global.$kAAIT.version: ' + global.$kAAIT.version + '. restarting.'" />
 						<set_value name="$kAAIT_version" exact="global.$kAAIT.version" />
 						<!-- <create_order id="'Wait'" object="this.assignedcontrolled" immediate="true">
@@ -240,7 +240,7 @@
 			<handler name="kAAIT_Handler_AvoidWithdrawOrJustFight">
 				<conditions>
 					<check_any>
-						<check_all chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]) then 100 else 0">
+						<check_all chance="if (not @$kAAITParam_iskAAITOrder) and (@$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m])) then 100 else 0">
 							<check_any>
 								<event_object_shield_damaged object="this.assignedcontrolled" />
 								<event_object_hull_damaged object="this.assignedcontrolled" />
@@ -283,7 +283,7 @@
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker.knownname (shield/hull damaged, withdraw): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastHit" exact="player.age" />
 						</check_all>
-						<check_all chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]) then 100 else 0">
+						<check_all chance="if (not @$kAAITParam_iskAAITOrder) and (@$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m])) then 100 else 0">
 							<check_any>
 								<event_object_attacked object="this.assignedcontrolled" />
 								<event_object_attacked_object object="this.assignedcontrolled" />
@@ -300,7 +300,7 @@
 							<set_value name="$kAAIT_eventType" exact="'withdraw'" />
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker.knownname (attacked, withdraw): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						</check_all>
-						<check_all chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isAvoidHighRisk then 100 else 0">
+						<check_all chance="if (not @$kAAITParam_iskAAITOrder) and @$kAAITParam_isAvoidHighRisk then 100 else 0">
 							<event_gravidar_has_scanned object="if (@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)) then this.assignedcontrolled else null" check="false"/>
 							<check_value value="@this.assignedcontrolled.order.script != 'move.kuertee.avoid'" />
 							<check_any>
@@ -449,7 +449,7 @@
 							<set_value name="$kAAIT_eventType" exact="'avoid'" />
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight too few operational weapons, ensure avoid behaviour'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						</check_all>
-						<check_all comment="v station">
+						<check_all comment="vs station">
 							<check_all>
 								<check_value value="@$kAAIT_attacker.isclass.station" />
 								<check_value value="@$kAAIT_attacker.dps.all" />
@@ -468,7 +468,7 @@
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight poor shields (le skill-withdraw) v station'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						</check_all>
 						<check_value value="@$kAAIT_isActOnEventNow" />
-						<check_all comment="v ship">
+						<check_all comment="vs ship">
 							<check_all>
 								<check_value value="$kAAIT_attacker.isclass.ship" />
 								<check_value value="$kAAIT_attacker.dps.all" />
