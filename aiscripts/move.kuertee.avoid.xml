@@ -256,6 +256,14 @@
 				<wait min="1s" max="3s" />
 			</do_if>
 			<remove_value name="$kAAIT_isCancelAvoidance" />
+			<create_object name="$beacon_obstacle" sector="$orderLocation_space" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+				<position value="$posTarget" y="10km" />
+			</create_object>
+			<set_object_name object="$beacon_obstacle" name="'kuda: obstacle'" />
+			<create_object name="$beacon_avoidDestination" sector="$orderLocation_space" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+				<position value="$orderLocation_pos" y="10km" />
+			</create_object>
+			<set_object_name object="$beacon_avoidDestination" name="'kuda: avoidDestination'" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
 				uselocalhighways="false"
@@ -293,22 +301,26 @@
 					</conditions>
 				</interrupt>
 			</wait>
+			<do_if value="@$beacon_obstacle.exists">
+				<destroy_object object="$beacon_obstacle" />
+			</do_if>
+			<do_if value="@$beacon_avoidDestination.exists">
+				<destroy_object object="$beacon_avoidDestination" />
+			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' wait end'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isCancelAvoidance: ' + @$kAAIT_isCancelAvoidance" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$distToDest" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $distToDest: ' + $distToDest" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_attacker: ' + @$kAAIT_attacker + ' (' + @$kAAIT_attacker.knownname + ', ' + @$kAAIT_attacker.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="not @this.assignedcontrolled.isoperational">
 				<resume label="finish" />
 			</do_if>
+			<set_value name="$distToDest" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $distToDest: ' + $distToDest" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="not @$kAAIT_isCancelAvoidance">
 				<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.isoperational: ' + @this.assignedcontrolled.isoperational" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-				<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-				<set_value name="$dist_toOrderLocationPos" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' $dist_toOrderLocationPos: ' + $dist_toOrderLocationPos" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-				<do_if value="
-					$dist_toOrderLocationPos le $dist_shipToTarget and
-					$dist_shipToTarget gt global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw">
+				<set_value name="$kAAIT_test_target_isInTheWay" exact="$target" />
+				<set_value name="$kAAIT_test_target_isInTheWayOf" exact="table[$sector = this.sector, $destination = $orderLocation_space, $position = $orderLocation_pos]" />
+				<include_interrupt_actions ref="kAAIT_GetIsTargetInTheWay" />
+				<do_if value="not @$kAAIT_result_isTargetInTheWay">
 					<resume label="finish" />
 				</do_if>
 				<do_if value="
