@@ -76,7 +76,7 @@
 				<set_value name="$target" exact="$target.defensible" />
 			</do_if>
 			<do_if value="$target.isclass.ship">
-				<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+				<do_if value="@this.assignedcontrolled.iscapitalship">
 					<include_interrupt_actions ref="kAAIT_RequestHelp" comment="always request help at every new withdrawal" />
 				</do_if>
 			</do_if>
@@ -169,7 +169,7 @@
 				</do_else>
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$combatRange_mid + $dist_adjByShields" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$distance_attackFrom (mid combat range (' + $combatRange_mid + ') + shield-based (' + (100 - this.assignedcontrolled.shieldpercentage) + ') withdraw distance (' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw + ')): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<do_if value="$target.isclass.[class.ship_l, class.ship_xl]">
+				<do_if value="@$target.iscapitalship">
 					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom"
 						exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * 1.5" />
 				</do_if>
@@ -221,15 +221,16 @@
 				destination="$orderLocation_space"
 				uselocalhighways="false"
 				useknownpath="this.isplayerowned"
-				forcesteering="this.assignedcontrolled.isclass.[class.ship_xs, class.ship_s, class.ship_m]"
+				forcesteering="not @this.assignedcontrolled.iscapitalship"
 				commandaction="false"
+				abortpath="false"
 				flightbehaviour="flightbehaviour.evasive_random">
 				<position value="$orderLocation_pos"/>
 				<interrupt_after_time time="1s" />
 			</move_to>
 			<debug_text text="@this.assignedcontrolled.idcode + ' move_to end'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' wait start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$wait" exact="[(100 - this.assignedcontrolled.shieldpercentage) * 1s, 5s].min" />
+			<set_value name="$wait" exact="[(100 - this.assignedcontrolled.shieldpercentage * 0.25)s, 5s].max" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $wait: ' + $wait" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<wait exact="$wait">
 				<interrupt>
@@ -245,7 +246,7 @@
 									<event_object_signalled object="this.assignedcontrolled.commander" param="'kAAIT_help'" check="false" />
 								</check_any>
 								<check_value value="event.param2 != this.assignedcontrolled" />
-								<check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
+								<check_value value="@this.assignedcontrolled.iscapitalship" />
 							</check_all>
 						</check_any>
 						<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
@@ -258,7 +259,7 @@
 						<set_value name="$dist_targetToWithdrawDest_current" exact="$target.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
 						<check_all>
 							<check_value value="$target.isclass.ship" />
-							<check_value value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
+							<check_value value="@this.assignedcontrolled.iscapitalship" />
 							<check_any>
 								<!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
 									fight: shield gt skill-withdraw-value.
