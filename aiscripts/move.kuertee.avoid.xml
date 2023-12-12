@@ -134,7 +134,7 @@
 			</do_elseif>
 			<do_else>
 				<include_interrupt_actions ref="kAAIT_GetDestination" />
-				<!-- <do_if value="
+				<do_if value="
 					@$kAAIT_destination and
 					@$kAAIT_destinationPosition and
 					$kAAIT_destination != $target and
@@ -144,19 +144,23 @@
 						@this.assignedcontrolled.commander.order.$primarytarget != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget
 					)
 				" comment="either destination != commander or commander's target != my target. distanceto: at this point all objects are in same sector as ship.">
-					<set_value name="$dist_toDest" exact="this.assignedcontrolled.distanceto.[$kAAIT_destination, $kAAIT_destinationPosition]" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' AVOIDING WHILE MOVING TOWARDS DESTINATION'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+					<!-- <set_value name="$dist_toDest" exact="this.assignedcontrolled.distanceto.[$kAAIT_destination, $kAAIT_destinationPosition]" />
 					<create_orientation name="$rot_shipToDest" orientation="look_at" refposition="$kAAIT_destinationPosition">
 						<position value="$pos_avoidFrom" />
 					</create_orientation>
-					<set_value name="$yaw_shipToDest" exact="$rot_shipToDest.yaw * 180 / pi" />
+					<set_value name="$yaw_shipToDest" exact="$rot_shipToDest.yaw * 180 / pi" /> -->
+					<create_position name="$pos_ship" space="this.sector" object="this.assignedcontrolled" />
+					<create_orientation name="$rot" orientation="look_at" refposition="$kAAIT_destinationPosition">
+						<position value="$pos_ship" />
+					</create_orientation>
 					<set_value name="$kAAIT_yaw_from" exact="$yaw_avoid" />
-					<set_value name="$kAAIT_yaw_to" exact="$yaw_shipToDest" />
+					<set_value name="$kAAIT_yaw_to" exact="$rot.yaw * 180 / pi" />
 					<include_interrupt_actions ref="kAAIT_GetMidYaw" />
 					<set_value name="$yaw_avoid" exact="$kAAIT_yaw_mid" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' $yaw_avoid (adjusted to move to dest): ' + $yaw_avoid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 				</do_if>
-				<do_else> -->
+				<do_else>
 					<debug_text text="@this.assignedcontrolled.idcode + ' MOVING AROUND ATTACK TARGET'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_aroundDir">
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_aroundDir" exact="[-1, 1].random" />
@@ -164,7 +168,7 @@
 					<set_value name="$yaw_adj" min="30" max="45" />
 					<set_value name="$yaw_avoid" exact="$yaw_avoid + $yaw_adj * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_aroundDir" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' $yaw_avoid (adjusted to move around target): ' + $yaw_avoid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-				<!-- </do_else> -->
+				</do_else>
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_avoid * pi / 180" />
 			<!-- end: add other yaws -->
@@ -235,8 +239,6 @@
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" exact="$orderLocation_pos" />
 			<set_value name="$dist_targetToAvoidDest" exact="$target.distanceto.[$orderLocation_space, $orderLocation_pos]" />
 
-			<label name="move_locked_destination" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL move_locked_destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="
 				@this.assignedcontrolled.nextorder.script != 'order.repair' and
 				@this.assignedcontrolled.nextorder.script != 'order.restock.subordinates' and
@@ -255,15 +257,20 @@
 				<signal_objects object="this.assignedcontrolled" param="'resupply'" param2="[false]" param3="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<wait min="1s" max="3s" />
 			</do_if>
-			<remove_value name="$kAAIT_isCancelAvoidance" />
-			<create_object name="$beacon_obstacle" sector="$orderLocation_space" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
-				<position value="$posTarget" y="10km" />
-			</create_object>
-			<set_object_name object="$beacon_obstacle" name="'kuda: obstacle'" />
-			<create_object name="$beacon_avoidDestination" sector="$orderLocation_space" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
-				<position value="$orderLocation_pos" y="10km" />
-			</create_object>
-			<set_object_name object="$beacon_avoidDestination" name="'kuda: avoidDestination'" />
+			<do_if value="
+				@this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode and
+				@global.$kAAIT_Data.$debugChance
+			">
+				<create_object name="$beacon_obstacle" sector="$orderLocation_space" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+					<position value="$posTarget" y="10km" />
+				</create_object>
+				<set_object_name object="$beacon_obstacle" name="'kuda: obstacle'" />
+				<create_object name="$beacon_avoidDestination" sector="$orderLocation_space" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+					<position value="$orderLocation_pos" y="10km" />
+				</create_object>
+				<set_object_name object="$beacon_avoidDestination" name="'kuda: avoidDestination'" />
+			</do_if>
+			<debug_text text="@this.assignedcontrolled.idcode + ' move_to start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<move_to object="this.assignedcontrolled"
 				destination="$orderLocation_space"
 				uselocalhighways="false"
@@ -276,6 +283,9 @@
 				<position value="$orderLocation_pos"/>
 				<interrupt_after_time time="1s" />
 			</move_to>
+			<label name="move_locked_destination" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL move_locked_destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<remove_value name="$kAAIT_isCancelAvoidance" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' wait start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$kAAIT_attacker" exact="null" />
 			<remove_value name="$kAAIT_isInterrupted" />
@@ -380,6 +390,12 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 
 			<label name="finish" />
+			<do_if value="@$beacon_obstacle.exists">
+				<destroy_object object="$beacon_obstacle" />
+			</do_if>
+			<do_if value="@$beacon_avoidDestination.exists">
+				<destroy_object object="$beacon_avoidDestination" />
+			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
@@ -392,6 +408,12 @@
 		</actions>
 	</attention>
 	<on_abort>
+		<do_if value="@$beacon_obstacle.exists">
+			<destroy_object object="$beacon_obstacle" />
+		</do_if>
+		<do_if value="@$beacon_avoidDestination.exists">
+			<destroy_object object="$beacon_avoidDestination" />
+		</do_if>
 		<do_if value="@this.assignedcontrolled.isoperational">
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
