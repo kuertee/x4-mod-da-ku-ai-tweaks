@@ -54,6 +54,7 @@
 		</handler>
 	</interrupts>
 	<init>
+		<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.name" />
 		<set_value name="$kAAIT_detailedDebugChance" exact="100" />
 		<!-- required for disengage handler -->
 		<set_value name="$pursuetargets" exact="false" />
@@ -62,6 +63,10 @@
 	</init>
 	<attention min="unknown">
 		<actions>
+			<do_if value="@global.$kAAIT_Data.$debugChance">
+				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - Kuda withdraw'" />
+			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ', ' + @$target.isoperational + ', ' + @$target.hullpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.knownname + ' ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="not @$target.isoperational">
@@ -161,7 +166,7 @@
 			</do_elseif>
 			<do_else>
 				<set_value name="$combatRange_mid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_mid" />
-				<do_if value="@$target.isclass.station">
+				<do_if value="@$target.isclass.station or @$target.defensible.isclass.station">
 					<set_value name="$dist_adjByShields" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw" />
 				</do_if>
 				<do_else>
@@ -218,8 +223,7 @@
 				useknownpath="this.isplayerowned"
 				forcesteering="not @this.assignedcontrolled.iscapitalship"
 				commandaction="false"
-				abortpath="false"
-				flightbehaviour="flightbehaviour.evasive_random">
+				abortpath="false">
 				<position value="$orderLocation_pos"/>
 				<interrupt_after_time time="1s" />
 			</move_to>
@@ -345,7 +349,7 @@
 						this.assignedcontrolled.shieldpercentage le $target.shieldpercentage * (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0)
 					) or
 					(
-						$target.isclass.station and
+						($target.isclass.station or $target.defensible.isclass.station) and
 						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation and
 						this.assignedcontrolled.shieldpercentage le @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation
 					)
@@ -375,6 +379,10 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 
 			<label name="finish" />
+			<do_if value="@global.$kAAIT_Data.$debugChance">
+				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name reset'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name" />
+			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
@@ -388,6 +396,10 @@
 		</actions>
 	</attention>
 	<on_abort>
+		<do_if value="@global.$kAAIT_Data.$debugChance">
+			<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name reset'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name" />
+		</do_if>
 		<do_if value="@this.assignedcontrolled.isoperational">
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->

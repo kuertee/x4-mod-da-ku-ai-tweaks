@@ -22,7 +22,7 @@
 						<reset_cue cue="this" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="22">
+				<cue name="kAAIT2_Config" namespace="this" version="23">
 					<actions>
 						<set_value name="global.$kAAIT_Data" exact="this" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
@@ -61,6 +61,7 @@
 						<!-- commander defaulr order data
 						in the base game, the replacement commander doesn't acquire the previous commander's default order. this leaves all subordinates to be dumb - sometimes only responding to threads after they've attacked. -->
 						<set_value name="global.$kAAIT_Data.$defaultOrdersByShipId" exact="table[]" />
+						<set_value name="global.$kAAIT_Data.$lxl_isStrictMaintainDistance" exact="table[]" />
 					</actions>
 					<patch sinceversion="5">
 						<debug_text text="'sinceversion 5, state: ' + this.state" />
@@ -293,7 +294,7 @@
 						<check_any>
 							<event_cue_signalled />
 							<event_game_loaded />
-							<event_ui_triggered screen="'OptionsMenu'" />
+							<!-- <event_ui_triggered screen="'OptionsMenu'" /> -->
 						</check_any>
 					</conditions>
 					<actions>
@@ -1500,16 +1501,19 @@
 				</do_if>
 				<debug_text text="'size: ' + $ship.size" />
 				<debug_text text="'primarypurpose: ' + $ship.primarypurpose" />
-				<debug_text text="'order: ' + @$ship.order.id + ' $kAAITParam_iskAAITOrder: ' + @$ship.order.$kAAITParam_iskAAITOrder" />
+				<debug_text text="'order: ' + $ship.order + ' ' + @$ship.order.script" />
 				<debug_text text="'    $ship.order.istemporary: ' + @$ship.order.istemporary" />
+				<debug_text text="'    $ship.order.$kAAITParam_iskAAITOrder: ' + @$ship.order.$kAAITParam_iskAAITOrder" />
 				<debug_text text="'    $ship.order.$kAAITParam_isAvoidHighRisk: ' + @$ship.order.$kAAITParam_isAvoidHighRisk" />
 				<debug_text text="'    $ship.order.$kAAITParam_isStepForwardWithdraw: ' + @$ship.order.$kAAITParam_isStepForwardWithdraw" />
-				<debug_text text="'orders.{1}: ' + @$ship.orders.{1}.id + ' $kAAITParam_iskAAITOrder: ' + @$ship.orders.{1}.$kAAITParam_iskAAITOrder" />
-				<debug_text text="'    $ship.orders.{1}.istemporary: ' + @$ship.orders.{1}.istemporary" />
-				<debug_text text="'    $ship.orders.{1}.$kAAITParam_isAvoidHighRisk: ' + @$ship.orders.{1}.$kAAITParam_isAvoidHighRisk" />
-				<debug_text text="'    $ship.orders.{1}.$kAAITParam_isStepForwardWithdraw: ' + @$ship.orders.{1}.$kAAITParam_isStepForwardWithdraw" />
-				<debug_text text="'defaultorder: ' + @$ship.defaultorder.id + ' $kAAITParam_iskAAITOrder: ' + @$ship.defaultorder.$kAAITParam_iskAAITOrder" />
+				<debug_text text="'orders.{2}: ' + @$ship.orders.{2} + ' ' + @$ship.orders.{2}.script" />
+				<debug_text text="'    $ship.orders.{2}.istemporary: ' + @$ship.orders.{2}.istemporary" />
+				<debug_text text="'    $ship.orders.{2}.$kAAITParam_iskAAITOrder: ' + @$ship.orders.{2}.$kAAITParam_iskAAITOrder" />
+				<debug_text text="'    $ship.orders.{2}.$kAAITParam_isAvoidHighRisk: ' + @$ship.orders.{2}.$kAAITParam_isAvoidHighRisk" />
+				<debug_text text="'    $ship.orders.{2}.$kAAITParam_isStepForwardWithdraw: ' + @$ship.orders.{2}.$kAAITParam_isStepForwardWithdraw" />
+				<debug_text text="'defaultorder: ' + $ship.defaultorder + ' ' + @$ship.defaultorder.script" />
 				<debug_text text="'    $ship.defaultorder.istemporary: ' + @$ship.defaultorder.istemporary" />
+				<debug_text text="'    $ship.defaultorder.$kAAITParam_iskAAITOrder: ' + @$ship.defaultorder.$kAAITParam_iskAAITOrder" />
 				<debug_text text="'    $ship.defaultorder.$kAAITParam_isAvoidHighRisk: ' + @$ship.defaultorder.$kAAITParam_isAvoidHighRisk" />
 				<debug_text text="'    $ship.defaultorder.$kAAITParam_isStepForwardWithdraw: ' + @$ship.defaultorder.$kAAITParam_isStepForwardWithdraw" />
 				<create_position name="$pos" space="$ship.sector" object="$ship" />
@@ -1551,6 +1555,9 @@
 					<set_value name="$target" exact="@$ship.nextorder.$primarytarget" />
 				</do_if>
 				<debug_text text="'$target: ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ', ' + @$target.class + ')'" />
+				<set_value name="$dist" exact="$ship.distanceto.{$target}" />
+				<set_value name="$dist2" exact="$ship.bboxdistanceto.{$target}" />
+				<debug_text text="'$dist: ' + $dist + ' $dist2 (bboxdistanceto): ' + $dist2" />
 				<do_if value="$target">
 					<debug_text text="'attack vectors:'" />
 					<set_value name="$orderLocation_space" exact="$ship.sector" />
@@ -1568,7 +1575,6 @@
 						</create_orientation>
 						<set_value name="$kAAIT_yaw_from" exact="$rotFromStation.yaw * 180 / pi" />
 						<debug_text text="'$kAAIT_yaw_from: ' + $kAAIT_yaw_from" />
-
 						<do_if value="[$kAAIT_yaw_to - $kAAIT_yaw_from, $kAAIT_yaw_from - $kAAIT_yaw_to].max ge 180">
 							<do_if value="$kAAIT_yaw_from lt 0">
 								<set_value name="$kAAIT_yaw_to" exact="$kAAIT_yaw_to - 360" />
