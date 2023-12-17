@@ -191,7 +191,8 @@
 			</move_to>
 			<label name="move_locked_destination" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL move_locked_destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$isInterrupted" exact="false" />
+			<set_value name="$isNewEngagePosition" exact="false" />
+			<set_value name="$kAAIT_attacker" exact="null" />
 			<wait exact="5s">
 				<interrupt>
 					<conditions>
@@ -206,37 +207,46 @@
 									</check_all>
 									<check_value value="event.param !=  @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 								</check_any>
-								<set_value name="$isInterrupted" exact="event.param.size gt this.assignedcontrolled.size * 1.5" />
+								<set_value name="$kAAIT_attacker" exact="event.param" />
 							</check_all>
 							<check_all>
 								<check_any>
 									<event_object_changed_zone object="this.assignedcontrolled" />
 									<event_object_changed_zone object="$target" />
 								</check_any>
-								<set_value name="$isInterrupted" exact="true" />
+								<set_value name="$isNewEngagePosition" exact="true" />
 							</check_all>
 						</check_any>
 					</conditions>
 				</interrupt>
 			</wait>
-			<debug_text text="@this.assignedcontrolled.idcode + ' $isInterrupted: ' + $isInterrupted" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$dist" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $isNewEngagePosition: ' + $isNewEngagePosition" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.{$target}" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="
-				$target.isrealclass.module and
-				(not $isInterrupted)">
-				<set_value name="$dist" exact="this.assignedcontrolled.bboxdistanceto.[$orderLocation_space, $orderLocation_pos]" />
-				<do_if value="$dist gt 3km">
-					<resume label="move_locked_destination" />
+			<do_if value="@$kAAIT_attacker.isoperational">
+				<set_value name="$kAAIT_test_target_isHighRisk" exact="$kAAIT_attacker" />
+				<include_interrupt_actions ref="kAAIT_GetIsTargetHighRisk" />
+				<set_value name="$kAAIT_isHighRisk" exact="$kAAIT_result_isTargetHighRisk" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isHighRisk: ' + @$kAAIT_isHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+				<do_if value="$kAAIT_isHighRisk">
+					<include_interrupt_actions ref="kAAIT_RequestHelp" />
+					<set_value name="$kAAIT_test_target_isTakeRisk" exact="$kAAIT_attacker" />
+					<include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
+					<do_if value="not $kAAIT_isTakeRisk">
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+						<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_target_attack" exact="$kAAIT_attacker" />
+						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+					</do_else>
 				</do_if>
 			</do_if>
-			<do_elseif value="$dist gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom">
-				<do_if value="$isInterrupted">
-					<resume label="move_to_engage_position" />
-				</do_if>
-				<do_else>
-					<resume label="move_locked_destination" />
-				</do_else>
+			<do_if value="$isNewEngagePosition">
+				<resume label="move_to_engage_position" />
+			</do_if>
+			<do_elseif value="$dist gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + 3km">
+				<resume label="move_locked_destination" />
 			</do_elseif>
 
 			<label name="finish" />
