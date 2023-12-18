@@ -1751,21 +1751,27 @@
 				<set_value name="$kAAIT_yaw_to" exact="$kAAIT_angle" />
 				<set_value name="$kAAIT_yaw_diff" exact="$kAAIT_yaw_to - $kAAIT_yaw_from" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_diff: ' + $kAAIT_yaw_diff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<do_if value="$kAAIT_yaw_diff lt -180 or $kAAIT_yaw_diff gt 180">
+					<set_value name="$kAAIT_angle" exact="$kAAIT_yaw_from_orig" />
+					<include_interrupt_actions ref="kAAIT_LimitAngleTo360" />
+					<set_value name="$kAAIT_yaw_from" exact="$kAAIT_angle" />
+					<set_value name="$kAAIT_angle" exact="$kAAIT_yaw_to_orig" />
+					<include_interrupt_actions ref="kAAIT_LimitAngleTo360" />
+					<set_value name="$kAAIT_yaw_to" exact="$kAAIT_angle" />
+					<set_value name="$kAAIT_yaw_diff" exact="$kAAIT_yaw_to - $kAAIT_yaw_from" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_diff (smaller arc): ' + $kAAIT_yaw_diff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				</do_if>
 				<do_if value="not @$kAAIT_midYawFactorAdj">
 					<set_value name="$kAAIT_midYawFactorAdj" exact="1" />
 				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_midYawFactorAdj: ' + $kAAIT_midYawFactorAdj" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_yaw_mid" exact="$kAAIT_yaw_from + $kAAIT_yaw_diff * 0.5 * $kAAIT_midYawFactorAdj" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_mid: ' + $kAAIT_yaw_mid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<do_if value="$kAAIT_yaw_diff lt -180 or $kAAIT_yaw_diff gt 180">
-					<set_value name="$kAAIT_yaw_mid" operation="add" exact="180" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_mid (opposite for smaller arc): ' + $kAAIT_yaw_mid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-					<set_value name="$kAAIT_angle" exact="$kAAIT_yaw_mid" />
-					<include_interrupt_actions ref="kAAIT_LimitAngleToNegPos180" />
-					<set_value name="$kAAIT_yaw_mid" exact="$kAAIT_angle" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_mid (normalised): ' + $kAAIT_yaw_mid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				</do_if>
-				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_mid (final): ' + $kAAIT_yaw_mid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<set_value name="$kAAIT_angle" exact="$kAAIT_yaw_mid" />
+				<include_interrupt_actions ref="kAAIT_LimitAngleToNegPos180" />
+				<set_value name="$kAAIT_yaw_mid" exact="$kAAIT_angle" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_diff (final): ' + $kAAIT_yaw_diff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_mid (normalised, final): ' + $kAAIT_yaw_mid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</actions>
 
 			<actions name="kAAIT_CheckDefaultOrderOfCommander" comment="in the base game, the replacement commander doesn't acquire the previous commander's default order. this leaves all subordinates to be dumb - sometimes only responding to threads after they've attacked.">
