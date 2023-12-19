@@ -2366,26 +2366,32 @@
 			</actions>
 
 			<!--
-				
-				                       ,,                                                          ,,      ,...,,                  ,...
-				                     `7MM                                                          db    .d' ""db                .d' ""
-				                       MM                                                                dM`                     dM`
-				 ,pW"Wq.`7Mb,od8  ,M""bMM  .gP"Ya `7Mb,od8   ,pP"Ybd `7MMpdMAo.  .gP"Ya   ,p6"bo `7MM   mMMmm`7MM  ,p6"bo       mMMmm`7MM  `7MM  `7MMpMMMb.  ,p6"bo  ,pP"Ybd
-				6W'   `Wb MM' "',AP    MM ,M'   Yb  MM' "'   8I   `"   MM   `Wb ,M'   Yb 6M'  OO   MM    MM    MM 6M'  OO        MM    MM    MM    MM    MM 6M'  OO  8I   `"
-				8M     M8 MM    8MI    MM 8M""""""  MM mmmmm `YMMMa.   MM    M8 8M"""""" 8M        MM    MM    MM 8M             MM    MM    MM    MM    MM 8M       `YMMMa.
-				YA.   ,A9 MM    `Mb    MM YM.    ,  MM       L.   I8   MM   ,AP YM.    , YM.    ,  MM    MM    MM YM.    ,       MM    MM    MM    MM    MM YM.    , L.   I8
-				 `Ybmd9'.JMML.   `Wbmd"MML.`Mbmmd'.JMML.     M9mmmP'   MMbmmd'   `Mbmmd'  YMbmd' .JMML..JMML..JMML.YMbmd'      .JMML.  `Mbod"YML..JMML  JMML.YMbmd'  M9mmmP'
-				                                                       MM
-				                                                     .JMML.
+				 dP"Yb  88""Yb 8888b.  888888 88""Yb          .dP"Y8 88""Yb 888888  dP""b8 88 888888 88  dP""b8
+				dP   Yb 88__dP  8I  Yb 88__   88__dP ________ `Ybo." 88__dP 88__   dP   `" 88 88__   88 dP   `"
+				Yb   dP 88"Yb   8I  dY 88""   88"Yb  """""""" o.`Y8b 88"""  88""   Yb      88 88""   88 Yb
+				 YbodP  88  Yb 8888Y"  888888 88  Yb          8bodP' 88     888888  YboodP 88 88     88  YboodP
 			 -->
 			<actions name="kAAIT_InitThisOrder">
 				<set_value name="$kAAIT_version" exact="global.$kAAIT.version" />
 				<set_value name="$kAAIT_defensibleTarget" exact="$target.defensible" />
+				<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.name" />
 				<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 					<include_interrupt_actions ref="kAAIT_Init" />
-				</do_if>
-				<do_if value="@$kAAITParam_isAvoidHighRisk">
 					<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
+				</do_if>
+			</actions>
+
+			<actions name="kAAIT_FinishThisOrder">
+				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
+					<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+					<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
+				</do_if>
+				<do_if value="@this.assignedcontrolled.isoperational">
+					<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name reset'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name" />
+				</do_if>
+				<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+					<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
 				</do_if>
 			</actions>
 		</library>

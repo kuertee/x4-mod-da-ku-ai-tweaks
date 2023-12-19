@@ -148,7 +148,6 @@
 	<init>
 -->
 	<add pos="prepend" sel="//init">
-		<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.name" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 <!-- add prepend. purpose: init.
@@ -156,14 +155,7 @@
 -->
 	<add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]/actions">
 		<label name="kAAIT_label_start" />
-		<set_value name="$kAAIT_version" exact="global.$kAAIT.version" />
-
-		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<include_interrupt_actions ref="kAAIT_Init" />
-		</do_if>
-		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
-		</do_if>
+		<include_interrupt_actions ref="kAAIT_InitThisOrder" />
 	</add>
 <!-- replace 2 instances.
 	purpose: $iscarrier behaviour is true if shiptype.carrier AND has subordinates or has a wingmate that is a capital ship.
@@ -452,16 +444,8 @@
 	<label name="finish" />
 -->
 	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
-		<do_if value="@this.assignedcontrolled.isoperational">
-			<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name reset'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name" />
-		</do_if>
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-		<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
-		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
-		</do_if>
+		<include_interrupt_actions ref="kAAIT_FinishThisOrder" />
 	</add>
 	<!--
 		   db    88""Yb  dP"Yb  88""Yb 888888
