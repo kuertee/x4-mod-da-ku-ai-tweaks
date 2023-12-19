@@ -66,7 +66,6 @@
 					fight: shield le 5, hull le 50.
 				-->
 				<do_if value="
-					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT and
 					(
 						(
 							@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.station and
@@ -84,7 +83,6 @@
 							)
 						)
 					)" comment="clear ignore flag when ship should fight. e.g. v ship: when no shields, but good hull.">
-					<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT" />
 				</do_if>
 				<do_if value="@this.assignedcontrolled.commander.exists">
 					<include_interrupt_actions ref="kAAIT_CheckDefaultOrderOfCommander" />
@@ -318,7 +316,7 @@
 							<set_value name="$kAAIT_eventType" exact="'withdraw'" />
 						</check_all>
 						<check_all chance="if (not @$kAAITParam_iskAAITOrder) and @$kAAITParam_isAvoidHighRisk then 100 else 0">
-							<event_gravidar_has_scanned object="if (@$kAAITParam_isAvoidHighRisk and (not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT)) then this.assignedcontrolled else null" check="false"/>
+							<event_gravidar_has_scanned object="if @$kAAITParam_isAvoidHighRisk then this.assignedcontrolled else null" check="false"/>
 							<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<check_value value="@this.assignedcontrolled.order.script != 'move.kuertee.avoid'" />
 							<check_any>
@@ -418,7 +416,6 @@
 								<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" />
 							</check_any>
 							<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" />
-							<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isIgnoreKAAIT" />
 							<check_value value="this.assignedcontrolled.engines.all.count" />
 							<check_value value="this.assignedcontrolled.engines.operational.count / (this.assignedcontrolled.engines.all.count)f gt 0.25" />
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight self checks passed'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -2365,6 +2362,30 @@
 				</do_if>
 				<do_if value="@this.assignedcontrolled.commander.isoperational">
 					<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_help'" param2="this.assignedcontrolled" />
+				</do_if>
+			</actions>
+
+			<!--
+				
+				                       ,,                                                          ,,      ,...,,                  ,...
+				                     `7MM                                                          db    .d' ""db                .d' ""
+				                       MM                                                                dM`                     dM`
+				 ,pW"Wq.`7Mb,od8  ,M""bMM  .gP"Ya `7Mb,od8   ,pP"Ybd `7MMpdMAo.  .gP"Ya   ,p6"bo `7MM   mMMmm`7MM  ,p6"bo       mMMmm`7MM  `7MM  `7MMpMMMb.  ,p6"bo  ,pP"Ybd
+				6W'   `Wb MM' "',AP    MM ,M'   Yb  MM' "'   8I   `"   MM   `Wb ,M'   Yb 6M'  OO   MM    MM    MM 6M'  OO        MM    MM    MM    MM    MM 6M'  OO  8I   `"
+				8M     M8 MM    8MI    MM 8M""""""  MM mmmmm `YMMMa.   MM    M8 8M"""""" 8M        MM    MM    MM 8M             MM    MM    MM    MM    MM 8M       `YMMMa.
+				YA.   ,A9 MM    `Mb    MM YM.    ,  MM       L.   I8   MM   ,AP YM.    , YM.    ,  MM    MM    MM YM.    ,       MM    MM    MM    MM    MM YM.    , L.   I8
+				 `Ybmd9'.JMML.   `Wbmd"MML.`Mbmmd'.JMML.     M9mmmP'   MMbmmd'   `Mbmmd'  YMbmd' .JMML..JMML..JMML.YMbmd'      .JMML.  `Mbod"YML..JMML  JMML.YMbmd'  M9mmmP'
+				                                                       MM
+				                                                     .JMML.
+			 -->
+			<actions name="kAAIT_InitThisOrder">
+				<set_value name="$kAAIT_version" exact="global.$kAAIT.version" />
+				<set_value name="$kAAIT_defensibleTarget" exact="$target.defensible" />
+				<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+					<include_interrupt_actions ref="kAAIT_Init" />
+				</do_if>
+				<do_if value="@$kAAITParam_isAvoidHighRisk">
+					<include_interrupt_actions ref="kAAIT_AddAttackerToTarget" />
 				</do_if>
 			</actions>
 		</library>
