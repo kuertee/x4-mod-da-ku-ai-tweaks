@@ -367,6 +367,8 @@
 							'move.undock',
 							'move.flee'
 						].indexof.{@this.assignedcontrolled.order.script}" /> -->
+					<check_value value="player.age - @$kAAIT_time_lastAvoidWithdrawEvent ge 1s" />
+					<set_value name="$kAAIT_time_lastAvoidWithdrawEvent" exact="player.age" />
 					<set_value name="$kAAIT_isInterrupted" exact="true" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight @$kAAIT_eventType: ' + @$kAAIT_eventType" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<check_value value="@$kAAIT_eventType" />
@@ -879,8 +881,22 @@
 						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_attackTarget ($primarytarget): ' + @$kAAIT_result_attackTarget.knownname + ' ' + @$kAAIT_result_attackTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					</do_if>
 					<do_if value="(not $kAAIT_result_attackTarget.isoperational) and @$target.hasrelation.enemy.{this.assignedcontrolled}">
-						<set_value name="$kAAIT_result_attackTarget" exact="$target" />
-						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_attackTarget ($target): ' + @$kAAIT_result_attackTarget.knownname + ' ' + @$kAAIT_result_attackTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<set_value name="$kAAIT_attackScriptsWithTargetVar" exact="[
+							'fight.attack.object.bigtarget',
+							'fight.attack.object.fighter',
+							'move.attack.object.capital',
+							'order.fight.board',
+						]" />
+						<do_if value="
+							$kAAIT_attackScriptsWithTargetVar.indexof.{this.assignedcontrolled.order.script} or
+							(
+								$DefensibleScript? and
+								$kAAIT_attackScriptsWithTargetVar.indexof.{$DefensibleScript}
+							)
+						">
+							<set_value name="$kAAIT_result_attackTarget" exact="$target" />
+							<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_attackTarget ($target): ' + @$kAAIT_result_attackTarget.knownname + ' ' + @$kAAIT_result_attackTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						</do_if>
 					</do_if>
 					<do_if value="(not $kAAIT_result_attackTarget.isoperational) and @$selectedtarget.isoperational">
 						<set_value name="$kAAIT_result_attackTarget" exact="$selectedtarget" />
@@ -1416,6 +1432,19 @@
 						<match class="class.buildstorage" negate="true"/>
 						<match state="componentstate.wreck" negate="true"/>
 					</find_gravidar_contact>
+					<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
+					<do_for_each name="$kAAIT_smallTarget" in="$kAAIT_smallTargets">
+						<do_for_each name="$kAAIT_bigEnemy" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies">
+							<set_value name="$kAAIT_attackTarget" exact="$kAAIT_smallTarget" />
+							<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_bigEnemy" />
+							<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$$kAAIT_smallTarget" />
+							<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
+							<do_if value="not $kAAIT_result_isTargetInTheWay">
+								<set_value name="$kAAIT_result_target_found" exact="$kAAIT_smallTarget" />
+								<break />
+							</do_if>
+						</do_for_each>
+					</do_for_each>
 				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget $kAAIT_result_target_found: ' + @$kAAIT_result_target_found.knownname + ' ' + @$kAAIT_result_target_found.idcode + ' size: ' + @$kAAIT_result_target_found.size + ' weapons: ' + @$kAAIT_result_target_found.weapons.operational.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</actions>
