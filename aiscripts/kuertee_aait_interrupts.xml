@@ -1434,16 +1434,27 @@
 					</find_gravidar_contact>
 					<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
 					<do_for_each name="$kAAIT_smallTarget" in="$kAAIT_smallTargets">
+						<set_value name="$kAAIT_isNearBigEnemy" exact="false" />
+						<set_value name="$kAAIT_isBigEnemyInTheWay" exact="false" />
 						<do_for_each name="$kAAIT_bigEnemy" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies">
-							<set_value name="$kAAIT_attackTarget" exact="$kAAIT_smallTarget" />
-							<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_bigEnemy" />
-							<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$$kAAIT_smallTarget" />
-							<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
-							<do_if value="not $kAAIT_result_isTargetInTheWay">
-								<set_value name="$kAAIT_result_target_found" exact="$kAAIT_smallTarget" />
+							<do_if value="$kAAIT_smallTarget.bboxdistanceto.{$kAAIT_bigEnemy} le this.assignedcontrolled.maxradarrange * 0.25">
+								<set_value name="$kAAIT_isNearBigEnemy" exact="true" />
 								<break />
 							</do_if>
+							<do_else>
+								<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_bigEnemy" />
+								<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$kAAIT_smallTarget" />
+								<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
+								<do_if value="$kAAIT_result_isTargetInTheWay">
+									<set_value name="$kAAIT_isBigEnemyInTheWay" exact="true" />
+									<break />
+								</do_if>
+							</do_else>
 						</do_for_each>
+						<do_if value="(not $kAAIT_isNearBigEnemy) and (not $kAAIT_isBigEnemyInTheWay)">
+							<set_value name="$kAAIT_result_target_found" exact="$kAAIT_smallTarget" />
+							<break />
+						</do_if>
 					</do_for_each>
 				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget $kAAIT_result_target_found: ' + @$kAAIT_result_target_found.knownname + ' ' + @$kAAIT_result_target_found.idcode + ' size: ' + @$kAAIT_result_target_found.size + ' weapons: ' + @$kAAIT_result_target_found.weapons.operational.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -1655,8 +1666,8 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination: ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				</do_if>
 				<do_else>
-					<set_value name="$kAAIT_result_destination" exact="$kAAIT_test_target_isInTheWayOf.$destination" />
-					<set_value name="$kAAIT_result_destinationPosition" exact="$kAAIT_test_target_isInTheWayOf.$position" />
+					<set_value name="$kAAIT_result_destination" exact="$kAAIT_test_target_isInTheWayOf" />
+					<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destination.sector" object="$kAAIT_result_destination" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (from $kAAIT_test_target_isInTheWayOf): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<remove_value name="$kAAIT_test_target_isInTheWayOf" />
 				</do_else>

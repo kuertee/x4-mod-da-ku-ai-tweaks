@@ -89,6 +89,7 @@
 			<!-- <set_flight_behaviour object="this.assignedcontrolled" flightbehaviour="flightbehaviour.evasive_random" /> -->
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" exact="true" />
 
+			<set_value name="$encircleDirection" exact="null" />
 			<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$defensibleTarget}" />
 			<set_value name="$isShortAvoidance" exact="false" />
 			<set_value name="$isEncircleTarget" exact="false" />
@@ -145,7 +146,7 @@
 			<do_elseif value="$isEncircleTarget">
 				<debug_text text="@this.assignedcontrolled.idcode + ' ENCIRCLING TARGET'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$isShortAvoidance" exact="true" />
-				<do_if value="not $encircleDirection?">
+				<do_if value="not @$encircleDirection">
 					<set_value name="$encircleDirection" exact="[-1, 1].random" />
 				</do_if>
 				<create_position name="$posShip" space="this.sector" object="this.assignedcontrolled" />
@@ -317,6 +318,7 @@
 					<do_if value="$isEncircleTarget">
 						<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
 						<do_if value="$kAAIT_result_target_found.isoperational">
+							<set_value name="$isEncircleTarget" exact="false" />
 							<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
 							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
 						</do_if>
