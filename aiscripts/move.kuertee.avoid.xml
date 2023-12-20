@@ -291,8 +291,7 @@
 							<check_all>
 								<event_object_attacked object="this.assignedcontrolled" />
 								<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + event.param + ' ' + event.param.knownname" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-								<check_value value="event.param !=  @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" />
-								<set_value name="$kAAIT_attacker_interruptedMove" exact="event.param" />
+								<set_value name="$kAAIT_attacker_interruptedMove" exact="if event.param.defensible then event.param.defensible else event.param" />
 							</check_all>
 							<check_all>
 								<check_any>
@@ -309,45 +308,37 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$orderLocation_space, $orderLocation_pos]"/>
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="@$kAAIT_attacker_interruptedMove.isoperational">
-				<set_value name="$kAAIT_test_target_isTakeRisk" exact="$kAAIT_attacker_interruptedMove" />
-				<include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
-				<do_if value="not $kAAIT_result_isTakeRisk">
-					<include_interrupt_actions ref="kAAIT_RequestHelp" />
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_attacker_interruptedMove" />
-					<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+			<include_interrupt_actions ref="kAAIT_ActOnAttackerThatInterruptedMove" />
+			<do_if value="not $kAAIT_result_isActioned_attackerThatInterruptedMove">
+				<do_if value="$isTargetMoved">
+					<resume label="start" />
 				</do_if>
-				<do_else>
-					<set_value name="$kAAIT_target_attack" exact="$kAAIT_attacker_interruptedMove" />
-					<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-				</do_else>
-			</do_if>
-			<do_if value="$isTargetMoved">
-				<resume label="start" />
-			</do_if>
-			<do_elseif value="$dist gt 3km">
-				<do_if value="$isEncircleTarget">
-					<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
-					<do_if value="$kAAIT_result_target_found.isoperational">
-						<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
-						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+				<do_elseif value="$dist gt 3km">
+					<do_if value="$isEncircleTarget">
+						<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
+						<do_if value="$kAAIT_result_target_found.isoperational">
+							<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
+							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+						</do_if>
+						<do_else>
+							<resume label="move_locked_destination" />
+						</do_else>
 					</do_if>
 					<do_else>
-						<resume label="move_locked_destination" />
+						<set_value name="$kAAIT_test_target_isInTheWay" exact="$defensibleTarget" />
+						<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
+						<do_if value="$kAAIT_result_isTargetInTheWay">
+							<resume label="move_locked_destination" />
+						</do_if>
 					</do_else>
-				</do_if>
-				<do_else>
-					<set_value name="$kAAIT_test_target_isInTheWay" exact="$defensibleTarget" />
-					<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
-					<do_if value="$kAAIT_result_isTargetInTheWay">
-						<resume label="move_locked_destination" />
-					</do_if>
-				</do_else>
-			</do_elseif>
-			<do_elseif value="$isEncircleTarget">
-				<resume label="start" />
-			</do_elseif>
-			<resume label="finish" />
+				</do_elseif>
+				<do_elseif value="$isEncircleTarget">
+					<resume label="start" />
+				</do_elseif>
+			</do_if>
+			<do_else>
+				<resume label="finish" />
+			</do_else>
 
 			<label name="fight" comment="required for DisengageHandler. $disengage_pursue resumes at fight label. in this case, just finish." />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
