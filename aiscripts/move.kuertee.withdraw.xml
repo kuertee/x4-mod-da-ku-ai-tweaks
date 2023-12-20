@@ -70,23 +70,25 @@
 			<do_if value="not $kAAIT_original_name?">
 				<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.name" />
 			</do_if>
-			<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance">
-				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - Kuda withdraw'" />
+			<do_if value="$target.defensible">
+				<set_value name="$defensibleTarget" exact="$target.defensible" />
 			</do_if>
-			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ', ' + @$target.isoperational + ', ' + @$target.hullpercentage" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.knownname + ' ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="not @$target.isoperational">
+			<do_else>
+				<set_value name="$defensibleTarget" exact="$target" />
+			</do_else>
+			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + @$target.knownname + ' ' + @$target.idcode + ', ' + @$target.isoperational" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $defensibleTarget: ' + @$defensibleTarget.knownname + ' ' + @$defensibleTarget.idcode + ', ' + @$defensibleTarget.isoperational" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' and $kAAIT_detailedDebugChance then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="(not @$target.isoperational) or (not @$defensibleTarget.isoperational)">
 				<resume label="finish" />
 			</do_if>
-			<include_interrupt_actions ref="kAAIT_Init" />
-			<!-- <set_flight_behaviour object="this.assignedcontrolled" flightbehaviour="flightbehaviour.evasive_random" /> -->
 
+			<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance">
+				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - Kuda avoid'" />
+			</do_if>
+			<include_interrupt_actions ref="kAAIT_Init" />
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" exact="true" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$isWithdrawing: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="@$target.defensible">
-				<set_value name="$target" exact="$target.defensible" />
-			</do_if>
 			<do_if value="$target.isclass.ship">
 				<do_if value="@this.assignedcontrolled.iscapitalship">
 					<include_interrupt_actions ref="kAAIT_RequestHelp" comment="always request help at every new withdrawal" />
@@ -190,10 +192,11 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$distance_attackFrom ($dist_avoidExtra added): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<!-- end: get distance -->
 
+			<set_value name="$dist_withdraw" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" />
 			<create_position name="$orderLocation_pos"
-				x="$pos_avoidFrom.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($yaw_avoid) * cos ($pitch_avoid)"
-				y="$pos_avoidFrom.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($pitch_avoid)"
-				z="$pos_avoidFrom.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * cos ($yaw_avoid) * cos ($pitch_avoid)"
+				x="$pos_avoidFrom.x + ($dist_withdraw + $defensibleTarget.size) * sin ($yaw_avoid) * cos ($pitch_avoid)"
+				y="$pos_avoidFrom.y + ($dist_withdraw + $defensibleTarget.size) * sin ($pitch_avoid)"
+				z="$pos_avoidFrom.z + ($dist_withdraw + $defensibleTarget.size) * cos ($yaw_avoid) * cos ($pitch_avoid)"
 			/>
 			<get_safe_pos result="$orderLocation_pos" sector="$orderLocation_space" value="$orderLocation_pos" radius="this.ship.size * 2" />
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" exact="$orderLocation_space" />
