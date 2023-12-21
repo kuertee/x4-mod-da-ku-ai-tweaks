@@ -47,7 +47,6 @@
 				</do_else>
 				<include_interrupt_actions ref="kAAIT_SaveCombatRangeToData" />
 				<include_interrupt_actions ref="kAAIT_SaveSkillVarsToData" />
-				<set_value name="$kAAIT_target" exact="null" />
 				<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders">
 					<do_if value="@$kAAIT_order.$primarytarget">
 						<set_value name="$kAAIT_test_target_isHighRisk" exact="@$kAAIT_order.$primarytarget" />
@@ -1288,35 +1287,37 @@
 						(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget.exists) or
 						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget.$primarytarget.isoperational)
 					)">
-					<find_gravidar_contact name="$kAAIT_smallTargets" object="this.assignedcontrolled" class="[class.ship_xs, class.ship_s, class.ship_m]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" multiple="true" sortbydistanceto="this.assignedcontrolled" sortdescending="false">
-						<match_context macro="[@this.sector.macro]"/>
-						<match class="class.buildstorage" negate="true"/>
-						<match state="componentstate.wreck" negate="true"/>
-					</find_gravidar_contact>
-					<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
-					<do_for_each name="$kAAIT_smallTarget" in="$kAAIT_smallTargets">
-						<set_value name="$kAAIT_isNearBigEnemy" exact="false" />
-						<set_value name="$kAAIT_isBigEnemyInTheWay" exact="false" />
-						<do_for_each name="$kAAIT_bigEnemy" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies">
-							<do_if value="$kAAIT_smallTarget.bboxdistanceto.{$kAAIT_bigEnemy} le this.assignedcontrolled.maxradarrange * 0.25">
-								<set_value name="$kAAIT_isNearBigEnemy" exact="true" />
-								<break />
-							</do_if>
-							<do_else>
-								<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_bigEnemy" />
-								<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$kAAIT_smallTarget" />
-								<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
-								<do_if value="$kAAIT_result_isTargetInTheWay">
-									<set_value name="$kAAIT_isBigEnemyInTheWay" exact="true" />
+					<do_if value="@this.assignedcontrolled.order.$allowothertargets or @this.assignedcontrolled.orders.{1}.$allowothertargets">
+						<find_gravidar_contact name="$kAAIT_smallTargets" object="this.assignedcontrolled" class="[class.ship_xs, class.ship_s, class.ship_m]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" multiple="true" sortbydistanceto="this.assignedcontrolled" sortdescending="false">
+							<match_context macro="[@this.sector.macro]"/>
+							<match class="class.buildstorage" negate="true"/>
+							<match state="componentstate.wreck" negate="true"/>
+						</find_gravidar_contact>
+						<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
+						<do_for_each name="$kAAIT_smallTarget" in="$kAAIT_smallTargets">
+							<set_value name="$kAAIT_isNearBigEnemy" exact="false" />
+							<set_value name="$kAAIT_isBigEnemyInTheWay" exact="false" />
+							<do_for_each name="$kAAIT_bigEnemy" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies">
+								<do_if value="$kAAIT_smallTarget.bboxdistanceto.{$kAAIT_bigEnemy} le this.assignedcontrolled.maxradarrange * 0.25">
+									<set_value name="$kAAIT_isNearBigEnemy" exact="true" />
 									<break />
 								</do_if>
-							</do_else>
+								<do_else>
+									<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_bigEnemy" />
+									<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$kAAIT_smallTarget" />
+									<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
+									<do_if value="$kAAIT_result_isTargetInTheWay">
+										<set_value name="$kAAIT_isBigEnemyInTheWay" exact="true" />
+										<break />
+									</do_if>
+								</do_else>
+							</do_for_each>
+							<do_if value="(not $kAAIT_isNearBigEnemy) and (not $kAAIT_isBigEnemyInTheWay)">
+								<set_value name="$kAAIT_result_target_found" exact="$kAAIT_smallTarget" />
+								<break />
+							</do_if>
 						</do_for_each>
-						<do_if value="(not $kAAIT_isNearBigEnemy) and (not $kAAIT_isBigEnemyInTheWay)">
-							<set_value name="$kAAIT_result_target_found" exact="$kAAIT_smallTarget" />
-							<break />
-						</do_if>
-					</do_for_each>
+					</do_if>
 				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget $kAAIT_result_target_found: ' + @$kAAIT_result_target_found.knownname + ' ' + @$kAAIT_result_target_found.idcode + ' size: ' + @$kAAIT_result_target_found.size + ' weapons: ' + @$kAAIT_result_target_found.weapons.operational.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</actions>
