@@ -157,12 +157,12 @@
 
 			<!-- start: get distance from target -->
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$target.size * 0.5 + $defensibleTarget.size * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
-			<do_elseif value="
+			<do_if value="
 				this.assignedcontrolled.primarypurpose != purpose.fight or
 				(not @this.assignedcontrolled.iscapitalship)
 			">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5 * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
-			</do_elseif>
+			</do_if>
 			<do_else>
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
 			</do_else>
@@ -274,6 +274,9 @@
 			<set_value name="$isTargetMoved" exact="false" />
 			<set_value name="$kAAIT_attacker_interruptedMove" exact="null" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' wait start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="not $enemiesWithdrawnFrom?">
+				<create_group groupname="$enemiesWithdrawnFrom" />
+			</do_if>
 			<wait exact="5s">
 				<interrupt>
 					<conditions>
@@ -281,6 +284,8 @@
 							<check_all>
 								<event_object_attacked object="this.assignedcontrolled" />
 								<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + event.param + ' ' + event.param.knownname" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+								<check_value value="not $enemiesWithdrawnFrom.indexof.{event.param}" />
+								<check_value value="not $enemiesWithdrawnFrom.indexof.{event.param.defensible}" />
 								<set_value name="$kAAIT_attacker_interruptedMove" exact="if event.param.defensible then event.param.defensible else event.param" />
 							</check_all>
 							<check_all>
@@ -298,9 +303,12 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$orderLocation_space, $orderLocation_pos]" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
-			<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
-			<do_if value="not $kAAIT_result_isAttackerActioned">
+			<do_if value="@$kAAIT_attacker_interruptedMove">
+				<add_to_group groupname="$enemiesWithdrawnFrom" object="$kAAIT_attacker_interruptedMove" />
+				<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
+				<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
+			</do_if>
+			<do_if value="not @$kAAIT_result_isAttackerActioned">
 				<do_if value="$dist gt 3km">
 					<do_if value="$isTargetMoved">
 						<resume label="move_to_engage_position" />

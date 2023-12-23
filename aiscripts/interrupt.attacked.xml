@@ -1,40 +1,34 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
 <!--
+  add. purpose: before actual fight, evaluate for kAAIT-enabled ships.
+  <do_if value="$attackrespond?" >
+-->
+  <add pos="before" sel="//do_if[@value=&quot;@$attackrespond&quot;]">
+    <do_if value="@$attackrespond">
+      <do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+        <debug_text text="@this.assignedcontrolled.idcode + ' interrupt.attacked $attackrespond: ' + @$attackrespond" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+        <set_value name="$kAAIT_test_target_isTakeRisk" exact="event.param" />
+        <include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
+        <do_if value="not $kAAIT_result_isTakeRisk">
+          <debug_text text="@this.assignedcontrolled.idcode + ' interrupt.attacked $attackrespond (final): ' + @$attackrespond" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+          <remove_value name="$attackrespond" />
+        </do_if>
+      </do_if>
+    </do_if>
+  </add>
+<!--
   add. purpose: before actual flee, evaluate for kAAIT-enabled ships.
   <do_if value="$flee?" >
 -->
   <add pos="before" sel="//do_if[@value=&quot;$flee?&quot;]">
     <do_if value="@$flee">
       <do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-        <!-- check for other entries of this text: ship will withdraw and fight at these conditions. so cancel withdrawal when required.
-          fight: shield gt skill-withdraw-value.
-          withdraw: shield gt 5, shield le skill-withdraw-value, distance to target < 10km.
-          fight: shield le 5, hull le 50.
-        -->
-        <include_interrupt_actions ref="kAAIT_SaveSkillVarsToData" />
-        <do_if value="@$kAAIT_attacker.defensible">
-          <set_value name="$kAAIT_attacker" exact="$kAAIT_attacker.defensible" />
-        </do_if>
-        <do_if value="
-          (
-            (
-              @$kAAIT_attacker.isclass.station and
-              this.assignedcontrolled.shieldpercentage gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vStation
-            ) or
-            (
-              @$kAAIT_attacker.isclass.ship and
-              (
-                this.assignedcontrolled.shieldpercentage / @$kAAIT_attacker.shieldpercentage gt (@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_shieldPercentage_withdrawAt_vShip / 100.0) or
-                @this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker} gt this.assignedcontrolled.maxradarrange * 0.25 or
-                (
-                  this.assignedcontrolled.shieldpercentage le 5 and
-                  this.assignedcontrolled.hullpercentage le 50
-                )
-              )
-            )
-          )" comment="clear ignore flag when ship should fight. e.g. v ship: when no shields, but good hull.">
-          <debug_text text="@this.assignedcontrolled.idcode + ' flee cancelled!'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+        <debug_text text="@this.assignedcontrolled.idcode + ' interrupt.attacked $flee: ' + @$flee" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+        <set_value name="$kAAIT_test_target_isTakeRisk" exact="event.param" />
+        <include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
+        <do_if value="$kAAIT_result_isTakeRisk">
+          <debug_text text="@this.assignedcontrolled.idcode + ' interrupt.attacked $flee (final): ' + @$flee" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
           <remove_value name="$flee" />
         </do_if>
       </do_if>

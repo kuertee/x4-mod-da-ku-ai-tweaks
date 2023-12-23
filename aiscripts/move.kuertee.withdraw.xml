@@ -38,9 +38,8 @@
 				<do_if value="@this.assignedcontrolled.order.script != 'move.kuertee.withdraw'">
 					<do_for_each name="$order" in="this.assignedcontrolled.orders">
 						<do_if value="$order.$kAAITParam_isStepForwardWithdraw?">
-							<!-- <set_value name="$order.$kAAITParam_isStepForwardWithdraw" exact="false" /> -->
+							<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw (edit_order_param $kAAITParam_isStepForwardWithdraw, ' + event.name + '): ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<edit_order_param order="$order" param="'kAAITParam_isStepForwardWithdraw'" value="false" />
-							<!-- <set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user" exact="false" /> -->
 						</do_if>
 					</do_for_each>
 					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
@@ -244,6 +243,8 @@
 							<check_all>
 								<event_object_attacked object="this.assignedcontrolled" />
 								<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + event.param + ' ' + event.param.knownname" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+								<check_value value="@event.param != $target" />
+								<check_value value="@event.param.defensible != $target" />
 								<set_value name="$kAAIT_attacker_interruptedMove" exact="if event.param.defensible then event.param.defensible else event.param" />
 							</check_all>
 							<check_all>
@@ -260,9 +261,17 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$orderLocation_space, $orderLocation_pos]" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
-			<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
-			<do_if value="not $kAAIT_result_isAttackerActioned">
+			<do_if value="@$kAAIT_attacker_interruptedMove">
+				<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
+				<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
+			</do_if>
+			<do_if value="@$kAAIT_result_isAttackerActioned == 'resume start'">
+				<resume label="start" />
+			</do_if>
+			<do_elseif value="@$kAAIT_result_isAttackerActioned == 'move_locked_destination'">
+				<resume label="move_locked_destination" />
+			</do_elseif>
+			<do_elseif value="not @$kAAIT_result_isAttackerActioned">
 				<do_if value="$dist gt 3km">
 					<set_value name="$kAAIT_isHighRisk" exact="true" />
 					<set_value name="$kAAIT_test_target_isTakeRisk" exact="$target" />
@@ -276,7 +285,7 @@
 						</do_else>
 					</do_if>
 				</do_if>
-			</do_if>
+			</do_elseif>
 			<do_else>
 				<resume label="finish" />
 			</do_else>

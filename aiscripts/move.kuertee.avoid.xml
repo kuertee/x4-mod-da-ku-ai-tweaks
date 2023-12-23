@@ -36,10 +36,8 @@
 				<do_if value="@this.assignedcontrolled.order.script != 'move.kuertee.avoid'">
 					<do_for_each name="$order" in="this.assignedcontrolled.orders">
 						<do_if value="$order.$kAAITParam_isAvoidHighRisk?">
-							<!-- <set_value name="$order.$kAAITParam_isAvoidHighRisk" exact="false" /> -->
+							<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk (edit_order_param $kAAITParam_isAvoidHighRisk, ' + event.name + '): ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<edit_order_param order="$order" param="'kAAITParam_isAvoidHighRisk'" value="false" />
-							<!-- <set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user" exact="false" /> -->
-							<debug_text text="@this.assignedcontrolled.idcode + ' EVENT this.assignedcontrolled.order.script: ' + @this.assignedcontrolled.order.script" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						</do_if>
 					</do_for_each>
 					<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData?">
@@ -97,7 +95,9 @@
 			<!-- <set_flight_behaviour object="this.assignedcontrolled" flightbehaviour="flightbehaviour.evasive_random" /> -->
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" exact="true" />
 
-			<set_value name="$encircleDirection" exact="null" />
+			<do_if value="not $encircleDirection?">
+				<set_value name="$encircleDirection" exact="null" />
+			</do_if>
 			<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$defensibleTarget}" />
 			<set_value name="$isShortAvoidance" exact="false" />
 			<set_value name="$isEncircleTarget" exact="false" />
@@ -179,10 +179,11 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' $yaw_avoid (adjusted to move behind commander): ' + $yaw_avoid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</do_if>
 			<do_elseif value="$isEncircleTarget">
-				<debug_text text="@this.assignedcontrolled.idcode + ' ENCIRCLING TARGET'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' ENCIRCLING TARGET $encircleDirection: ' + $encircleDirection" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$isShortAvoidance" exact="true" />
-				<do_if value="not @$encircleDirection">
+				<do_if value="not $encircleDirection">
 					<set_value name="$encircleDirection" exact="[-1, 1].random" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $encircleDirection (random): ' + $encircleDirection" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				</do_if>
 				<create_position name="$posShip" space="this.sector" object="this.assignedcontrolled" />
 				<create_position name="$posTarget" space="$orderLocation_space" object="$defensibleTarget" />
@@ -209,9 +210,10 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' $yaw_avoid (adjusted to move to dest): ' + $yaw_avoid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</do_elseif>
 			<do_else>
-				<debug_text text="@this.assignedcontrolled.idcode + ' MOVING AROUND ATTACK TARGET'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' MOVING AROUND ATTACK TARGET $encircleDirection: ' + $encircleDirection" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="not $encircleDirection?">
 					<set_value name="$encircleDirection" exact="[-1, 1].random" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $encircleDirection (random): ' + $encircleDirection" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				</do_if>
 				<set_value name="$yaw_adj" min="30" max="45" />
 				<set_value name="$yaw_avoid" exact="$yaw_toShip + $yaw_adj * $encircleDirection" />
@@ -236,7 +238,7 @@
 				</do_else>
 			</do_elseif>
 			<do_elseif value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget == $defensibleTarget">
-				<set_value name="$distAvoid" exact="[10km + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw, [$dist_shipToTarget, this.assignedcontrolled.maxradarrange * 0.5].min].max" />
+				<set_value name="$distAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_withdraw" />
 				<do_if value="
 					(not @this.assignedcontrolled.iscapitalship) and
 					$defensibleTarget.isclass.ship and
@@ -333,6 +335,8 @@
 							<check_all>
 								<event_object_attacked object="this.assignedcontrolled" />
 								<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + event.param + ' ' + event.param.knownname" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+								<check_value value="@event.param != $target" />
+								<check_value value="@event.param.defensible != $target" />
 								<set_value name="$kAAIT_attacker_interruptedMove" exact="if event.param.defensible then event.param.defensible else event.param" />
 							</check_all>
 							<check_all>
@@ -350,9 +354,17 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$orderLocation_space, $orderLocation_pos]"/>
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
-			<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
-			<do_if value="not $kAAIT_result_isAttackerActioned">
+			<do_if value="@$kAAIT_attacker_interruptedMove">
+				<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
+				<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
+			</do_if>
+			<do_if value="@$kAAIT_result_isAttackerActioned == 'resume start'">
+				<resume label="start" />
+			</do_if>
+			<do_elseif value="@$kAAIT_result_isAttackerActioned == 'move_locked_destination'">
+				<resume label="move_locked_destination" />
+			</do_elseif>
+			<do_elseif value="not @$kAAIT_result_isAttackerActioned">
 				<do_if value="$isTargetMoved">
 					<resume label="start" />
 				</do_if>
@@ -378,7 +390,7 @@
 				<do_elseif value="$isEncircleTarget">
 					<resume label="start" />
 				</do_elseif>
-			</do_if>
+			</do_elseif>
 			<do_else>
 				<resume label="finish" />
 			</do_else>
