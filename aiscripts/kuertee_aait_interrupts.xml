@@ -1280,6 +1280,8 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP =================='" />
 				</do_if>
 				<set_value name="$kAAIT_result_target_found" exact="null" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget this.assignedcontrolled.dps.all: ' + @this.assignedcontrolled.dps.all" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget this.assignedcontrolled.primarypurpose: ' + @this.assignedcontrolled.primarypurpose" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="
 					this.assignedcontrolled.dps.all and
 					this.assignedcontrolled.primarypurpose == purpose.fight and
@@ -1287,12 +1289,15 @@
 						(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget.exists) or
 						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget.$primarytarget.isoperational)
 					)">
-					<do_if value="@this.assignedcontrolled.order.$allowothertargets or @this.assignedcontrolled.orders.{1}.$allowothertargets">
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget this.assignedcontrolled.order.$allowothertargets: ' + @this.assignedcontrolled.order.$allowothertargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget this.assignedcontrolled.orders.{2}.$allowothertargets: ' + @this.assignedcontrolled.orders.{2}.$allowothertargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<do_if value="@this.assignedcontrolled.order.$allowothertargets or @this.assignedcontrolled.orders.{2}.$allowothertargets">
 						<find_gravidar_contact name="$kAAIT_smallTargets" object="this.assignedcontrolled" class="[class.ship_xs, class.ship_s, class.ship_m]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" multiple="true" sortbydistanceto="this.assignedcontrolled" sortdescending="false">
 							<match_context macro="[@this.sector.macro]"/>
 							<match class="class.buildstorage" negate="true"/>
 							<match state="componentstate.wreck" negate="true"/>
 						</find_gravidar_contact>
+						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_FindSmallerTarget $kAAIT_smallTargets.count: ' + @$kAAIT_smallTargets.count" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 						<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
 						<do_for_each name="$kAAIT_smallTarget" in="$kAAIT_smallTargets">
 							<set_value name="$kAAIT_isNearBigEnemy" exact="false" />
@@ -1441,22 +1446,34 @@
  				<set_value name="$kAAIT_result_destinationSector" exact="@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$sector_dest" />
  				<set_value name="$kAAIT_result_destination" exact="@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$nextPathComponent" />
  				<set_value name="$kAAIT_result_destinationPosition" exact="@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$nextPathComponentPosition" />
-				<do_if value="
+				<!-- <do_if value="
 					this.sector and
 					$kAAIT_currentOrder.exists and
 					(not @$kAAIT_currentOrder.$kAAITParam_iskAAITOrder) and
 					(
 						@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$order != $kAAIT_currentOrder or
 						@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$sector != this.sector
-					)" comment="get new destination">
+					)" comment="get new destination"> -->
 					<set_value name="$kAAIT_result_destination" exact="null" />
 					<set_value name="$kAAIT_result_destinationSector" exact="null" />
 					<set_value name="$kAAIT_result_destinationPosition" exact="null" />
-					<do_if value="@$kAAIT_currentOrder.$primarytarget and $kAAIT_currentOrder.$primarytarget.sector == this.sector">
+					<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestination and global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestinationPosition">
+						<set_value name="$kAAIT_result_destination" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestination" />
+						<do_if value="$kAAIT_result_destination.isclass.sector">
+							<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination" />
+							<set_value name="$kAAIT_result_destinationPosition" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestinationPosition" />
+						</do_if>
+						<do_else>
+							<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination.sector" />
+							<set_value name="$kAAIT_result_destinationPosition" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestinationPosition" />
+							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" value="$kAAIT_result_destinationPosition" />
+						</do_else>
+					</do_if>
+					<do_elseif value="@$kAAIT_currentOrder.$primarytarget and $kAAIT_currentOrder.$primarytarget.sector == this.sector">
 						<set_value name="$kAAIT_result_destination" exact="$kAAIT_currentOrder.$primarytarget" />
 						<set_value name="$kAAIT_result_destinationSector" exact="this.sector" />
 						<create_position name="$kAAIT_result_destinationPosition" space="this.sector" object="$kAAIT_result_destination" />
-					</do_if>
+					</do_elseif>
 					<do_elseif value="@$kAAIT_currentOrder.$destination and @$kAAIT_currentOrder.$destination.sector == this.sector">
 						<set_value name="$kAAIT_result_destination" exact="$kAAIT_currentOrder.$destination" />
 						<set_value name="$kAAIT_result_destinationSector" exact="this.sector" />
@@ -1510,7 +1527,7 @@
 						</do_if>
 						<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination" exact="table[]" />
 					</do_else>
-				</do_if>
+				<!-- </do_if> -->
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetDestination $kAAIT_result_destination (final): ' + $kAAIT_result_destination + ' (' + @$kAAIT_result_destination.knownname + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetDestination $kAAIT_result_destinationSector (final): ' + $kAAIT_result_destinationSector + ' (' + @$kAAIT_result_destinationSector.knownname + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetDestination $kAAIT_result_destinationPosition (final): ' + $kAAIT_result_destinationPosition" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -1525,7 +1542,7 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_test_target_isInTheWay: ' + @$kAAIT_test_target_isInTheWay.knownname + ' (' + @$kAAIT_test_target_isInTheWay.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="not @$kAAIT_test_target_isInTheWayOf">
 					<include_interrupt_actions ref="kAAIT_GetDestination" comment="this sets $kAAIT_result_destination and $kAAIT_result_destinationPosition" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination: ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (from kAAIT_GetDestination): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				</do_if>
 				<do_else>
 					<set_value name="$kAAIT_result_destination" exact="$kAAIT_test_target_isInTheWayOf" />
@@ -1533,10 +1550,13 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (from $kAAIT_test_target_isInTheWayOf): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<remove_value name="$kAAIT_test_target_isInTheWayOf" />
 				</do_else>
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (final): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_result_isTargetInTheWay" exact="false" />
 				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and @$kAAIT_result_destination and @$kAAIT_result_destinationPosition" comment="at this point this is in same sector as ship">
 					<set_value name="$kAAIT_dist_obstacle" exact="this.assignedcontrolled.distanceto.{$kAAIT_test_target_isInTheWay}" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_dist_obstacle: ' + $kAAIT_dist_obstacle" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<set_value name="$kAAIT_dist_dest" exact="this.assignedcontrolled.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_dist_dest: ' + $kAAIT_dist_dest" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="$kAAIT_dist_obstacle le this.assignedcontrolled.maxradarrange and $kAAIT_dist_obstacle le $kAAIT_dist_dest">
 						<create_position name ="$kAAIT_pos_self" space="this.sector" object="this.assignedcontrolled" />
 						<create_position name ="$kAAIT_pos_obstacle" space="this.sector" object="$kAAIT_test_target_isInTheWay" />
@@ -1611,11 +1631,12 @@
 					<set_value name="$kAAIT_yaw_diff" exact="$kAAIT_angle" /> -->
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_diff (smaller arc): ' + $kAAIT_yaw_diff" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				</do_if>
-				<do_if value="not @$kAAIT_midYawFactorAdj">
-					<set_value name="$kAAIT_midYawFactorAdj" exact="1" />
+				<do_if value="not @$kAAIT_midYawFactorMult">
+					<set_value name="$kAAIT_midYawFactorMult" exact="0.5" />
 				</do_if>
-				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_midYawFactorAdj: ' + $kAAIT_midYawFactorAdj" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<set_value name="$kAAIT_yaw_mid" exact="$kAAIT_yaw_from + $kAAIT_yaw_diff * 0.5 * $kAAIT_midYawFactorAdj" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_midYawFactorMult: ' + $kAAIT_midYawFactorMult" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<set_value name="$kAAIT_yaw_mid" exact="$kAAIT_yaw_from + $kAAIT_yaw_diff * $kAAIT_midYawFactorMult" />
+				<remove_value name="$kAAIT_midYawFactorMult" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetYawDiffAndMid $kAAIT_yaw_mid: ' + $kAAIT_yaw_mid" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_angle" exact="$kAAIT_yaw_mid" />
 				<include_interrupt_actions ref="kAAIT_LimitAngleToNegPos180" />
@@ -2238,7 +2259,7 @@
 					kAAIT_result_isAttackerActioned is set to true if actioned or false if not
 				-->
 				<set_value name="$kAAIT_result_isAttackerActioned" exact="false" />
-				<do_if value="$kAAIT_test_attacker_isActOn.defensible">
+				<do_if value="@$kAAIT_test_attacker_isActOn.defensible">
 					<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_test_attacker_isActOn.defensible" />
 				</do_if>
 				<do_if value="
