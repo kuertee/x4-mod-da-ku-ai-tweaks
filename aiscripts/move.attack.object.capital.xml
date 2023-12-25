@@ -209,7 +209,7 @@
 				(this.isplayerowned and @global.$kAAIT_Data.$isCarriersAttackLikeDestroyers) or
 				((not this.isplayerowned) and @global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions)
 			">
-				<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance and this.assignedcontrolled.order.script == 'move.attack.object.capital'">
+				<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance and this.assignedcontrolled.order.script == 'order.fight.attack.object'">
 					<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT attack'" />
 				</do_if>
@@ -267,14 +267,14 @@
 			<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name" />
 		</do_if>
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-		<do_if value="@$kAAITParam_isAvoidHighRisk">
+		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 			<include_interrupt_actions ref="kAAIT_GetAvoidOrNot" />
-			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational and @$kAAITParam_isAvoidHighRisk">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
 				<resume label="kAAIT_label_avoid" />
 			</do_if>
-			<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational">
+			<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational and @$kAAITParam_isStepForwardWithdraw">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_withdrawFromEnemy" />
 				<resume label="kAAIT_label_withdraw" />
 			</do_elseif>
@@ -284,13 +284,6 @@
 			<do_if value="$kAAIT_result_isMovetoEngage">
 				<resume label="kAAIT_label_move_to_engage_position" />
 			</do_if>
-		</do_if>
-
-		<label name="kAAIT_label_just_fight" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_just_fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
 	</add>
 <!-- add before. purpose: force frontweapon on all kuda-enabled ships for debugging
@@ -313,7 +306,7 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance and this.assignedcontrolled.order.script == 'move.attack.object.capital'">
+			<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance and this.assignedcontrolled.order.script == 'order.fight.attack.object'">
 				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT attack'" />
 			</do_if>
@@ -362,26 +355,6 @@
 	<!-- <add pos="before" sel="//set_value[@name=&quot;$case&quot;][@exact=&quot;'1.1.3: cap v cap, front-mounted, retreat'&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' TOO NEAR TARGET'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add> -->
-<!-- add after 2nd instance. purpose: if chasing small ships near big enemy, move away.
-	<do_if value="not $issmall">
-		<do_if value="$frontweapon?" >
-			...
-	</do_if>
-	<do_else>
-		<get_safe_pos result="$pos" object="$target" min="$minoperationalrange" max="$maxoperationalrange" sector="$target.sector" direction="$weakquadrant" directionobject="$target" radius="this.ship.size/2.0" ignored="this.ship"/>
--->
-	<add pos="after" sel="(//get_safe_pos[@result=&quot;$pos&quot;][@object=&quot;$target&quot;][@min=&quot;$minoperationalrange&quot;][@max=&quot;$maxoperationalrange&quot;][@sector=&quot;$target.sector&quot;][@direction=&quot;$weakquadrant&quot;][@directionobject=&quot;$target&quot;][@radius=&quot;this.ship.size/2.0&quot;][@ignored=&quot;this.ship&quot;])[2]">
-		<do_if value="@$kAAITParam_isStepForwardWithdraw and @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk">
-			<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
-			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-			<do_if value="@$kAAIT_result_bigEnemy != global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget">
-				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_bigEnemy (too near): ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_bigEnemy" />
-				<!-- <resume label="kAAIT_label_withdraw" /> -->
-				<resume label="kAAIT_label_avoid" />
-			</do_if>
-		</do_if>
-	</add>
 <!-- add after. purpose: debug.
 	<do_if value="this.ship.bboxdistanceto.{$target} ge $minoperationalrange and this.ship.bboxdistanceto.{$target} le $maxoperationalrange">
 -->

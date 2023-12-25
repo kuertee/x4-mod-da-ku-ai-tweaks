@@ -221,14 +221,14 @@
 			</do_else>
 			<include_interrupt_actions ref="kAAIT_GetAvoidOrNot" />
 			<do_if value="@$kAAIT_result_avoidEnemy.isoperational or @$kAAIT_result_withdrawFromEnemy.isoperational">
-				<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+				<do_if value="@$kAAIT_result_avoidEnemy.isoperational and @$kAAITParam_isAvoidHighRisk">
 					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
 					<resume label="kAAIT_label_avoid" />
 				</do_if>
-				<do_else>
+				<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational and @$kAAITParam_isStepForwardWithdraw">
 					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_withdrawFromEnemy" />
 					<resume label="kAAIT_label_withdraw" />
-				</do_else>
+				</do_elseif>
 			</do_if>
 		</do_if>
 	</add>
@@ -416,11 +416,11 @@
 	<add pos="before" sel="//run_script[@name=&quot;$DefensibleScript&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_avoidEnemy: ' + @$kAAIT_result_avoidEnemy.knownname + ', ' + @$kAAIT_result_avoidEnemy.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational and @$kAAITParam_isAvoidHighRisk">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
 				<include_interrupt_actions ref="kAAIT_Order_Avoid" />
 			</do_if>
-			<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational">
+			<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational and @$kAAITParam_isStepForwardWithdraw">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_withdrawFromEnemy" />
 				<include_interrupt_actions ref="kAAIT_Order_Withdraw" />
 			</do_elseif>
