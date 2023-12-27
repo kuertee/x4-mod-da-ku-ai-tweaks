@@ -60,6 +60,7 @@
 				<check_value value="not event.param.isunit" />
 				<check_value value="not event.param.islasertower" />
 				<check_value value="event.param != player.occupiedship" />
+				<check_value value="not $isRunScriptAvoidActive" />
 			</conditions>
 			<actions>
 				<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -97,7 +98,7 @@
 			</do_if>
 
 			<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance and this.assignedcontrolled.order.script == 'move.kuertee.engage.position'">
-				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kAAIT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT move to engage position'" />
 			</do_if>
 			<include_interrupt_actions ref="kAAIT_Init" />
@@ -208,8 +209,8 @@
 						<include_interrupt_actions ref="GetMoveToEngagePosition" />
 						<set_value name="$orderLocation_space" exact="$target.sector" />
 						<get_safe_pos result="$orderLocation_pos" sector="$orderLocation_space" value="$kAAIT_result_moveToEngagePosition" radius="this.ship.size * 2" />
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" exact="$orderLocation_space" />
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" exact="$orderLocation_pos" />
+						<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+						<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestination" exact="$orderLocation_space" />
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestinationPosition" exact="$orderLocation_pos" />
 						<do_if value="
@@ -231,10 +232,14 @@
 							</create_object>
 							<set_object_name object="$beacon_destination" name="'kAAIT: move to engage: engage position'" />
 						</do_if>
+						<set_value name="$isRunScriptAvoidActive" exact="true" />
 						<run_script name="'move.kuertee.avoid'">
 							<param name="target" value="$target" />
 						</run_script>
-						<resume label="start" />
+						<set_value name="$isRunScriptAvoidActive" exact="false" />
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" exact="$orderLocation_space" />
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" exact="$orderLocation_pos" />
+						<!-- <resume label="start" /> -->
 					</do_if>
 				</do_if>
 			</do_if>

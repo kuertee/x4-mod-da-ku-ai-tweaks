@@ -1578,36 +1578,42 @@
 				</do_if>
 				<!-- <do_if value="not @$kAAIT_space_getGlobalPath or this.assignedcontrolled.bboxdistanceto.[$kAAIT_space_getGlobalPath, $kAAIT_position_getGlobalPath] gt this.assignedcontrolled.maxradarrange"> -->
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_test_target_isInTheWay: ' + @$kAAIT_test_target_isInTheWay.knownname + ' (' + @$kAAIT_test_target_isInTheWay.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_test_target_isInTheWayOf: ' + @$kAAIT_test_target_isInTheWayOf.knownname + ' (' + @$kAAIT_test_target_isInTheWayOf.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="@$kAAIT_test_target_isInTheWayOf">
 					<set_value name="$kAAIT_result_destination" exact="$kAAIT_test_target_isInTheWayOf" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_test_target_isInTheWayOf_position: ' + @$kAAIT_test_target_isInTheWayOf_position" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="$kAAIT_result_destination.isclass.sector">
+						<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination" />
 						<do_if value="@$kAAIT_test_target_isInTheWayOf_position">
 							<set_value name="kAAIT_result_destinationPosition" exact="$kAAIT_test_target_isInTheWayOf_position" />
 						</do_if>
 						<do_else comment="get maxradarrange front from ship. not the ideal destination point as ship can be facing away from its destination, but there's no other better value.">
-							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destination" object="this.assignedcontrolled" z="this.maxradarrange" />
+							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destinationSector" object="this.assignedcontrolled" z="this.maxradarrange" />
 						</do_else>
 					</do_if>
 					<do_else>
+						<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination.sector" />
 						<do_if value="@$kAAIT_test_target_isInTheWayOf_position">
-							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destination.sector" object="$kAAIT_result_destination" value="$kAAIT_test_target_isInTheWayOf_position" />
+							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" value="$kAAIT_test_target_isInTheWayOf_position" />
 						</do_if>
 						<do_else>
-							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destination.sector" object="$kAAIT_result_destination" />
+							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" />
 						</do_else>
 					</do_else>
 					<remove_value name="$kAAIT_test_target_isInTheWayOf" />
+					<remove_value name="$kAAIT_test_target_isInTheWayOf_position" />
 				</do_if>
 				<do_else>
 					<include_interrupt_actions ref="kAAIT_GetDestination" comment="this sets $kAAIT_result_destination and $kAAIT_result_destinationPosition" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (from kAAIT_GetDestination): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				</do_else>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (final): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destinationPosition (final): ' + @$kAAIT_result_destinationPosition" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_result_isTargetInTheWay" exact="false" />
 				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and @$kAAIT_result_destination and @$kAAIT_result_destinationPosition" comment="at this point this is in same sector as ship">
 					<set_value name="$kAAIT_dist_obstacle" exact="this.assignedcontrolled.distanceto.{$kAAIT_test_target_isInTheWay}" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_dist_obstacle: ' + $kAAIT_dist_obstacle" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-					<set_value name="$kAAIT_dist_dest" exact="this.assignedcontrolled.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]" />
+					<set_value name="$kAAIT_dist_dest" exact="this.assignedcontrolled.distanceto.[$kAAIT_result_destinationSector, $kAAIT_result_destinationPosition]" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_dist_dest: ' + $kAAIT_dist_dest" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="$kAAIT_dist_obstacle le this.assignedcontrolled.maxradarrange and $kAAIT_dist_obstacle le $kAAIT_dist_dest">
 						<create_position name ="$kAAIT_pos_self" space="this.sector" object="this.assignedcontrolled" />

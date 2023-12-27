@@ -59,7 +59,10 @@
 							)
 						)
 					) and
-					(@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk or @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetPotentialHighRisk) and
+					(
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetPotentialHighRisk
+					) and
 					(not @$primarytarget.travel.active) and
 					(not @$target.travel.active)
 				">
@@ -69,6 +72,7 @@
 							this.assignedcontrolled.maxradarrange * 0.5,
 							$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult
 						].min" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $target: ' + $target + ' (' + $target.knownname + ' , ' + @$target.hullpercentage + ') $moduleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget + ' (' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget.knownname + ', ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget.hullpercentage + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="$target.isrealclass.module and $target != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget">
 						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
 					</do_if>
@@ -77,12 +81,12 @@
 						(
 							(
 								global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.station and
-								$kAAIT_distToTarget gt $kAAIT_engagePosDist + 10km
+								$kAAIT_distToTarget gt $kAAIT_engagePosDist
 							) or
 							(
 								global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.ship and
 								(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.ship.travel.active) and
-								$kAAIT_distToTarget gt $kAAIT_engagePosDist + 10km
+								$kAAIT_distToTarget gt $kAAIT_engagePosDist
 							)
 						)
 					">
@@ -210,7 +214,7 @@
 				((not this.isplayerowned) and @global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions)
 			">
 				<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance and this.assignedcontrolled.order.script == 'order.fight.attack.object'">
-					<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kAAIT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT attack'" />
 				</do_if>
 				<set_value name="$maintaindistance" exact="false" />
@@ -309,7 +313,7 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<do_if value="@this.assignedcontrolled.isoperational and @global.$kAAIT_Data.$debugChance and this.assignedcontrolled.order.script == 'order.fight.attack.object'">
-				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kuda'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kAAIT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT attack'" />
 			</do_if>
 			<set_value name="$movethreshold_min" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min"/>
@@ -531,8 +535,12 @@
 					<!-- might need to account for rotation time to target -->
 					<!-- adding 50% to time to account for rotation -->
 					<set_value name="$DATupdatetime" exact="(this.assignedcontrolled.distanceto.[$target.zone, $DATRePos] / [this.assignedcontrolled.maxspeed, 1m].max)s * 1.5"/>
-					<!-- <do_if value="true" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"> -->
-					<do_if value="true">
+					<do_if value="@global.$kAAIT_Data.$debugChance" comment="debug DAT Reposition">
+						<do_if value="@this.assignedcontrolled.isoperational and this.assignedcontrolled.order.script == 'order.fight.attack.object'">
+							<set_value name="$kAAIT_original_name_DAT" exact="this.assignedcontrolled.name" />
+							<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name DAT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+							<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - DAT reposition'" />
+						</do_if>
 						<!-- Create beacon for testing -->
 						<create_object name="$DATBeacon" zone="$target.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
 							<position value="$DATRePos"/>
@@ -554,7 +562,12 @@
 							</conditions>
 						</interrupt>
 					</move_to>
-					<do_if value="@$DATBeacon.exists">
+					<do_if value="$kAAIT_original_name_DAT?" comment="undebug DAT Reposition">
+						<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name reset to pre DAT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name_DAT" />
+						<remove_value name="$kAAIT_original_name_DAT" />
+					</do_if>
+					<do_if value="@$DATBeacon.exists" comment="undebug DAT Reposition">
 						<destroy_object object="$DATBeacon" />
 					</do_if>
 					<do_if value="@$DATRepositionForLOS and @$DATupdatetime">
