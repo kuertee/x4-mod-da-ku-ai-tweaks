@@ -223,8 +223,12 @@
 								<event_object_shield_damaged object="this.assignedcontrolled" />
 								<event_object_hull_damaged object="this.assignedcontrolled" />
 							</check_any>
-							<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-							<!-- <check_value value="false" comment="debugging: uncomment to disable event listener" /> -->
+							<check_any comment="prevent event stack">
+								<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" />
+								<check_value value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" />
+							</check_any>
+							<debug_text text="@this.assignedcontrolled.idcode + ' event.name (' + player.age + ', ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent + '): ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" exact="player.age + (0.25)s" />
 							<check_any>
 								<check_value value="@this.assignedcontrolled.order.script == 'order.fight.attack.object'" />
 								<check_value value="@this.assignedcontrolled.order.script == 'order.fight.tactical'" />
@@ -258,13 +262,6 @@
 									<set_value name="$kAAIT_distAttacker" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker}" />
 								</check_all>
 							</check_any>
-							<check_any>
-								<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastHit" />
-								<check_all>
-									<check_value value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastHit" />
-									<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastHit" exact="player.age" />
-								</check_all>
-							</check_any>
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight (event.name: ' + event.name + ') $kAAIT_attacker.knownname (shield/hull damaged, withdraw): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<set_value name="$kAAIT_eventType" exact="'withdraw'" />
 						</check_all>
@@ -273,7 +270,12 @@
 								<event_object_attacked object="this.assignedcontrolled" />
 								<event_object_attacked_object object="this.assignedcontrolled" />
 							</check_any>
-							<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+							<check_any comment="prevent event stack">
+								<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" />
+								<check_value value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" />
+							</check_any>
+							<debug_text text="@this.assignedcontrolled.idcode + ' event.name (' + player.age + ', ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent + '): ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" exact="player.age + (0.25)s" />
 							<!-- <check_value value="false" comment="debugging: uncomment to disable event listener" /> -->
 							<check_any>
 								<check_value value="@this.assignedcontrolled.order.script == 'order.fight.attack.object'" />
@@ -284,21 +286,19 @@
 							<set_value name="$kAAIT_attacker" exact="if event.param.defensible then event.param.defensible else event.param" />
 							<check_value value="@$kAAIT_attacker.isoperational" />
 							<set_value name="$kAAIT_distAttacker" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_attacker}" />
-							<check_any>
-								<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastHit" />
-								<check_all>
-									<check_value value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastHit" />
-									<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastHit" exact="player.age" />
-								</check_all>
-							</check_any>
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight (event.name: ' + event.name + ') $kAAIT_attacker.knownname (attacked, withdraw): ' + @$kAAIT_attacker.knownname + ' ' + $kAAIT_attacker.idcode" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<set_value name="$kAAIT_eventType" exact="'withdraw'" />
 						</check_all>
 						<check_all chance="if (not @$kAAITParam_iskAAITOrder) and @$kAAITParam_isAvoidHighRisk then 100 else 0">
 							<event_gravidar_has_scanned object="if @$kAAITParam_isAvoidHighRisk then this.assignedcontrolled else null" check="false"/>
-							<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+							<check_any comment="prevent event stack">
+								<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" />
+								<check_value value="player.age gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" />
+							</check_any>
+							<debug_text text="@this.assignedcontrolled.idcode + ' event.name (' + player.age + ', ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent + '): ' + event.name" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_avoidWithdrawEvent" exact="player.age + (0.25)s" />
 							<check_value value="@this.assignedcontrolled.order.script != 'move.kuertee.avoid'" />
-							<check_any>
+							<!-- <check_any>
 								<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isoperational" comment="not in attack" />
 								<check_all>
 									<set_value name="$kAAIT_attacker" exact="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
@@ -306,7 +306,7 @@
 									<set_value name="$kAAIT_distAttacker" exact="this.assignedcontrolled.bboxdistanceto.{global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget}" />
 									<check_value value="$kAAIT_distAttacker gt this.assignedcontrolled.maxradarrange" comment="target is far" />
 								</check_all>
-							</check_any>
+							</check_any> -->
 							<count_gravidar_contacts result="$kAAIT_gravidarTarget" object="this.assignedcontrolled" class="[class.ship_l, class.ship_xl, class.station]" maybeattackedby="this.assignedcontrolled" checkoperational="false" masstraffic="false" docked="false" min="1" multiple="false" sortbydistanceto="this.assignedcontrolled" sortdescending="false">
 								<match_context macro="[@this.sector.macro]"/>
 								<match_context class="class.highway" negate="true"/>
@@ -380,8 +380,8 @@
 							'move.undock',
 							'move.flee'
 						].indexof.{@this.assignedcontrolled.order.script}" /> -->
-					<check_value value="player.age - @$kAAIT_time_lastAvoidWithdrawEvent ge 1s" />
-					<set_value name="$kAAIT_time_lastAvoidWithdrawEvent" exact="player.age" />
+					<!-- <check_value value="player.age - @$kAAIT_time_lastAvoidWithdrawEvent ge 1s" />
+					<set_value name="$kAAIT_time_lastAvoidWithdrawEvent" exact="player.age" /> -->
 					<set_value name="$kAAIT_isInterrupted" exact="true" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight @$kAAIT_eventType: ' + @$kAAIT_eventType" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<check_value value="@$kAAIT_eventType" />
@@ -531,6 +531,10 @@
 							</check_all>
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight vs ship'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<check_any>
+								<check_all>
+									<check_value value="$kAAIT_attacker != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" comment="new attacker" />
+									<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight new attacker'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+								</check_all>
 								<check_all>
 									<check_value value="this.assignedcontrolled.primarypurpose != purpose.fight" />
 									<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight this.assignedcontrolled.primarypurpose: ' + this.assignedcontrolled.primarypurpose" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
