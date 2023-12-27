@@ -248,7 +248,8 @@
 				<append_to_list name="$kAAIT_attackPos_defenders" exact="$kAAIT_attackPos" />
 			</do_all>
 		</actions>
-		<actions name="kAAIT_GetAttackPosition">
+
+		<actions name="kAAIT_GetAttackPosition" comment="overrides $initialpos">
 			<do_if value="
 				(not $kAAIT_count_attackers?) or
 				(not $kAAIT_count_defenders?)">
@@ -485,18 +486,6 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' EVENT init'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<set_value name="$kAAIT_isCancelled" exact="false" />
 	</add>
-<!-- add. purpose: because there's a sync point, the order cancels, reinits then re-gives orders on the first move_to.
-	to prevent a 2nd re-init, create the sync point here and force a quick move to.
-	this should cancel the order, re-inii before anything else resulting in the main code to not run twice.
-	<label name="start" />
--->
-	<add pos="before" sel="//label[@name=&quot;start&quot;]">
-		<set_value name="$kAAIT_sector" exact="$primarytarget.sector" />
-		<create_order_syncpoint owner="this.assignedcontrolled.order" />
-		<wait exact="1ms" />
-	</add>
-	<!-- also, remove this: <create_order_syncpoint owner="this.ship.order" /> -->
-	<remove sel="//create_order_syncpoint[@owner=&quot;this.ship.order&quot;]" />
 <!-- add before. purpose: behaviours.
 	<label name="fight" />
 -->
@@ -535,21 +524,39 @@
 	<add pos="before" sel="//label[@name=&quot;targetselection&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' this.sector: ' + @this.sector.knownname + ' this.assignedcontrolled.sector: ' + @this.assignedcontrolled.sector.knownname + ' $primarytarget.sector: ' + @$primarytarget.sector.knownname" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="this.sector == $primarytarget.sector">
-			<resume label="kAAT_label_finish_move_to_sector" />
+			<resume label="kAAT_label_move_to_target" />
 		</do_if>
+
 		<label name="kAAT_label_move_to_sector" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAT_label_move_to_sector'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<run_script name="'move.generic'" result="$movesuccess">
 			<param name="destination" value="$primarytarget.sector" />
 			<param name="stopondetect" value="$primarytarget.sector"/>
-			<param name="kAAITParam_iskAAITOrder" value="true" />
 		</run_script>
 		<debug_text text="@this.assignedcontrolled.idcode + ' this.sector: ' + @this.sector.knownname + ' this.assignedcontrolled.sector: ' + @this.assignedcontrolled.sector.knownname + ' $primarytarget.sector: ' + @$primarytarget.sector.knownname" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="this.sector != $primarytarget.sector">
 			<resume label="kAAT_label_move_to_sector" />
 		</do_if>
-		<label name="kAAT_label_finish_move_to_sector" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAT_label_finish_move_to_sector'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+
+		<label name="kAAT_label_move_to_target" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAT_label_move_to_target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<do_if value="$selected.isclass.station and this.assignedcontrolled.distanceto.{$selectedtarget} gt this.assignedcontrolled.maxradarrange + 5km">
+			<set_value name="$kAAIT_orderLocation_space" exact="$selectedtarget" />
+			<create_position name="$kAAIT_pos" space="$selectedtarget" object="this.assignedcontrolled" />
+			<create_orientation name="$kAAIT_rot" orientation="look_at" refposition="$kAAIT_pos">
+				<position value="position.[0, 0, 0]" />
+			</create_orientation>
+			<create_position name="$kAAIT_orderLocation_pos"
+				x="(this.assignedcontrolled.maxradarrange + 5km) * sin ($kAAIT_rot.yaw) * cos ($kAAIT_rot.pitch)"
+				y="(this.assignedcontrolled.maxradarrange + 5km) * sin ($kAAIT_rot.pitch)"
+				z="(this.assignedcontrolled.maxradarrange + 5km) * cos ($kAAIT_rot.yaw) * cos ($kAAIT_rot.pitch)"
+			/>
+			<create_order object="this.assignedcontrolled" id="'MoveGeneric'" immediate="true">
+				<param name="destination" value="$kAAIT_orderLocation_space" />
+				<param name="position" value="$kAAIT_orderLocation_pos" />
+			</create_order>
+			<wait exact="1ms" />
+		</do_if>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;targetselection&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL targetselection'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
