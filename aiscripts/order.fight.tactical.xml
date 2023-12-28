@@ -539,12 +539,12 @@
 
 		<label name="kAAT_label_move_to_target" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAT_label_move_to_target'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-		<do_if value="$selected.isclass.station and this.assignedcontrolled.distanceto.{$selectedtarget} gt this.assignedcontrolled.maxradarrange + 20km">
-			<set_value name="$kAAIT_orderLocation_space" exact="$selectedtarget" />
-			<create_position name="$kAAIT_pos" space="$selectedtarget" object="this.assignedcontrolled" />
-			<create_orientation name="$kAAIT_rot" orientation="look_at" refposition="$kAAIT_pos">
-				<position value="position.[0, 0, 0]" />
-			</create_orientation>
+		<set_value name="$kAAIT_orderLocation_space" exact="$selectedtarget" />
+		<create_position name="$kAAIT_pos" space="$selectedtarget" object="this.assignedcontrolled" />
+		<create_orientation name="$kAAIT_rot" orientation="look_at" refposition="$kAAIT_pos">
+			<position value="position.[0, 0, 0]" />
+		</create_orientation>
+		<do_if value="$selectedtarget.isclass.station and this.assignedcontrolled.distanceto.{$selectedtarget} gt this.assignedcontrolled.maxradarrange + 10km">
 			<create_position name="$kAAIT_orderLocation_pos"
 				x="(this.assignedcontrolled.maxradarrange + 5km) * sin ($kAAIT_rot.yaw) * cos ($kAAIT_rot.pitch)"
 				y="(this.assignedcontrolled.maxradarrange + 5km) * sin ($kAAIT_rot.pitch)"
@@ -556,6 +556,19 @@
 			</create_order>
 			<wait exact="1ms" />
 		</do_if>
+		<do_elseif value="$selectedtarget.isclass.ship and this.assignedcontrolled.distanceto.{$selectedtarget} gt this.assignedcontrolled.maxradarrange">
+			<create_position name="$kAAIT_orderLocation_pos"
+				x="(this.assignedcontrolled.maxradarrange - 5km) * sin ($kAAIT_rot.yaw) * cos ($kAAIT_rot.pitch)"
+				y="(this.assignedcontrolled.maxradarrange - 5km) * sin ($kAAIT_rot.pitch)"
+				z="(this.assignedcontrolled.maxradarrange - 5km) * cos ($kAAIT_rot.yaw) * cos ($kAAIT_rot.pitch)"
+			/>
+			<create_order object="this.assignedcontrolled" id="'MoveGeneric'" immediate="true">
+				<param name="destination" value="$kAAIT_orderLocation_space" />
+				<param name="position" value="$kAAIT_orderLocation_pos" />
+				<param name="stopondetect" value="$selectedtarget"/>
+			</create_order>
+			<wait exact="1ms" />
+		</do_elseif>
 	</add>
 	<add pos="after" sel="//label[@name=&quot;targetselection&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL targetselection'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />

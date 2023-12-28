@@ -885,6 +885,24 @@
 				888888 88""   88  .o 88"""  88""   88"Yb  o.`Y8b
 				88  88 888888 88ood8 88     888888 88  Yb 8bodP'
 			 -->
+			<actions name="kAAIT_GetNonKAAITOrder">
+				<do_if value="not @$kAAIT_getOrderOf">
+					<set_value name="$kAAIT_getOrderOf" exact="this.assignedcontrolled" />
+				</do_if>
+				<set_value name="$kAAIT_result_order" exact="null" />
+				<do_for_each name="$kAAIT_order" in="$kAAIT_getOrderOf.orders" counter="$i">
+					<do_if value="not @$kAAIT_order.$kAAITParam_iskAAITOrder">
+						<set_value name="$kAAIT_result_order" exact="$kAAIT_order" />
+						<break />
+					</do_if>
+				</do_for_each>
+				<do_if value="not $kAAIT_result_order">
+					<set_value name="$kAAIT_result_order" exact="$kAAIT_getOrderOf.defaultorder" />
+				</do_if>
+				<debug_text text="@$kAAIT_getOrderOf.idcode + ' kAAIT_GetNonkAAITOrder $kAAIT_result_order: ' + $kAAIT_result_order + ' ' + @$kAAIT_result_order.script" chance="if @$kAAIT_getAttackTargetOf.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<remove_value name="$kAAIT_getOrderOf" />
+			</actions>
+
 			<actions name="kAAIT_GetAttackTarget">
 				<set_value name="$kAAIT_result_attackTarget" exact="null" />
 				<do_if value="not @$kAAIT_getAttackTargetOf">
@@ -895,13 +913,9 @@
 					@$kAAIT_getAttackTargetOf.weapons.all.count and
 					@$kAAIT_getAttackTargetOf.weapons.operational.count / ($kAAIT_getAttackTargetOf.weapons.all.count)f gt 0.25"
 					comment="do not get attack target unless: (1) fighter and (2) has operational weapons">
-					<set_value name="$kAAIT_currentOrder" exact="$kAAIT_getAttackTargetOf.order" />
-					<do_if value="@$kAAIT_currentOrder.$kAAITParam_iskAAITOrder">
-						<set_value name="$kAAIT_currentOrder" exact="$kAAIT_getAttackTargetOf.nextorder" />
-					</do_if>
-					<do_if value="not $kAAIT_currentOrder">
-						<set_value name="$kAAIT_currentOrder" exact="$kAAIT_getAttackTargetOf.defaultorder" />
-					</do_if>
+					<set_value name="$kAAIT_getOrderOf" exact="$kAAIT_getAttackTargetOf" />
+					<include_interrupt_actions ref="kAAIT_GetNonKAAITOrder" />
+					<set_value name="$kAAIT_currentOrder" exact="$kAAIT_result_order" />
 					<do_if value="(not @$kAAIT_result_attackTarget.isoperational) and @global.$kAAITByShipId.{'$' + @$kAAIT_getAttackTargetOf.idcode}.$attackData.$defensibleTarget.isoperational">
 						<set_value name="$kAAIT_result_attackTarget" exact="@global.$kAAITByShipId.{'$' + @$kAAIT_getAttackTargetOf.idcode}.$attackData.$defensibleTarget" />
 						<set_value name="$kAAIT_isHighRisk" exact="@global.$kAAITByShipId.{'$' + @$kAAIT_getAttackTargetOf.idcode}.$attackData.$isTargetHighRisk" />
@@ -1006,7 +1020,7 @@
 						<set_value name="$kAAIT_result_isAvoid" exact="false" />
 						<set_value name="$kAAIT_result_avoidEnemy" exact="null" />
 					</do_if>
-					<do_elseif value="this.assignedcontrolled.order.script == 'order.fight.attack.object' and ($kAAIT_result_isShieldsLow_vsStation or $kAAIT_result_isShieldsLow_vsShip)">
+					<do_elseif value="this.assignedcontrolled.order.script == 'order.fight.attack.object' and (@$kAAIT_result_isShieldsLow_vsStation or @$kAAIT_result_isShieldsLow_vsShip)">
 						<set_value name="$kAAIT_result_isWithdraw" exact="true" />
 						<set_value name="$kAAIT_result_withdrawFromEnemy" exact="$kAAIT_result_avoidEnemy" />
 						<set_value name="$kAAIT_result_isAvoid" exact="false" />
@@ -1461,13 +1475,8 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetDestination order: ' + @this.assignedcontrolled.order.script" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
-				<set_value name="$kAAIT_currentOrder" exact="this.assignedcontrolled.order" />
-				<do_if value="@$kAAIT_currentOrder.$kAAITParam_iskAAITOrder">
-					<set_value name="$kAAIT_currentOrder" exact="this.assignedcontrolled.nextorder" />
-				</do_if>
-				<do_if value="not $kAAIT_currentOrder">
-					<set_value name="$kAAIT_currentOrder" exact="this.assignedcontrolled.defaultorder" />
-				</do_if>
+				<include_interrupt_actions ref="kAAIT_GetNonKAAITOrder" />
+				<set_value name="$kAAIT_currentOrder" exact="$kAAIT_result_order" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetDestination $kAAIT_currentOrder: ' + @$kAAIT_currentOrder.script" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
  				<set_value name="$kAAIT_result_destinationSector" exact="@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$sector_dest" />
  				<set_value name="$kAAIT_result_destination" exact="@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$nextPathComponent" />
