@@ -22,7 +22,7 @@
 						<reset_cue cue="this" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="23">
+				<cue name="kAAIT2_Config" namespace="this" version="24">
 					<actions>
 						<set_value name="global.$kAAIT_Data" exact="this" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
@@ -62,6 +62,9 @@
 						in the base game, the replacement commander doesn't acquire the previous commander's default order. this leaves all subordinates to be dumb - sometimes only responding to threads after they've attacked. -->
 						<set_value name="global.$kAAIT_Data.$defaultOrdersByShipId" exact="table[]" />
 						<set_value name="global.$kAAIT_Data.$lxl_isStrictMaintainDistance" exact="table[]" />
+						<!-- optimisation settings -->
+						<set_value name="global.$kAAIT_Data.$optimisation_hit_event" exact="1" />
+						<set_value name="global.$kAAIT_Data.$optimisation_radar_event" exact="1" />
 					</actions>
 					<patch sinceversion="5">
 						<debug_text text="'sinceversion 5, state: ' + this.state" />
@@ -180,6 +183,11 @@
 					<patch sinceversion="22">
 						<debug_text text="'patch sinceversion 22, state: ' + this.state" />
 						<set_value name="global.$kAAIT_Data.$defaultOrdersByShipId" exact="table[]" />
+					</patch>
+					<patch sinceversion="24">
+						<debug_text text="'patch sinceversion 24, state: ' + this.state" />
+						<set_value name="global.$kAAIT_Data.$optimisation_hit_event" exact="1" />
+						<set_value name="global.$kAAIT_Data.$optimisation_radar_event" exact="1" />
 					</patch>
 				</cue>
 			</cues>
@@ -1159,6 +1167,43 @@
 						$bgColor = 'Helper.color.red',
 						$onClick = kAAIT_ExtOpts_OnCheckboxChange
 					]"/>
+
+				<do_if value="global.$kAAIT_Data.$debugChance">
+					<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+					<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='']"/>
+					<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+					<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Optimisation']" />
+					<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+					<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Higher settings = less frequent detections = better performance = slower reactions to potential high-risk enemies', $wordwrap = true]" />
+					<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+					<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Hit event detection frequency', $halign='right', $color='Helper.color.blue']" />
+					<signal_cue_instantly
+						cue = "md.Simple_Menu_API.Make_Slider"
+						param = "table[
+							$id = 'optimisation_hit_event',
+							$start = global.$kAAIT_Data.$optimisation_hit_event,
+							$col = 2,
+							$text = table[$text=''],
+							$min = 0.25, $max = 3, $step = 0.25, $suffix='s',
+							$default = 0.25,
+							$mouseOverText = {1001,2661} + ': 1',
+							$onSliderCellChanged = kAAIT_ExtOpts_OnSliderChange
+						]" />
+					<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row" />
+					<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text='Radar event detection frequency', $halign='right', $color='Helper.color.blue']" />
+					<signal_cue_instantly
+						cue = "md.Simple_Menu_API.Make_Slider"
+						param = "table[
+							$id = 'optimisation_radar_event',
+							$start = global.$kAAIT_Data.$optimisation_radar_event,
+							$col = 2,
+							$text = table[$text=''],
+							$min = 0.25, $max = 3, $step = 0.25, $suffix='s',
+							$default = 0.25,
+							$mouseOverText = {1001,2661} + ': 1',
+							$onSliderCellChanged = kAAIT_ExtOpts_OnSliderChange
+						]" />
+				</do_if>
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
