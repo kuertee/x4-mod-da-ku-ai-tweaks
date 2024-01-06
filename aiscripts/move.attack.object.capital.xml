@@ -459,14 +459,17 @@
 	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else/set_value[@name='$boost']/@chance">if this.isplayerowned then ([global.$DATPlayerAllowBoost,$allowboost].min * 100) else ($allowboost * 100)</replace>
 	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/set_value[@name='$boost']/@chance">if this.isplayerowned then ([global.$DATPlayerAllowBoost,$allowboost].min * 100) else ($allowboost * 100)</replace>
 	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $boost? and $allowboost and ($combinedskill ge 80)']/@value">((not $boost?) or (global.$DATTravelTweaks)) and ($allowboost) and ($combinedskill ge 80)</replace>
-	<replace sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='((not $boost?) or (global.$DATTravelTweaks)) and ($allowboost) and ($combinedskill ge 80)']/do_if[@value='$timetopos gt 120s']/@value">$timetopos ge (if global.$DATTravelTweaks then 60s else 120s)</replace>
 	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='((not $boost?) or (global.$DATTravelTweaks)) and ($allowboost) and ($combinedskill ge 80)']">
-		<do_if value="global.$DATTravelTweaks and @$travel and (this.assignedcontrolled.bboxdistanceto.{$target} le [@$movethreshold_max,@$maxoperationalrange].max)">
-			<remove_value name="$travel"/>
+		<do_if value="global.$DATTravelTweaks">
+			<do_if value="$timetopos ge 60s">
+				<set_value name="$travel"/>
+			</do_if>
+			<do_if value="@$travel and (this.assignedcontrolled.bboxdistanceto.{$target} le [@$movethreshold_max,@$maxoperationalrange].max)">
+				<remove_value name="$travel"/>
+			</do_if>
 		</do_if>
 	</add>
 	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='$boost?']/do_if[@value='(this.assignedcontrolled.shieldpercentage gt 50) and this.assignedcontrolled.boost.maxduration']" type="@chance">if (this.isplayerowned and (not global.$DATPlayerAllowBoost)) then 0 else 100</add>
-	<!-- DAT Reposition for LOS -->
 	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='this.assignedcontrolled.attention ge attention.visible']/remove_value[@name='$isinview']" pos="before">
 		<do_if value="global.$DATAttackStationLOSTweak">
 			<!-- Since below is a resume label, best place to clean up is at beginning for reduced code amount -->
@@ -535,11 +538,12 @@
 					<!-- might need to account for rotation time to target -->
 					<!-- adding 50% to time to account for rotation -->
 					<set_value name="$DATupdatetime" exact="(this.assignedcontrolled.distanceto.[$target.zone, $DATRePos] / [this.assignedcontrolled.maxspeed, 1m].max)s * 1.5"/>
+					<!-- Debug -->
 					<do_if value="@global.$kAAIT_Data.$debugChance" comment="debug DAT Reposition">
 						<do_if value="@this.assignedcontrolled.isoperational and this.assignedcontrolled.order.script == 'order.fight.attack.object'">
-							<set_value name="$kAAIT_original_name_DAT" exact="this.assignedcontrolled.name" />
-							<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name DAT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-							<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - DAT reposition'" />
+							<set_value name="$kAAIT_original_name_DAT" exact="this.assignedcontrolled.knownname"/>
+							<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name DAT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+							<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - DAT reposition'"/>
 						</do_if>
 						<!-- Create beacon for testing -->
 						<create_object name="$DATBeacon" zone="$target.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
@@ -563,12 +567,12 @@
 						</interrupt>
 					</move_to>
 					<do_if value="$kAAIT_original_name_DAT?" comment="undebug DAT Reposition">
-						<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name reset to pre DAT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-						<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name_DAT" />
-						<remove_value name="$kAAIT_original_name_DAT" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name reset to pre DAT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+						<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name_DAT"/>
+						<remove_value name="$kAAIT_original_name_DAT"/>
 					</do_if>
 					<do_if value="@$DATBeacon.exists" comment="undebug DAT Reposition">
-						<destroy_object object="$DATBeacon" />
+						<destroy_object object="$DATBeacon"/>
 					</do_if>
 					<do_if value="@$DATRepositionForLOS and @$DATupdatetime">
 						<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- Move Complete'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/>
