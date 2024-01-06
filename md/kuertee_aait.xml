@@ -1705,6 +1705,44 @@
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
+		<cue name="DebugIsPrimaryTargetInFront" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<set_value name="$primaryTarget" exact="@$interact_target.order.$primarytarget" />
+				<debug_text text="'$interact_target: ' + $interact_target.knownname + ' ' + $interact_target.idcode" />
+				<debug_text text="'$interact_target.rotation: ' + $interact_target.rotation" />
+				<debug_text text="'$primaryTarget: ' + $primaryTarget.knownname + ' ' + $primaryTarget.idcode" />
+				<do_if value="$primaryTarget">
+					<create_orientation name="$rot" orientation="look_at" refobject="$primaryTarget">
+						<position object="$interact_target" />
+					</create_orientation>
+					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
+					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
+					<debug_text text="'create_orientation from object to refobject $yaw: ' + $yaw + ' $pitch: ' + $pitch" />
+
+					<create_position name="$pos_target" space="$interact_target" object="$primaryTarget" />
+					<create_orientation name="$rot" orientation="look_at" refposition="$pos_target">
+						<position value="position.[0,0,0]" />
+					</create_orientation>
+					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
+					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
+					<debug_text text="'create_orientation from [0,0,0] to $pos_target $yaw: ' + $yaw + ' $pitch: ' + $pitch" />
+
+					<create_position name="$pos_self" space="$interact_target.sector" object="$interact_target" />
+					<create_position name="$pos_target" space="$interact_target.sector" object="$primaryTarget" />
+					<create_orientation name="$rot" orientation="look_at" refposition="$pos_target">
+						<position value="$pos_self" />
+					</create_orientation>
+					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
+					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
+					<debug_text text="'create_orientation from $pos_self to $pos_target $yaw: ' + $yaw + ' $pitch: ' + $pitch" />
+				</do_if>
+				<reset_cue cue="this" />
+			</actions>
+		</cue>
 		<cue name="kAAIT_Debug_InteractMenu" namespace="this">
 			<conditions>
 				<event_cue_signalled cue="md.Interact_Menu_API.Get_Actions" />
@@ -1801,6 +1839,13 @@
 							$text = 'DebugForceWithdraw',
 							$icon = null,
 							$callback = DebugForceWithdraw
+						]" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'DebugIsPrimaryTargetInFront',
+							$section = $section,
+							$text = 'DebugIsPrimaryTargetInFront',
+							$icon = null,
+							$callback = DebugIsPrimaryTargetInFront
 						]" />
 					</do_if>
 				</do_if>
