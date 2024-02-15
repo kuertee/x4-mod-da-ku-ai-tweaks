@@ -90,21 +90,34 @@
 	</add>
 	<add pos="before" sel="//create_position[@name=&quot;$position&quot;][@space=&quot;$targetzone&quot;][@value=&quot;$position&quot;][@object=&quot;$positionspace&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' $destination: ' + $destination + ' $position: ' + $position" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+		<set_value name="$kAAAIT_savedDestination" exact="$destination" />
 		<create_position name="$kAAIT_destinationPosAtTargetZone" space="$targetzone" object="$destination" value="$position" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' $targetzone: ' + $targetzone + ' $kAAIT_destinationPosAtTargetZone: ' + $kAAIT_destinationPosAtTargetZone" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
 	</add>
 	<add pos="after" sel="//create_position[@name=&quot;$position&quot;][@space=&quot;$targetzone&quot;][@value=&quot;$position&quot;][@object=&quot;$positionspace&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' $targetzone: ' + $targetzone + ' $position (newly created at $targetzone): ' + $position" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
 		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_destinationPosAtTargetZone.distanceto.{$position}: ' + $kAAIT_destinationPosAtTargetZone.distanceto.{$position}" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
-		<set_value name="$destination" exact="$targetzone" />
+		<set_value name="$destination" exact="$targetzone" comment="hack: because position's space has changed to $targetzone, update $destination to $targetzone so that the order location points to the correct position" />
 	</add>
 	<add pos="before" sel="(//move_to)[4]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' $destination: ' + $destination + ' $position: ' + $position" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
 		<debug_text text="@this.assignedcontrolled.idcode + ' move_to (small move to final with rotation) $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder + ' $kAAITParam_isAvoidHighRisk:' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
 	</add>
+	<add pos="after" sel="(//move_to)[4]">
+		<do_if value="$kAAAIT_savedDestination?">
+			<set_value name="$destination" exact="$kAAAIT_savedDestination" comment="hack: restore previous $destination in case $destination is used elsewhere" />
+			<remove_value name="$kAAAIT_savedDestination" />
+		</do_if>
+	</add>
 	<add pos="before" sel="(//move_to)[5]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' $destination: ' + $destination + ' $position: ' + $position" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
 		<debug_text text="@this.assignedcontrolled.idcode + ' move_to (small move to final) $kAAITParam_iskAAITOrder: ' + @$kAAITParam_iskAAITOrder + ' $kAAITParam_isAvoidHighRisk:' + @$kAAITParam_isAvoidHighRisk" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
+	</add>
+	<add pos="after" sel="(//move_to)[5]">
+		<do_if value="$kAAAIT_savedDestination?">
+			<set_value name="$destination" exact="$kAAAIT_savedDestination" comment="hack: restore previous $destination in case $destination is used elsewhere" />
+			<remove_value name="$kAAAIT_savedDestination" />
+		</do_if>
 	</add>
 <!--
 	add after. purpose: debug.
