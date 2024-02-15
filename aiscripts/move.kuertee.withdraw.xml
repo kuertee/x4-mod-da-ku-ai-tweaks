@@ -12,7 +12,8 @@
 		<requires>
 			<match shiptype="shiptype.lasertower" negate="true"/>
 		</requires>
-		<location object="@$orderLocation_space" position="@$orderLocation_pos" condition="@$orderLocation_space and @$orderLocation_pos" />
+		<location object="$map_space" position="$map_pos" condition="@$map_space and @$map_pos" comment="$map_space/pos MAY BE DIFFERENT FROM $moveTo_space/pos" />
+		<location object="$target" condition="$target" />
 	</order>
 	<interrupts>
 		<handler ref="DisengageHandler"/>
@@ -100,9 +101,9 @@
 			<do_if value="$dist_shipToTarget gt this.assignedcontrolled.maxradarrange">
 				<resume label="finish" />
 			</do_if>
-			<set_value name="$orderLocation_space" exact="this.sector" />
-			<create_position name="$posShip" space="$orderLocation_space" object="this.assignedcontrolled" />
-			<create_position name="$posTarget" space="$orderLocation_space" object="$target" />
+			<set_value name="$moveTo_space" exact="this.sector" />
+			<create_position name="$posShip" space="$moveTo_space" object="this.assignedcontrolled" />
+			<create_position name="$posTarget" space="$moveTo_space" object="$target" />
 			<set_value name="$kAAIT_target_avoid" exact="$target" />
 			<include_interrupt_actions ref="GetAvoidPosVectorAndObject" />
 			<set_value name="$pos_avoidFrom" exact="$kAAIT_result_avoidPos" />
@@ -131,7 +132,7 @@
 						$ally.bboxdistanceto.{$target} gt 5km and
 						(not $ally.order.$kAAITParam_iskAAITOrder)
 					">
-						<create_position name="$posAlly" space="$orderLocation_space" object="$ally" />
+						<create_position name="$posAlly" space="$moveTo_space" object="$ally" />
 						<create_orientation name="$rot_shipToAlly" orientation="look_at" refposition="$posAlly">
 							<position value="$pos_avoidFrom" />
 						</create_orientation>
@@ -191,14 +192,12 @@
 			<!-- end: get distance -->
 
 			<set_value name="$dist_withdraw" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" />
-			<create_position name="$orderLocation_pos"
+			<create_position name="$moveTo_pos"
 				x="$pos_avoidFrom.x + ($dist_withdraw + $defensibleTarget.size) * sin ($yaw_avoid) * cos ($pitch_avoid)"
 				y="$pos_avoidFrom.y + ($dist_withdraw + $defensibleTarget.size) * sin ($pitch_avoid)"
 				z="$pos_avoidFrom.z + ($dist_withdraw + $defensibleTarget.size) * cos ($yaw_avoid) * cos ($pitch_avoid)"
 			/>
-			<get_safe_pos result="$orderLocation_pos" sector="$orderLocation_space" value="$orderLocation_pos" radius="this.ship.size * 2" />
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" exact="$orderLocation_space" />
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" exact="$orderLocation_pos" />
+			<get_safe_pos result="$moveTo_pos" sector="$moveTo_space" value="$moveTo_pos" radius="this.ship.size * 2" />
 			<set_value name="$distance_attackFrom_saved" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" />
 
 			<do_if value="
@@ -220,14 +219,19 @@
 				<wait min="1s" max="3s" />
 			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' move_to start'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<set_value name="$map_space" exact="$moveTo_space" />
+			<set_value name="$map_pos" exact="$moveTo_pos" />
+			<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" exact="$moveTo_space" />
+			<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" exact="$moveTo_pos" />
 			<move_to object="this.assignedcontrolled"
-				destination="$orderLocation_space"
+				destination="$moveTo_space"
 				uselocalhighways="false"
 				useknownpath="this.isplayerowned"
 				forcesteering="not @this.assignedcontrolled.iscapitalship"
 				commandaction="false"
+				travel="true"
 				abortpath="false">
-				<position value="$orderLocation_pos"/>
+				<position value="$moveTo_pos"/>
 				<interrupt_after_time time="1s" />
 			</move_to>
 			<debug_text text="@this.assignedcontrolled.idcode + ' move_to end'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -259,7 +263,7 @@
 				</interrupt>
 			</wait>
 			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$orderLocation_space, $orderLocation_pos]" />
+			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$moveTo_space, $moveTo_pos]" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<do_if value="@$kAAIT_attacker_interruptedMove">
 				<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
@@ -304,10 +308,11 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
-			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" exact="false" />
-				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
-				<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
+			<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData?">
+				<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" />
+				<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$target_avoid" />
+				<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+				<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 			</do_if>
 			<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$isWithdrawing: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<include_interrupt_actions ref="kAAIT_Deinit" />
@@ -325,10 +330,11 @@
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
 		</do_if>
-		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" exact="false" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
-			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
+		<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData?">
+			<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" />
+			<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$target_avoid" />
+			<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
+			<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>
 		<include_interrupt_actions ref="kAAIT_Deinit" />
 	</on_abort>
