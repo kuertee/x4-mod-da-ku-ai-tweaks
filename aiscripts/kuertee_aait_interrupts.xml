@@ -54,6 +54,11 @@
 					<do_if value="@$kAAIT_order.$primarytarget">
 						<set_value name="$kAAIT_test_target_isHighRisk" exact="@$kAAIT_order.$primarytarget" />
 						<include_interrupt_actions ref="kAAIT_GetIsHighRisk" />
+						<do_if value="
+							@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget != $kAAIT_test_target_isHighRisk and
+							@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTargetEntity.$kAAIT_attackers.indexof.{this.assignedcontrolled}">
+							<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
+						</do_if>
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" exact="$kAAIT_test_target_isHighRisk" />
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTargetEntity" exact="@$kAAIT_target_highRiskEntity" />
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetPotentialHighRisk" exact="@$kAAIT_result_isPotentialHighRisk" />
@@ -168,6 +173,7 @@
 						</do_if>
 						<remove_from_group group="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTargetEntity.$kAAIT_attackers" object="this.assignedcontrolled" />
 						<remove_from_group group="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTargetEntity.$kAAIT_attackers_lxl" object="this.assignedcontrolled" />
+						<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget" />
 					</do_if>
 					<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTargetEntity.$kAAIT_attackers.count">
 						<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTargetEntity.$kAAIT_attackers" />
@@ -2318,11 +2324,9 @@
 						<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name" />
 					</do_if>
 				</do_if>
-				<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-					<!-- deinit will be called at order.fight.attack.object script -->
-					<!-- <include_interrupt_actions ref="kAAIT_Deinit" /> -->
+				<!-- <do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 					<include_interrupt_actions ref="kAAIT_RemoveAttackerFromTarget" />
-				</do_if>
+				</do_if> -->
 			</actions>
 
 			<actions name="kAAIT_ActOnAttacker" comment="only works in the move.kuertee.* scripts">
