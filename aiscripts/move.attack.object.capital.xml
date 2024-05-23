@@ -377,20 +377,20 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.bboxdistanceto.[$target.sector, $pos]: ' + this.assignedcontrolled.bboxdistanceto.[$target.sector, $pos]" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 <!-- add before. purpose: if primarypurpose != fight, stay away from target
-	<do_if value="this.ship.sector == $target.sector">
+	<do_if value="this.assignedcontrolled.sector == $target.sector">
 		...
 		<do_if value="$strafe?">
 -->
-	<add pos="before" sel="//do_if[@value=&quot;this.ship.sector == $target.sector&quot;]//do_if[@value=&quot;$strafe?&quot;]">
+	<add pos="before" sel="//do_if[@value=&quot;this.assignedcontrolled.sector == $target.sector&quot;]//do_if[@value=&quot;$strafe?&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' $case: ' + $case" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.bboxdistanceto.[$target, $pos]: ' + this.assignedcontrolled.bboxdistanceto.[$target, $pos]" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 <!-- add after. purpose: step_forward after attack run.
-	<do_if value="this.ship.sector == $target.sector">
+	<do_if value="this.assignedcontrolled.sector == $target.sector">
 		...
 		<do_if value="@$boost">
 -->
-	<add pos="after" sel="//do_if[@value=&quot;this.ship.sector == $target.sector&quot;]/do_if[@value=&quot;@$boost&quot;]">
+	<add pos="after" sel="//do_if[@value=&quot;this.assignedcontrolled.sector == $target.sector&quot;]/do_if[@value=&quot;@$boost&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' ATTACK CYCLE COMPLETE'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="@$kAAITParam_isStepForwardWithdraw and @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk">
 			<debug_text text="@this.assignedcontrolled.idcode + ' $target: ' + $target.knownname + ' ' + @$target.idcode + ' isoperational: ' + $target.isoperational" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -470,11 +470,12 @@
 		</do_if>
 	</add>
 	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='$boost?']/do_if[@value='(this.assignedcontrolled.shieldpercentage gt 50) and this.assignedcontrolled.boost.maxduration']" type="@chance">if (this.isplayerowned and (not global.$DATPlayerAllowBoost)) then 0 else 100</add>
-	<add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='this.assignedcontrolled.attention ge attention.visible']/remove_value[@name='$isinview']" pos="before">
-		<do_if value="global.$DATAttackStationLOSTweak">
+	<!-- 7.x incompatibility: -->
+	<!-- <add sel="/aiscript/attention/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_elseif[@value='$distance le $movethreshold_max and $distance ge $movethreshold_min']/do_if[@value='this.assignedcontrolled.attention ge attention.visible']/remove_value[@name='$isinview']" pos="before">
+		<do_if value="global.$DATAttackStationLOSTweak"> -->
 			<!-- Since below is a resume label, best place to clean up is at beginning for reduced code amount -->
 			<!-- Changed debug chance to "if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance" -->
-			<remove_value name="$DATThisPosSector"/>
+			<!-- <remove_value name="$DATThisPosSector"/>
 			<remove_value name="$DATEnemyPosSector"/>
 			<remove_value name="$DATThisPosZone"/>
 			<remove_value name="$DATEnemyPosZone"/>
@@ -487,13 +488,13 @@
 			<remove_value name="$DATRePosShipRot"/>
 			<remove_value name="$DATupdatetime"/>
 			<remove_value name="$DAlos"/>
-			<remove_value name="$DAisinview"/>
+			<remove_value name="$DAisinview"/> -->
 			<!-- Onto the actual scripting -->
-			<set_value name="$DATRepositionForLOS" exact="false"/>
+			<!-- <set_value name="$DATRepositionForLOS" exact="false"/>
 			<do_if value="(not @$los) and @$isinview and @$isstation and (this.assignedcontrolled.sector == $target.sector)">
-				<set_value name="$DATRepositionForLOS" exact="true"/>
+				<set_value name="$DATRepositionForLOS" exact="true"/> -->
 				<!-- Ships are repositioning when they shouldn't, LOS is pretty unreliable -->
-				<check_line_of_sight name="$DAlos" object="this.assignedcontrolled" target="$target"/>
+				<!-- <check_line_of_sight name="$DAlos" object="this.assignedcontrolled" target="$target"/>
 				<check_object result="$DAisinview" object="$target">
 					<match_is_in_view_of vertical="9deg" horizontal="9deg" object="this.assignedcontrolled"/>
 				</check_object>
@@ -505,18 +506,18 @@
 				<do_else>
 					<set_value name="$DATRepositionCounter" exact="1" operation="add"/>
 				</do_else>
-				<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- (not $los) and $isinview'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/>
+				<debug_text text="'MOD: DAT - move.attack.object.capital - %s (%s) - (not $los) and $isinview'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/> -->
 				<!-- Sector Positions -->
-				<create_position name="$DATThisPosSector" space="$target.sector" object="this.ship"/>
-				<create_position name="$DATEnemyPosSector" space="$target.sector" object="$target"/>
+				<!-- <create_position name="$DATThisPosSector" space="$target.sector" object="this.ship"/>
+				<create_position name="$DATEnemyPosSector" space="$target.sector" object="$target"/> -->
 				<!-- Zone Positions -->
-				<create_position name="$DATThisPosZone" space="this.zone" x="$DATThisPosSector.x" y="$DATThisPosSector.y" z="$DATThisPosSector.z" object="this.assignedcontrolled.sector"/>
-				<create_position name="$DATEnemyPosZone" space="$target.zone" x="$DATEnemyPosSector.x" y="$DATEnemyPosSector.y" z="$DATEnemyPosSector.z" object="$target.sector"/>
+				<!-- <create_position name="$DATThisPosZone" space="this.zone" x="$DATThisPosSector.x" y="$DATThisPosSector.y" z="$DATThisPosSector.z" object="this.assignedcontrolled.sector"/>
+				<create_position name="$DATEnemyPosZone" space="$target.zone" x="$DATEnemyPosSector.x" y="$DATEnemyPosSector.y" z="$DATEnemyPosSector.z" object="$target.sector"/> -->
 				<!-- Transform 15 Deg -->
-				<create_orientation name="$DATRot" refposition="$DATThisPosZone" orientation="look_at">
+				<!-- <create_orientation name="$DATRot" refposition="$DATThisPosZone" orientation="look_at">
 					<position value="$DATEnemyPosZone"/>
 				</create_orientation>
-				<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- original yaw: %s (%s) -- pitch: %s (%s) -- roll: %s (%s) -- distance: %s'.[this.ship.knownname,this.ship.idcode,$DATRot.yaw,$DATRot.yaw * 180 / pi,$DATRot.pitch,$DATRot.pitch * 180 / pi,$DATRot.roll,$DATRot.roll * 180 / pi,$target.distanceto.{this.assignedcontrolled}]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/>
+				<debug_text text="'MOD: DAT - move.attack.object.capital - %s (%s) - original yaw: %s (%s) - pitch: %s (%s) - roll: %s (%s) - distance: %s'.[this.ship.knownname,this.ship.idcode,$DATRot.yaw,$DATRot.yaw * 180 / pi,$DATRot.pitch,$DATRot.pitch * 180 / pi,$DATRot.roll,$DATRot.roll * 180 / pi,$target.distanceto.{this.assignedcontrolled}]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/>
 				<set_value name="$DATRotAdjusted" exact="rotation.[$DATRot.yaw + 15deg,$DATRot.pitch,$DATRot.roll]"/>
 				<set_value name="$DATmaxeffectivecombatrange" exact="this.assignedcontrolled.maxcombatrange.all * 0.8"/>
 				<do_if value="this.assignedcontrolled.dps.lasers.all">
@@ -528,30 +529,30 @@
 				<create_orientation name="$DATRePosRot" refposition="$DATRePos" orientation="look_at">
 					<position value="$DATEnemyPosZone"/>
 				</create_orientation>
-				<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- adjusted yaw: %s (%s) -- pitch: %s (%s) -- roll: %s (%s) -- distance: %s'.[this.ship.knownname,this.ship.idcode,$DATRePosRot.yaw,$DATRePosRot.yaw * 180 / pi,$DATRePosRot.pitch,$DATRePosRot.pitch * 180 / pi,$DATRePosRot.roll,$DATRePosRot.roll * 180 / pi,$target.distanceto.[$target.zone,$DATRePos]]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/>
+				<debug_text text="'MOD: DAT - move.attack.object.capital - %s (%s) - adjusted yaw: %s (%s) - pitch: %s (%s) - roll: %s (%s) - distance: %s'.[this.ship.knownname,this.ship.idcode,$DATRePosRot.yaw,$DATRePosRot.yaw * 180 / pi,$DATRePosRot.pitch,$DATRePosRot.pitch * 180 / pi,$DATRePosRot.roll,$DATRePosRot.roll * 180 / pi,$target.distanceto.[$target.zone,$DATRePos]]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/> -->
 				<!-- Handle obstructions or obstacles? -->
 				<!-- Move -->
-				<do_if value="$DATRePos? and (@$DATRePos != null) and this.assignedcontrolled.maxspeed and ((this.assignedcontrolled.zone == $target.zone) or (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)) and @$DATRepositionForLOS and (@$DATRepositionCounter ge 3)">
+				<!-- <do_if value="$DATRePos? and (@$DATRePos != null) and this.assignedcontrolled.maxspeed and ((this.assignedcontrolled.zone == $target.zone) or (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)) and @$DATRepositionForLOS and (@$DATRepositionCounter ge 3)"> -->
 					<!-- reset counter -->
-					<set_value name="$DATRepositionCounter" exact="0"/>
+					<!-- <set_value name="$DATRepositionCounter" exact="0"/> -->
 					<!-- Custom update time -->
 					<!-- might need to account for rotation time to target -->
 					<!-- adding 50% to time to account for rotation -->
-					<set_value name="$DATupdatetime" exact="(this.assignedcontrolled.distanceto.[$target.zone, $DATRePos] / [this.assignedcontrolled.maxspeed, 1m].max)s * 1.5"/>
+					<!-- <set_value name="$DATupdatetime" exact="(this.assignedcontrolled.distanceto.[$target.zone, $DATRePos] / [this.assignedcontrolled.maxspeed, 1m].max)s * 1.5"/> -->
 					<!-- Debug -->
-					<do_if value="@global.$kAAIT_Data.$debugChance" comment="debug DAT Reposition">
+					<!-- <do_if value="@global.$kAAIT_Data.$debugChance" comment="debug DAT Reposition">
 						<do_if value="@this.assignedcontrolled.isoperational and this.assignedcontrolled.order.script == 'order.fight.attack.object'">
 							<set_value name="$kAAIT_original_name_DAT" exact="this.assignedcontrolled.knownname"/>
 							<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name DAT'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0"/>
 							<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - DAT reposition'"/>
-						</do_if>
+						</do_if> -->
 						<!-- Create beacon for testing -->
-						<create_object name="$DATBeacon" zone="$target.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
+						<!-- <create_object name="$DATBeacon" zone="$target.zone" macro="macro.env_deco_nav_beacon_t1_macro" owner="faction.player">
 							<position value="$DATRePos"/>
 						</create_object>
 						<set_object_name object="$DATBeacon" name="'000 - %s (%s) Rot Beacon vs %s'.[this.assignedcontrolled.knownname,this.assignedcontrolled.idcode,$target.knownname]"/>
-					</do_if>
-					<move_to destination="$target.zone" abortpath="false" object="this.assignedcontrolled" finishonapproach="false" forceposition="false" forcerotation="false" uselocalhighways="false" boost="false" travel="false" chance="(@$DATRepositionForLOS and @$DATupdatetime) * 100">
+					</do_if> -->
+					<!-- <move_to destination="$target.zone" abortpath="false" object="this.assignedcontrolled" finishonapproach="false" forceposition="false" forcerotation="false" uselocalhighways="false" boost="false" travel="false" chance="(@$DATRepositionForLOS and @$DATupdatetime) * 100">
 						<position value="$DATRePos"/>
 						<interrupt_after_time time="if $DATupdatetime? then $DATupdatetime else 1s"/>
 						<interrupt>
@@ -575,28 +576,28 @@
 						<destroy_object object="$DATBeacon"/>
 					</do_if>
 					<do_if value="@$DATRepositionForLOS and @$DATupdatetime">
-						<debug_text text="'MOD: DAT -- move.attack.object.capital -- %s (%s) -- Move Complete'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/>
+						<debug_text text="'MOD: DAT - move.attack.object.capital - %s (%s) - Move Complete'.[this.ship.knownname,this.ship.idcode]" context="false" filter="scripts" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else $debugchance"/>
 					</do_if>
 					<resume label="fight" chance="@$DATRepositionForLOS * 100"/>
 				</do_if>
 				<do_else>
 					<do_if value="not this.assignedcontrolled.maxspeed">
-						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Error Moving: No Engines -- %s (%s) -- this.assignedcontrolled.maxspeed: %s '.[this.ship.knownname,this.ship.idcode,this.assignedcontrolled.maxspeed]" context="false" filter="error" chance="100"/>
+						<debug_text text="'MOD: DAT - move.attack.object.capital - Error Moving: No Engines - %s (%s) - this.assignedcontrolled.maxspeed: %s '.[this.ship.knownname,this.ship.idcode,this.assignedcontrolled.maxspeed]" context="false" filter="error" chance="100"/>
 						<set_value name="$DATRepositionCounter" exact="0"/>
 					</do_if>
 					<do_elseif value="not ((this.assignedcontrolled.zone == $target.zone) or (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange))">
-						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Error Moving: Too Far -- %s (%s) -- (this.assignedcontrolled.zone == $target.zone): %s -- (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange): %s'.[this.ship.knownname,this.ship.idcode,(this.assignedcontrolled.zone == $target.zone),(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)]" context="false" filter="error" chance="100"/>
+						<debug_text text="'MOD: DAT - move.attack.object.capital - Error Moving: Too Far - %s (%s) - (this.assignedcontrolled.zone == $target.zone): %s - (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange): %s'.[this.ship.knownname,this.ship.idcode,(this.assignedcontrolled.zone == $target.zone),(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange)]" context="false" filter="error" chance="100"/>
 						<set_value name="$DATRepositionCounter" exact="0"/>
 					</do_elseif>
 					<do_elseif value="((@$DATRepositionForLOS) and (@$DATRepositionCounter lt 3)) or ((not @$DATRepositionForLOS) and (@$DAlos and @$DAisinview))">
-						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Not Moving (Expected) -- %s (%s) -- @$DATRepositionForLOS: %s -- @$DATRepositionCounter: %s -- @$DAlos: %s -- @$DAisinview: %s'.[this.ship.knownname,this.ship.idcode,@$DATRepositionForLOS,@$DATRepositionCounter,@$DAlos,@$DAisinview]" context="false" filter="scripts" chance="100"/>
+						<debug_text text="'MOD: DAT - move.attack.object.capital - Not Moving (Expected) - %s (%s) - @$DATRepositionForLOS: %s - @$DATRepositionCounter: %s - @$DAlos: %s - @$DAisinview: %s'.[this.ship.knownname,this.ship.idcode,@$DATRepositionForLOS,@$DATRepositionCounter,@$DAlos,@$DAisinview]" context="false" filter="scripts" chance="100"/>
 					</do_elseif>
 					<do_else>
-						<debug_text text="'MOD: DAT -- move.attack.object.capital -- Error Moving: Unhandled -- %s (%s) -- $DATRePos?: %s -- (@$DATRePos != null): %s -- this.assignedcontrolled.maxspeed: %s -- (this.assignedcontrolled.zone == $target.zone): %s -- (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange): %s -- @$DATRepositionForLOS: %s -- (not @$DAlos): %s -- @$DAisinview: %s -- @$DATRepositionCounter: %s'.[this.ship.knownname,this.ship.idcode,$DATRePos?,(@$DATRePos != null),this.assignedcontrolled.maxspeed,(this.assignedcontrolled.zone == $target.zone),(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange),@$DATRepositionForLOS,(not @$DAlos),@$DAisinview,@$DATRepositionCounter]" context="false" filter="error" chance="100"/>
+						<debug_text text="'MOD: DAT - move.attack.object.capital - Error Moving: Unhandled - %s (%s) - $DATRePos?: %s - (@$DATRePos != null): %s - this.assignedcontrolled.maxspeed: %s - (this.assignedcontrolled.zone == $target.zone): %s - (this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange): %s - @$DATRepositionForLOS: %s - (not @$DAlos): %s - @$DAisinview: %s - @$DATRepositionCounter: %s'.[this.ship.knownname,this.ship.idcode,$DATRePos?,(@$DATRePos != null),this.assignedcontrolled.maxspeed,(this.assignedcontrolled.zone == $target.zone),(this.assignedcontrolled.bboxdistanceto.{$target} le this.assignedcontrolled.maxradarrange),@$DATRepositionForLOS,(not @$DAlos),@$DAisinview,@$DATRepositionCounter]" context="false" filter="error" chance="100"/>
 						<set_value name="$DATRepositionCounter" exact="0"/>
 					</do_else>
 				</do_else>
 			</do_if>
 		</do_if>
-	</add>
+	</add> -->
 </diff>
