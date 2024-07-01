@@ -1,6 +1,29 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <add sel="/aiscript/attention[@min='unknown']/actions/do_else[3]/set_value[@name='$hulldamagelimit']" pos="after">
-    <set_value name="$hulldamagelimit" exact="100" chance="@global.$DATRepairLimitTweak * 100"/>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='player.age le @this.$hacked']" pos="before">
+    <do_if value="true">
+      <do_if value="global.$DATweaks.$EngineerAI.$HullDamageLimitTweak? and global.$DATweaks.$EngineerAI.$HullDamageLimitTweak">
+        <set_value name="$hulldamagelimit" exact="100"/>
+      </do_if>
+      <do_if value="global.$DATweaks.$EngineerAI.$InternalRepairDrones? and global.$DATweaks.$EngineerAI.$InternalRepairDrones and this.defensible.isclass.ship">
+        <set_value name="$DATAllowLaunch" exact="false"/>
+      </do_if>
+      <do_else>
+        <set_value name="$DATAllowLaunch" exact="true"/>
+      </do_else>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$networkid and $Defensible.availableunits.{unitcategory.repair}.count']/launch_repair_drones[@object='$Defensible'][@result='$networkid']" type="@chance">if $DATAllowLaunch? then ($DATAllowLaunch * 100) else 100</add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$networkid and $Defensible.availableunits.{unitcategory.repair}.count']/clear_list[@list='$MassTrafficTargets']" pos="before">
+    <do_if value="$DATAllowLaunch? and ($DATAllowLaunch == false)">
+      <set_value name="$DALocRepairDroneCount" exact="$Defensible.units.{unitcategory.repair}.count"/>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$repairratefactor'][@exact='$repairratefactor * $repairmodifier / 25f'][@comment='crew speeds up repair by up to 400% (meaning a fifth of the normal repair time)']" pos="before">
+    <do_if value="$DALocRepairDroneCount? and ($DALocRepairDroneCount gt 0)">
+      <debug_text text="'MOD: DAT Engineer.AI -- %s(%s) -- $repairratefactor before: %s -- $DALocRepairDroneCount: %s -- $repairrate before: %s -- repairrate after: %s'.[$Defensible.knownname,$Defensible.idcode,$repairratefactor,$DALocRepairDroneCount,($repairratefactor + $repairratefactor * $repairmodifier / 25f) * $baserepairrate,($DALocRepairDroneCount + $DALocRepairDroneCount * $repairmodifier / 25f) * $baserepairrate]" context="false" filter="scripts"/>
+      <set_value name="$repairratefactor" exact="$DALocRepairDroneCount"/>
+      <remove_value name="$DALocRepairDroneCount"/>
+    </do_if>
   </add>
 </diff>

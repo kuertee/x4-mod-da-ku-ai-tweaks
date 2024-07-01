@@ -1,21 +1,41 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <replace sel="/aiscript/order[@name='{1041, 341}'][@id='MiningRoutine']/params/param[@name='effectiveskill']/@default">if @global.$DATMinerTweaks then 100 else this.assignedcontrolled.combinedskill</replace>
-  <add sel="/aiscript/init/do_if[@value='this.isplayerowned']/do_if[@value='$effectiveskill == 100']" pos="before">
-    <set_value name="$maxrange" exact="5" chance="@global.$DATMinerTweaks * 100"/>
-  </add>
-  <add sel="/aiscript/init/do_if[@value='this.isplayerowned']/do_if[@value='$effectiveskill == 100']" type="@chance">(not @global.$DATMinerTweaks) * 100</add>
-  <add sel="/aiscript/init/do_if[@value='this.isplayerowned']/do_else">
-    <do_if value="$maxsell != $maxrange" chance="@global.$DATMinerTweaks * 100">
-      <set_value name="$maxsell" exact="$maxrange"/>
-      <do_if value="@$thisorder.exists">
-        <edit_order_param order="this.assignedcontrolled.order" param="'maxsell'" value="$maxsell"/>
-      </do_if>
-    </do_if>
-  </add>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$tradeorder.exists']/do_if[@value='this.assignedcontrolled.cargo.count']/do_if[@value='not this.isplayerowned']/@value">((not @global.$DATMinerTweaks) and (not this.isplayerowned)) or (@global.$DATMinerTweaks and ((not this.isplayerowned) or ((this.assignedcontrolled.cargo.free.all)f / this.assignedcontrolled.cargo.capacity.all le 0.5)))</replace>
-  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$tradeorder.exists']/do_if[@value='this.assignedcontrolled.cargo.count']/do_if[@value='((not @global.$DATMinerTweaks) and (not this.isplayerowned)) or (@global.$DATMinerTweaks and ((not this.isplayerowned) or ((this.assignedcontrolled.cargo.free.all)f / this.assignedcontrolled.cargo.capacity.all le 0.5)))']/do_all[@exact='$warebasket.count']/do_if[@value='$maxamount']/drop_cargo[@object='this.assignedcontrolled'][@ware='$possibleware'][@min='($maxamount * 0.1f)i']" type="@chance">(not @global.$DATMinerTweaks) * 100</add>
-  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$tradeorder.exists']/do_if[@value='this.assignedcontrolled.cargo.count']/do_if[@value='((not @global.$DATMinerTweaks) and (not this.isplayerowned)) or (@global.$DATMinerTweaks and ((not this.isplayerowned) or ((this.assignedcontrolled.cargo.free.all)f / this.assignedcontrolled.cargo.capacity.all le 0.5)))']/do_all[@exact='$warebasket.count']/do_if[@value='$maxamount']/do_all[@exact='$droppedwares.count'][@chance='$debugchance']" pos="before">
-    <drop_cargo object="this.assignedcontrolled" ware="$possibleware" exact="$maxamount" amounts="$droppedamounts" wares="$droppedwares" chance="@global.$DATMinerTweaks * 100"/>
-  </add>
+	<add sel="/aiscript/init/do_if[@value='this.isplayerowned']/do_if[@value='$effectiveskill == 100']" type="@chance">(not @global.$DATweaks.$OrderMiningRoutine.$RespectMaxRange) * 100</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_else[2]/do_if[@value='($warebasket.count gt 1) and ((this.skill.management ge 6) or ($effectiveskill == 100))']" pos="before">
+		<do_if value="@global.$DATweaks.$OrderMiningRoutine.$CheckForDemand and ($warebasket.count gt 1)">
+			<set_value name="$effectiveskill" exact="100"/>
+		</do_if>
+	</add>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_else[2]/do_if[@value='($warebasket.count gt 1) and ((this.skill.management ge 6) or ($effectiveskill == 100))']/do_all[@exact='$sellspaces.count'][@counter='$i']/find_buy_offer[@result='$buyoffers_evaluate'][@space='$sellspaces.{$i}']">
+		<do_if value="true">
+			<do_if value="@global.$DATweaks.$OrderMiningRoutine.$CheckActualDemand">
+				<find_buy_offer tradepartner="this.assignedcontrolled" wares="$warebasket" space="$sellspaces.{$i}" result="$buyoffers_evaluate" multiple="true">
+					<match_buyer>
+						<match_content checkoperational="true">
+							<match_dock size="this.assignedcontrolled.docksize" trading="true"/>
+						</match_content>
+						<match_relation_to object="this.assignedcontrolled" relation="dock" comparison="ge"/>
+						<match tradesknownto="this.owner"/>
+						<match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.assignedcontrolled"/>
+					</match_buyer>
+				</find_buy_offer>
+			</do_if>
+			<do_else>
+				<find_buy_offer tradepartner="this.assignedcontrolled" wares="$warebasket" space="$sellspaces.{$i}" result="$buyoffers_evaluate" multiple="true"/>
+			</do_else>
+		</do_if>
+	</replace>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$tradeorder.exists']/do_if[@value='this.assignedcontrolled.cargo.count']/set_value[@name='$idle']" pos="before">
+		<do_if value="@global.$DATweaks.$OrderMiningRoutine.$DropUnsellable and this.isplayerowned">
+			<do_all exact="$warebasket.count" counter="$i">
+				<set_value name="$possibleware" exact="$warebasket.{$i}"/>
+				<set_value name="$maxamount" exact="this.assignedcontrolled.cargo.{$possibleware}.max"/>
+				<do_if value="$maxamount">
+					<drop_cargo object="this.assignedcontrolled" ware="$possibleware" exact="$maxamount"/>
+				</do_if>
+			</do_all>
+			<remove_value name="$possibleware"/>
+			<remove_value name="$maxamount"/>
+		</do_if>
+	</add>
 </diff>

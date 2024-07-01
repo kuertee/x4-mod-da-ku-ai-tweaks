@@ -1,18 +1,85 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <replace sel="/aiscript/interrupts/library/actions[@name='FindTargetspace_Police']/do_if[@value='$police']/do_if[@value='not $targetspace or (@$targetspace.policefaction != this.trueowner)']/do_if[@value='not $targetspace']/do_else/do_elseif[@value='this.trueowner != faction.khaak'][@chance='if (this.trueowner == faction.ministry) or (this.trueowner == faction.teladi) then 100 else 20']/@chance">if global.$DATPatrolTweaks then 0 else (if (this.trueowner == faction.ministry) or (this.trueowner == faction.teladi) then 100 else 20)</replace>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_else[2]/do_if[@value='not $targetspace.isclass.zone']/do_for_each[@name='$loczone']/do_if[@value='$loczone.distanceto.[$loczone.sector, $loczone.sector.coreposition] gt $loczone.sector.coresize / 2m'][@chance='90']/@chance">if global.$DATPatrolTweaks then 0 else 90</replace>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$blindtourist']/find_closest_undiscovered_position[@chance='this.assignedcontrolled.combinedskill']/@chance">if (not global.$DATPatrolTweaks) then this.assignedcontrolled.combinedskill else 0</replace>
-  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$blindtourist']/do_if[@value='not @$pos_target or $pos_target.distanceto.{$anchorpos} gt $radius']" pos="before">
-    <find_closest_undiscovered_position result="$pos_target" sector="$targetspace" range="$radius" chance="if global.$DATPatrolTweaks then 100 else 0">
-      <position value="$targetspace.coreposition"/>
-      <rangecenter object="$anchorpos"/>
-    </find_closest_undiscovered_position>
-  </add>
-  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_else/do_if[@value='$police']/do_if[@value='not @$localtarget.dock and (not @$localtarget.pilot.$donotscan) and (not $localtarget.zone.isclass.highway) and (not $localtarget.pilot.$haltedby? or @$localtarget.pilot.$haltedby == this.assignedcontrolled)']/do_if[@value='$localtarget == player.occupiedship']" pos="before">
-    <signal_objects object="$localtarget" param="'LoseCover'" param2="true" chance="(global.$DATPatrolTweaks and @$localtarget.coverowner) * 100"/>
-  </add>
-  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_if[@value='$localtarget.isoperational and ($trouble? or (not $break? and $time_scandone? and player.age ge $time_scandone))']/do_if[@value='$police and (this.owner != faction.paranid) and (this.owner != faction.holyorder) and (this.owner != faction.trinity) and not this.isplayerowned']/do_if[@value='$localtarget.isclass.station and ($localtarget.trueowner == faction.hatikvah or $localtarget.trueowner == faction.scaleplate)']/set_value[@name='$reportchance'][@exact='10']" type="@chance">(not global.$DATPatrolTweaks) * 100</add>
-  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_if[@value='$localtarget.isoperational and ($trouble? or (not $break? and $time_scandone? and player.age ge $time_scandone))']/do_if[@value='$police and (this.owner != faction.paranid) and (this.owner != faction.holyorder) and (this.owner != faction.trinity) and not this.isplayerowned']/do_else/set_value[@name='$reportchance'][@exact='this.combinedskill']" type="@chance">(not global.$DATPatrolTweaks) * 100</add>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_if[@value='@$list_potentialtargets.count'][@chance='if $blindtourist then (100 - this.assignedcontrolled.combinedskill) else this.assignedcontrolled.combinedskill']/@chance">if (global.$DATPatrolTweaks) then (100 - ($blindtourist * 100)) else (if $blindtourist then (100 - this.assignedcontrolled.combinedskill) else this.assignedcontrolled.combinedskill)</replace>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_if[@value='this.assignedcontrolled.distanceto.{$localtarget} gt $effectivescanningrange']" pos="before">
+		<do_if value="@global.$DATweaks.$OrderMoveRecon.$LongerLegalScans">
+			<set_value name="$effectivescanningrange" exact="[30km, (this.ship.maxradarrange * 0.75) + ($localtarget.size / 2.0)].min" comment="DAT Ships aim for a very close point but will signal further now"/>
+			<do_if value="((@$localtarget.cargo.illegalto.{this.sector.policefaction} or @$localtarget.pilot.inventory.illegalto.{this.sector.policefaction}) and $police) or $resourcescout" comment="DAT Police will still move close when necessary">
+				<set_value name="$effectivescanningrange" exact="[this.ship.maxradarrange, (this.assignedcontrolled.size / 2.0 + 1km)].min + ($localtarget.size / 2.0)" comment="DAT This is vanilla police/resource scout calculation"/>
+			</do_if>
+		</do_if>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_if[@value='this.assignedcontrolled.distanceto.{$localtarget} gt $effectivescanningrange']/debug_text[@chance='$debugchance']" pos="before">
+		<do_if value="@global.$DATweaks.$OrderMoveRecon.$AttemptInterceptNotFollow and @$localtarget.travel.active and (this.assignedcontrolled.distanceto.{$localtarget} gt $effectivescanningrange) and (this.isplayerowned or (this.assignedcontrolled.combinedskill ge 50)) and (this.assignedcontrolled.travel.maxspeed gt $localtarget.travel.maxspeed) and (not $localtarget.zone.isclass.highway)">
+			<!-- 5(a+b)/7 = c -->
+			<set_value name="$DAAlpha" exact="this.assignedcontrolled.distanceto.{$localtarget}"/>
+			<set_value name="$DAExtraDist" exact="(2 + this.assignedcontrolled.travel.chargetime)m * $localtarget.travel.maxspeed"/>
+			<set_value name="$DAAlphaTime" exact="($DAAlpha + $DAExtraDist) / (5 * this.assignedcontrolled.travel.maxspeed / 7)"/>
+			<set_value name="$DABeta" exact="[$localtarget.travel.maxspeed,$localtarget.speed].max * $DAAlphaTime"/>
+			<create_position name="$DALocTargetSectorPosForward" z="$DABeta" object="$localtarget" space="$localtarget.sector"/>
+			<get_safe_pos result="$DAsectorpos" sector="$localtarget.sector" x="$DALocTargetSectorPosForward.x" y="$DALocTargetSectorPosForward.y" z="$DALocTargetSectorPosForward.z" radius="this.ship.size / 2"/>
+			<do_if value="false" comment="future debug variable">
+				<create_position name="$DAThisSectorPos" space="this.sector" object="this.assignedcontrolled"/>
+				<create_position name="$DALocTargetSectorPos" space="$localtarget.sector" object="$localtarget"/>
+				<set_value name="$DACharlie" exact="5 * ($DAAlpha + $DABeta) / 7"/>
+				<debug_text text="'MOD: DAT -- %s(%s) moving to front of %s(%s) -- $DAAlpha: %s -- $DAAlphaTime: %s -- $DABeta: %s -- $DACharlie: %s -- ThisDistanceToSectorPos: %s -- ThisTimeToCharlie: %s -- TargetTimeToCharlie: %s'.[this.assignedcontrolled.knownname,this.assignedcontrolled.idcode,$localtarget.knownname,$localtarget.idcode,$DAAlpha,$DAAlphaTime,$DABeta,$DACharlie,this.assignedcontrolled.distanceto.[$localsector, $DAsectorpos],$DACharlie / this.assignedcontrolled.travel.maxspeed,$DACharlie / $localtarget.travel.maxspeed]" filter="scripts" chance="this.isplayerowned * 100"/>
+				<debug_text text="'MOD: DAT -- %s(%s) moving to front of %s(%s) -- XYZ -- StartPos: (%s,%s,%s) -- TargetPos: (%s,%s,%s) -- CharliePos: (%s,%s,%s)'.[this.assignedcontrolled.knownname,this.assignedcontrolled.idcode,$localtarget.knownname,$localtarget.idcode,$DAThisSectorPos.x,$DAThisSectorPos.y,$DAThisSectorPos.z,$DALocTargetSectorPos.x,$DALocTargetSectorPos.y,$DALocTargetSectorPos.z,$DALocTargetSectorPosForward.x,$DALocTargetSectorPosForward.y,$DALocTargetSectorPosForward.z]" filter="scripts" chance="this.isplayerowned * 100"/>
+				<remove_value name="$DAThisSectorPos"/>
+				<remove_value name="$DALocTargetSectorPos"/>
+				<remove_value name="$DACharlie"/>
+			</do_if>
+			<set_value name="$sectorpos" exact="$DAsectorpos"/>
+			<remove_value name="$DAAlpha"/>
+			<remove_value name="$DAExtraDist"/>
+			<remove_value name="$DAAlphaTime"/>
+			<remove_value name="$DABeta"/>
+			<remove_value name="$DALocTargetSectorPosForward"/>
+		</do_if>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_if[@value='this.assignedcontrolled.distanceto.{$localtarget} gt $effectivescanningrange']/move_to[@object='this.assignedcontrolled'][@destination='$localsector'][@travel='true']" type="@chance">(not (@global.$DATweaks.$OrderMoveRecon.$AttemptInterceptNotFollow and $DAsectorpos?)) * 100</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_if[@value='this.assignedcontrolled.distanceto.{$localtarget} gt $effectivescanningrange']/do_if[@value='not $localtarget.exists and not $break?']" pos="before">
+		<do_if value="true">
+			<move_to destination="$localsector" object="this.assignedcontrolled" travel="true" chance="(@global.$DATweaks.$OrderMoveRecon.$AttemptInterceptNotFollow and $DAsectorpos?) * 100">
+				<position value="$sectorpos"/>
+				<interrupt>
+					<conditions>
+						<check_any>
+							<event_object_destroyed object="$localtarget"/>
+							<check_all>
+								<event_masstraffic_ship_removed object="$localtarget.zone"/>
+								<check_value value="event.param == $localtarget"/>
+							</check_all>
+							<check_all>
+								<event_object_changed_zone object="$localtarget"/>
+								<check_value value="event.param.isclass.highway"/>
+							</check_all>
+							<event_object_changed_cluster object="$localtarget"/>
+							<event_object_changed_sector object="$localtarget"/>
+						</check_any>
+					</conditions>
+					<actions>
+						<debug_text text="'movement interrupted by %1.'.[event.name]" chance="$debugchance"/>
+						<set_value name="$break"/>
+					</actions>
+				</interrupt>
+				<interrupt_after_time time="31s" comment="movement sometimes stalls due to collision avoidance"/>
+			</move_to>
+			<remove_value name="$DAsectorpos"/>
+		</do_if>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_else/do_if[@value='not $time_scandone?']">
+		<do_if value="@global.$DATweaks.$OrderMoveRecon.$FasterPoliceScans and $police">
+			<set_value name="$time_scandone" exact="player.age + 1s"/>
+		</do_if>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_else/do_if[@value='$localtarget.isoperational and this.ship.distanceto.{$localtarget} le $effectivescanningrange']/do_if[@value='$localtarget.isoperational']/wait[@exact='[$time_scandone - player.age, 1s].max']/interrupt/actions/do_if" type="@chance">(not @global.$DATweaks.$OrderMoveRecon.$LessHostilePolice) * 100</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='@$localtarget']/do_while[@value='not $trouble? and (($resourcescout and $localtarget.exists and (not $time_scandone? or player.age lt $time_scandone)) or ($localtarget.isoperational and (not $time_scandone? or player.age lt $time_scandone) and (not @$localtarget.order or $localtarget.order.state != orderstate.critical) and (not @$localtarget.pilot.command or $localtarget.pilot.command.value != command.attackenemies or $localtarget.pilot.command.value != command.attackobject)))']/do_else/do_if[@value='$localtarget.isoperational and this.ship.distanceto.{$localtarget} le $effectivescanningrange']/do_if[@value='$localtarget.isoperational']/wait[@exact='[$time_scandone - player.age, 1s].max']/interrupt/actions">
+		<do_elseif value="@global.$DATweaks.$OrderMoveRecon.$LessHostilePolice and $police">
+			<do_if value="event.name == 'event_object_attacked'">
+				<set_value name="$trouble"/>
+				<do_if value="$localtarget == player.occupiedship">
+					<set_value name="$locreport"/>
+				</do_if>
+			</do_if>
+		</do_elseif>
+	</add>
 </diff>
