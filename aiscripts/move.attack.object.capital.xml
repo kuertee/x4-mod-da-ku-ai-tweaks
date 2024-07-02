@@ -455,4 +455,63 @@
 		</on_abort>
 	</add>
 	<!-- DEADAIR DIFFS APPLIED AFTER KUERTEE CHANGES -->
+	<replace sel="/aiscript/init/do_if[@value='this.isplayerowned']/@value">this.isplayerowned or @global.$DATweaks.$MAOCapital.$RemoveAISkillCheckAlso</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.isplayerowned']/@value">this.isplayerowned or @global.$DATweaks.$MAOCapital.$RemoveAISkillCheckAlso</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='not @$frontweapon'][@chance='[$combinedskill + 50, 100].min']/@chance">if @global.$DATweaks.$MAOCapital.$IgnoreVerticalQuadrants then 0 else [$combinedskill + 50, 100].min</replace>
+	<add sel="/aiscript/attention[@min='unknown']/actions/set_value[@name='$targetquadranttable'][@exact='table[]']" pos="before">
+		<do_if value="@global.$DATweaks.$MAOCapital.$EnemyQuadrantTweak">
+			<set_value name="$quadrants" exact="[quadrant.left, quadrant.right, quadrant.up, quadrant.down, quadrant.back, quadrant.front]"/>
+			<do_if value="@global.$DATweaks.$MAOCapital.$IgnoreVerticalQuadrants">
+				<set_value name="$quadrants" exact="[quadrant.left, quadrant.right, quadrant.back, quadrant.front]"/>
+			</do_if>
+		</do_if>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_if[@value='$distance gt $movethreshold_max']/set_value[@name='$updatetime'][@exact='((this.ship.distanceto.[$target.sector, $pos])f / [this.ship.maxspeed, 1m].max)s + ($locrot.yaw / [this.ship.maxyawspeed, 1].max)s']" pos="before">
+		<do_if value="@global.$DATweaks.$MAOCapital.$TravelDriveTweak">
+			<set_value name="$DATCheckTravel" exact="true"/>
+		</do_if>
+	</add>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else/set_value[@name='$boost'][@chance='$allowboost * 100']">
+		<do_if value="true">
+			<set_value name="$DATBoostBan" exact="false"/>
+			<do_if value="@global.$DATweaks.$MAOCapital.$PlayerBoostDisabled and this.isplayerowned">
+				<set_value name="$DATBoostBan" exact="true"/>
+			</do_if>
+			<do_elseif value="@global.$DATweaks.$MAOCapital.$AIBoostDisabled and (not this.isplayerowned)">
+				<set_value name="$DATBoostBan" exact="true"/>
+			</do_elseif>
+		</do_if>
+	</replace>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else/set_value[@name='$updatetime'][@exact='(((this.ship.distanceto.[$target.sector, $pos])f / [this.ship.maxspeed, 1m].max)s + (pi / [this.ship.maxyawspeed, 1].max)s) * 5']" pos="before">
+		<set_value name="$boost" chance="if @$DATBoostBan then 0 else ($allowboost * 100)"/>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_if[@value='$distance gt $movethreshold_max or $distance lt $movethreshold_min']/do_else/set_value[@name='$updatetime'][@exact='(((this.ship.distanceto.[$target.sector, $pos])f / [this.ship.maxspeed, 1m].max)s + (pi / [this.ship.maxyawspeed, 1].max)s) * 5']" pos="before">
+		<do_if value="@global.$DATweaks.$MAOCapital.$TravelDriveTweak">
+			<set_value name="$DATCheckTravel" exact="true"/>
+		</do_if>
+	</add>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/set_value[@name='$boost'][@chance='$allowboost * 100']">
+		<do_if value="true">
+			<set_value name="$DATBoostBan" exact="false"/>
+			<do_if value="@global.$DATweaks.$MAOCapital.$PlayerBoostDisabled and this.isplayerowned">
+				<set_value name="$DATBoostBan" exact="true"/>
+			</do_if>
+			<do_elseif value="@global.$DATweaks.$MAOCapital.$AIBoostDisabled and (not this.isplayerowned)">
+				<set_value name="$DATBoostBan" exact="true"/>
+			</do_elseif>
+		</do_if>
+	</replace>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $issmall']/do_if[@value='$frontweapon?']/do_else[2]/remove_value[@name='$enemypos']" pos="before">
+		<set_value name="$boost" chance="if @$DATBoostBan then 0 else ($allowboost * 100)"/>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_else[2]/get_safe_pos[@min='$minoperationalrange'][@max='$maxoperationalrange'][@object='$target'][@result='$pos']" pos="before">
+		<do_if value="@global.$DATweaks.$MAOCapital.$TravelDriveTweak">
+			<set_value name="$DATCheckTravel" exact="true"/>
+		</do_if>
+	</add>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='$target.canbeattacked and this.ship.defencenpc.exists']/do_if[@value='not $boost? and $allowboost and ($combinedskill ge 80)'][@chance='$combinedskill']">
+		<do_if value="@$DATCheckTravel and ($timetopos gt 60s)">
+			<set_value name="$travel"/>
+		</do_if>
+	</add>
 </diff>
