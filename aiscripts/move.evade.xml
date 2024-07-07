@@ -7,5 +7,16 @@
 		<position object="this.ship" min="3km" max="5km" />
 	</replace>
 	<!-- DeadAir Diffs -->
-	<replace sel="/aiscript/attention/actions/do_while[@value='$doevade and player.age le $maxevadedelay']/do_if[@value='$allowboost and ($fb != flightbehaviour.hardbrake) and (this.assignedcontrolled.shieldpercentage gt 50)']/@chance">((this.isplayerowned and global.$DATPlayerAllowBoost) or (not this.isplayerowned)) * 100</replace>
+	<add sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$doevade and player.age le $maxevadedelay']/do_if[@value='$allowboost and ($fb != flightbehaviour.hardbrake) and (this.assignedcontrolled.shieldpercentage gt 50)'][@chance='if (this.race == race.terran) then 100 else this.assignedcontrolled.combinedskill']" pos="before">
+		<do_if value="true">
+			<set_value name="$DATBoostBan" exact="false"/>
+			<do_if value="@global.$DATweaks.$MoveEvade.$PlayerBoostDisabled and this.isplayerowned">
+				<set_value name="$DATBoostBan" exact="true"/>
+			</do_if>
+			<do_elseif value="@global.$DATweaks.$MoveEvade.$AIBoostDisabled and (not this.isplayerowned)">
+				<set_value name="$DATBoostBan" exact="true"/>
+			</do_elseif>
+		</do_if>
+	</add>
+	<replace sel="/aiscript/attention[@min='visible']/actions/do_while[@value='$doevade and player.age le $maxevadedelay']/do_if[@value='$allowboost and ($fb != flightbehaviour.hardbrake) and (this.assignedcontrolled.shieldpercentage gt 50)'][@chance='if (this.race == race.terran) then 100 else this.assignedcontrolled.combinedskill']/@chance">if @$DATBoostBan then 0 else (if (this.race == race.terran) then 100 else this.assignedcontrolled.combinedskill)</replace>
 </diff>

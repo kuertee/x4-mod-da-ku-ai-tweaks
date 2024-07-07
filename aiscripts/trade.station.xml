@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/find_sell_offer[@result='$selloffers']/@usereservations">if @global.$DATweaks.$TradeStation.$StopIgnoringReservations then true else false</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$selloffers.count gt 0']/find_buy_offer[@result='$buyoffers']/@excludeempty">if @global.$DATweaks.$TradeStation.$StopBreakingTrades then true else false</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$selloffers.count gt 0']/find_buy_offer[@result='$buyoffers']/@usereservations">if @global.$DATweaks.$TradeStation.$StopIgnoringReservations then true else false</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$selloffers.count gt 0']/do_if[@value='$buyoffers.count']/do_all[@exact='$selloffers.count']/do_all[@exact='$buyoffers.count'][@counter='$j']/do_if[@value='$currentbuyoffer.ware == $currentware']/do_if[@value='this.station.tradewares.{$currentware}.exists and $currentbuyoffer.buyer.tradewares.{$currentware}.exists']/clamp_trade_amount[@result='$finalamount']">
+		<do_if value="true">
+			<do_if value="@global.$DATweaks.$TradeStation.$StopBreakingTrades">
+				<clamp_trade_amount result="$finalamount" amount="[$currentbuyoffer.desiredamount, $currentbuyoffer.amount, $currentselloffer.amount].min" trade="$currentbuyoffer" seller="this.station" buyer="$currentbuyoffer.buyer"/>
+			</do_if>
+			<do_else>
+				<clamp_trade_amount result="$finalamount" amount="[$currentbuyoffer.desiredamount, 100000 / $currentware.volume].min" trade="$currentbuyoffer" seller="this.station" buyer="$currentbuyoffer.buyer"/>
+			</do_else>
+		</do_if>
+	</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$selloffer.exists']/@value">(@global.$DATweaks.$TradeStation.$StopBreakingTrades and $selloffer.exists and ($selloffer.amount gt 0) and ($finalbuyoffer.amount gt 0) and ($finalamount gt 0)) or ((not @global.$DATweaks.$TradeStation.$StopBreakingTrades) and $selloffer.exists)</replace>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='(@global.$DATweaks.$TradeStation.$StopBreakingTrades and $selloffer.exists and ($selloffer.amount gt 0) and ($finalbuyoffer.amount gt 0) and ($finalamount gt 0)) or ((not @global.$DATweaks.$TradeStation.$StopBreakingTrades) and $selloffer.exists)']/execute_trade[@result='$traderesult']">
+		<do_if value="true">
+			<do_if value="@global.$DATweaks.$TradeStation.$StopBreakingTrades">
+				<remove_cargo object="this.station" ware="$tradeware" exact="$finalamount" result="$RemovedAmount"/>
+				<do_if value="$RemovedAmount" min="1">
+					<add_cargo object="this.station.buildstorage" ware="$tradeware" exact="$RemovedAmount" result="$FinalAmount"/>
+				</do_if>
+				<do_if value="$RemovedAmount != $FinalAmount">
+					<do_if value="$RemovedAmount lt $FinalAmount">
+						<add_cargo object="this.station" ware="$tradeware" exact="$RemovedAmount - $FinalAmount"/>
+					</do_if>
+					<debug_text text="'MOD: DAT -- Moved cargo from station to buildstorage -- Station: %s(%s) in %s -- Ware: %s -- RemovedAmount: %s -- FinalAmount: %s'.[this.station.knownname,this.station.idcode,this.station.sector.knownname,@$tradeware.id,@$RemovedAmount,@$FinalAmount]" context="false" filter="scripts"/>
+				</do_if>
+				<remove_value name="$RemovedAmount"/>
+				<remove_value name="$FinalAmount"/>
+			</do_if>
+			<do_else>
+				<execute_trade tradeoffer="$finalbuyoffer" amount="$finalamount" tradepartner="this.station" result="$traderesult" resume="true">
+					<interrupt_after_time time="3h"/>
+					<interrupt>
+						<conditions>
+							<event_trade_cancelled tradeoffer="$finalbuyoffer"/>
+						</conditions>
+						<actions>
+							<debug_text text="player.age + ' trade %1 for %2 %3 got cancelled, interrupting execute_trade'.[$finalbuyoffer, $finalbuyoffer.amount, $finalbuyoffer.ware]" chance="$debugchance"/>
+						</actions>
+					</interrupt>
+				</execute_trade>
+			</do_else>
+		</do_if>
+	</replace>
+</diff>

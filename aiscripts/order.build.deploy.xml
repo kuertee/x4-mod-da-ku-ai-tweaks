@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_while[@value='true']/do_if[@value='not $buildmodule.requiresconstructionvessel']" pos="before">
+    <do_if value="@global.$DATweaks.$OrderBuildDeploy.$PayMe and (not $DATBuilderHireTime?) and (not $station.isplayerowned) and this.assignedcontrolled.isplayerowned">
+      <set_value name="$DATBuilderHireTime" exact="player.age"/>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/run_script" pos="before">
+    <do_if value="@global.$DATweaks.$OrderBuildDeploy.$PayMe">
+      <do_if value="@$DATBuilderHireTime">
+        <!-- Pay the player -->
+        <set_value name="$DATWages" exact="([(player.age - $DATBuilderHireTime) / 3600.0 * 1000000,500000].max)Cr"/>
+        <set_value name="$DATEmployer" exact="$station.trueowner"/>
+        <do_if value="@$station.money">
+          <set_value name="$DATEmployer" exact="$station"/>
+        </do_if>
+        <transfer_money from="$DATEmployer" to="this.ship.trueowner" amount="$DATWages" result="$DATRealWages"/>
+        <do_if value="$DATRealWages lt 0">
+          <set_value name="$DATRealWages" exact="-$DATRealWages"/>
+        </do_if>
+        <write_to_logbook category="upkeep" title="'%s: %s(%s)'.[{1011,9},this.assignedcontrolled.knownname,this.assignedcontrolled.idcode]" interaction="showonmap" object="this.assignedcontrolled" bonus="$DATRealWages" text="'%s %s(%s)'.[{1111920,9000},$station.knownname,$station.idcode]"/>
+        <remove_value name="$DATWages"/>
+        <remove_value name="$DATEmployer"/>
+        <remove_value name="$DATRealWages"/>
+      </do_if>
+      <!-- All attempts to recover cleanly have failed, brute force method -->
+      <do_if value="@global.$DATweaks.$OrderBuildDeploy.$StopLosingDrones and this.assignedcontrolled.units.{unitcategory.build}.count and (this.assignedcontrolled.units.{unitcategory.build}.count gt this.assignedcontrolled.availableunits.{unitcategory.build}.count)">
+        <set_value name="$LocNumber" exact="[this.assignedcontrolled.units.{unitcategory.build}.count,this.assignedcontrolled.availableunits.{unitcategory.build}.count].max"/>
+        <set_value name="$LocUnavailable" exact="this.assignedcontrolled.units.{unitcategory.build}.count - this.assignedcontrolled.availableunits.{unitcategory.build}.count"/>
+        <do_if value="$LocNumber gt 0">
+          <remove_units object="this.assignedcontrolled" macro="macro.ship_gen_xs_buildingdrone_01_a_macro" exact="$LocUnavailable" unavailable="true"/>
+          <remove_units object="this.assignedcontrolled" macro="macro.ship_gen_xs_buildingdrone_01_a_macro" exact="$LocNumber"/>
+          <add_units object="this.assignedcontrolled" macro="macro.ship_gen_xs_buildingdrone_01_a_macro" exact="$LocNumber"/>
+          <do_if value="this.assignedcontrolled.units.{unitcategory.build}.count != this.assignedcontrolled.availableunits.{unitcategory.build}.count">
+            <debug_text text="'MOD: DAT -- %s(%s) is finishing build in %s -- Failed to fix bug -- Removed and Added drones -- units.{unitcategory.build}.count: %s -- availableunits.{unitcategory.build}.count: %s -- $LocNumber: %s -- $LocUnavailable: %s'.[this.assignedcontrolled.knownname,this.assignedcontrolled.idcode,this.assignedcontrolled.sector.knownname,this.assignedcontrolled.units.{unitcategory.build}.count,this.assignedcontrolled.availableunits.{unitcategory.build}.count,$LocNumber,$LocUnavailable]" filter="scripts"/>
+          </do_if>
+        </do_if>
+        <remove_value name="$LocNumber"/>
+        <remove_value name="$LocUnavailable"/>
+      </do_if>
+      <remove_value name="$DATBuilderHireTime"/>
+    </do_if>
+  </add>
+</diff>

@@ -1,18 +1,33 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <add sel="/mdscript/cues/cue[@name='Start']/actions/do_else/set_value[@name='$FindShipSpaces']" pos="after">
-    <do_if value="md.$DATInvadeSpaceTweaks and (player.age ge 2h)">
-      <do_if value="$Faction != faction.xenon">
-        <find_sector name="$DAOwnedSectors" owner="$Faction" multiple="true"/>
-        <remove_from_list name="$FindShipSpaces" list="$DAOwnedSectors" multiple="true"/>
-        <append_list_elements name="$FindShipSpaces" other="$DAOwnedSectors"/>
-      </do_if>
-    </do_if>
-  </add>
-  <add sel="/mdscript/cues/cue[@name='Start']/cues/cue[@name='EvaluateState']/actions/do_else/do_if[@value='not $NewPhase']/do_if/do_for_each[@name='$DesiredSubgoalsKey']/do_if[@value='$DesiredSubgoalAmount gt 0']/do_all[@exact='$DesiredSubgoalAmount']/do_if/do_if[@value='this.$DefendAreaDefinition']/do_else">
-    <set_value name="$NewSubgoalTable.$RequestStrengthAllowance" min="$NewSubgoalTable.$DesiredShipStrength / 4" max="$NewSubgoalTable.$DesiredShipStrength / 2" chance="md.$DATInvadeSpaceTweaks * 100"/>
-  </add>
-  <add sel="/mdscript/cues/cue[@name='Start']/cues/cue[@name='EvaluateState']/actions/do_else/do_if[@value='not $NewPhase']/do_elseif[1]/do_all[@exact='$DesiredSubgoalsKeys.count']/do_if[@value='$DesiredSubgoals.{$DesiredSubgoalsKeys.{$i}} gt 0']/do_all[@exact='$DesiredSubgoals.{$DesiredSubgoalsKeys.{$i}}']/do_if/do_if[@value='this.$DefendAreaDefinition']/set_value[@name='$NewSubgoalTable.$FindShipSpaces'][@exact='$FindShipSpaces.clone']" pos="before">
-    <set_value name="$NewSubgoalTable.$RequestStrengthAllowance" min="$NewSubgoalTable.$DesiredShipStrength / 4" max="$NewSubgoalTable.$DesiredShipStrength / 2" chance="md.$DATInvadeSpaceTweaks * 100"/>
-  </add>
+	<replace sel="/mdscript/cues/cue[@name='Start']/actions/do_else[1]/set_value[@name='$FindShipSpaces'][@exact='$LocalSectors.clone']">
+		<do_if value="true">
+			<set_value name="$FindShipSpaces" exact="$LocalSectors.clone"/>
+			<do_if value="@global.$DATweaks.$FGInvadeSpace.$IncreaseSearchRange and (player.age ge 2h)">
+				<do_if value="$Faction != faction.xenon">
+					<find_cluster_in_range name="$DALocalClusters" object="$Target" maxdistance="3" multiple="true"/>
+					<find_sector name="$DAOwnedSectors" space="$DALocalClusters" owner="$Faction" multiple="true"/>
+					<remove_from_list name="$FindShipSpaces" list="$DAOwnedSectors" multiple="true"/>
+					<append_list_elements name="$FindShipSpaces" other="$DAOwnedSectors"/>
+					<remove_value name="$DALocalClusters"/>
+					<remove_value name="$DAOwnedSectors"/>
+				</do_if>
+			</do_if>
+		</do_if>
+	</replace>
+	<add sel="/mdscript/cues/cue[@name='Start']/cues/cue[@name='EvaluateState']/actions/do_else/do_if[@value='not $NewPhase']/do_if/do_for_each[@name='$DesiredSubgoalsKey'][@in='$DesiredSubgoals']/do_if[@value='$DesiredSubgoalAmount gt 0']/do_all[@exact='$DesiredSubgoalAmount']/do_if/do_if[@value='this.$DefendAreaDefinition']/set_value[@name='$NewSubgoalTable.$FindShipSpaces'][@exact='$FindShipSpaces.clone']" pos="before">
+		<do_if value="true">
+			<do_if value="@global.$DATweaks.$FGInvadeSpace.$AllowMoreOrdering and ((@global.$DATweaks.$FGInvadeSpace.$AllowOrderingForExpedition and $ExpeditionForce) or (not $ExpeditionForce))">
+				<set_value name="$NewSubgoalTable.$RequestStrengthAllowance" min="$NewSubgoalTable.$DesiredShipStrength / 4" max="$NewSubgoalTable.$DesiredShipStrength / 2"/>
+			</do_if>
+			<do_elseif value="@global.$DATweaks.$FGInvadeSpace.$AllowOrderingForExpedition and $ExpeditionForce">
+				<set_value name="$NewSubgoalTable.$RequestStrengthAllowance" exact="$NewSubgoalTable.$DesiredShipStrength / 4" comment="Quarter of the forces can be requested to be built"/>
+			</do_elseif>
+		</do_if>
+	</add>
+	<add sel="/mdscript/cues/cue[@name='Start']/cues/cue[@name='EvaluateState']/actions/do_else/do_if[@value='not $NewPhase']/do_elseif[1]/do_all[@exact='$DesiredSubgoalsKeys.count'][@counter='$i']/do_if[@value='$DesiredSubgoals.{$DesiredSubgoalsKeys.{$i}} gt 0']/do_all[@exact='$DesiredSubgoals.{$DesiredSubgoalsKeys.{$i}}']/do_if/do_if[@value='this.$DefendAreaDefinition']/set_value[@name='$NewSubgoalTable.$FindShipSpaces'][@exact='$FindShipSpaces.clone']" pos="before">
+		<do_if value="@global.$DATweaks.$FGInvadeSpace.$AllowMoreOrdering">
+			<set_value name="$NewSubgoalTable.$RequestStrengthAllowance" min="$NewSubgoalTable.$DesiredShipStrength / 4" max="$NewSubgoalTable.$DesiredShipStrength / 2"/>
+		</do_if>
+	</add>
 </diff>

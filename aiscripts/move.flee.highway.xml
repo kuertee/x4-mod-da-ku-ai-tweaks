@@ -1,4 +1,15 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$highway?']/move_to[@object='this.ship']/@boost">if this.assignedcontrolled.isplayerowned then global.$DATPlayerAllowBoost else true</replace>
+	<add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$highway?']/move_to[@object='this.ship'][@destination='$highway.destination'][@travel='true']" pos="before">
+		<do_if value="true">
+			<set_value name="$DATboost" exact="true"/>
+			<do_if value="@global.$DATweaks.$MoveFlee.$PlayerBoostDisabled and this.isplayerowned">
+				<set_value name="$DATboost" exact="false"/>
+			</do_if>
+			<do_elseif value="@global.$DATweaks.$MoveFlee.$AIBoostDisabled and (not this.isplayerowned)">
+				<set_value name="$DATboost" exact="false"/>
+			</do_elseif>
+		</do_if>
+	</add>
+	<replace sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$highway?']/move_to[@object='this.ship'][@destination='$highway.destination'][@travel='true']/@boost">if $DATboost? then $DATboost else true</replace>
 </diff>
