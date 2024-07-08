@@ -2,71 +2,72 @@
 
 ## Updates for 7.x (20240706)
 - Implemented options menu for DA tweaks.
-- move.generic script - ObjectChangedSector - Ships will recalculate when the object they are moving to an object and it changes sectors.</t>
-- move.generic script - ForceTravel - Ships will be forced to use travel drive in some instances they would slowboat instead.</t>
-- move.generic script - SmallerRadius - Ships will attempt to get closer to their destination point instead of within 10km of it. (Unless they are really really big)</t>
-- engineer.ai script - HullDamageLimitTweak - Objects that can repair themselves are no longer skill limited and will repair to 100%, eventually.</t>
-- engineer.ai script - InternalRepairDrones - Objects that can repair themselves will keep the drones internal and calculations are adjusted for total number of repair drones, not drones that have been launched.</t>
-- interrupt.attacked script - DecideToFlee - Adjusts flee calculations. Civilian ships will flee when they are reduced to less than 150% of hull percentage + shield percentage.</t>
-- interrupt.attacked script - AllowMilitaryFlee - Military ships will be allowed to flee if they are reduced to below than 75% of hull percentage + shield percentage. If the ship has an attack order, it will not flee if it thinks it can destroy it's target before dying.</t>
-- interrupt.attacked script - DecideToFight - Adjusts retaliation calculations. Stops xenon economy ships from always fighting.</t>
-- interrupt.attacked script - AllowCivilianFight - Civilian ships will be allowed to retaliate if they are currently waiting for orders and they think they can destroy their target before dying.</t>
-- interrupt.attacked script - PolicePlayFavorites - Ships will not call for help if the police have a better relationship with the attacker.</t>
-- interrupt.attacked script - Civilian Flee HP Percent - Changes HP percentage of {1111920,5031}.</t>
-- interrupt.attacked script - Military Flee HP Percent - Changes HP percentage of {1111920,5032}.</t>
-- lib.calculate.miningefficiency script - SectorWideProbe - A resource probe anywhere in the sector will provide benefits.</t>
-- lib.respond.inspected script - ComplyWhenLawAbiding - Ships without a set response to being inspected will comply when they have nothing to fear from police.</t>
-- move.collect.ship.smallship script - UseTravelMore - Small ships collecting drops will use their travel drive more for objects further than 5km away.</t>
-- move.collect.ship.smallship script - UseMagnet - Small ships collecting drops will use an instant container magnet for wares within 5km.</t>
-- move.seekenemies script - PoliceResponse - Police will respond more reliably to trouble calls in their sector. This also implements support for ships mimic'ing the police order.</t>
-- move.seekenemies script - DistressCallResponse - Police and patrols will respond more reliably to distress calls in their sector (Yes, patrol ships will actually respond unlike vanilla). This also implements support for ships mimic'ing the patrol/police order.</t>
-- move.seekenemies script - RemoveResponseSkillCheck - Removes the skill check for ships responding to trouble or distress calls further than their radar coverage.</t>
-- order.build.deploy script - PayMe - Sets up payment scale for player owned building ships. Ships earn 1,000,000 Cr per hour of work with a minimum of 500,000 Cr.</t>
-- order.build.deploy script - StopLosingDrones - Fixes bug where ships that move to new task after waiting more than an hour for resources at build storage leave their drones behind.</t>
-- order.build.find.task script - BuildAIStations - Allows player owned building ships to be hired by NPC factions and will respect travel/activity blacklists.</t>
-- order.mining.routine script - RespectMaxRange - Removes the tripling of maxrange applied to player owned ships with 5 star pilot.</t>
-- order.mining.routine script - CheckForDemand - Ships that are set to order multiple wares will always check for demand to determine which ware to gather.</t>
-- order.mining.routine script - CheckActualDemand - Ships that check demand will check stations that they would actually be able to sell at.</t>
-- order.mining.routine script - DropUnsellable - Player owned ships that have unsellable cargo due to lack of demand will drop the wares just like the NPC mining ships do.</t>
-- order.move.recon script - LongerLegalScans - Police ships that are scanning law abiding ships can do so from a longer range.</t>
-- order.move.recon script - AttemptInterceptNotFollow - Police ships that are moving to scan a ship will attempt to move to where the target is going instead of just constantly moving to where the ship was when the move started.</t>
-- order.move.recon script - FasterPoliceScans - Police ships will complete scans much faster than vanilla.</t>
-- order.move.recon script - LessHostilePolice - Should prevent/reduce police going hostile for seemingly no reason.</t>
-- trade.find.free script - BetterSellOfferFiltering - Filters sell offers from stations the ship would actually be able to buy from.</t>
-- trade.find.free script - BetterBuyOfferFiltering - Filters buy offers from stations the ship would actually be able to sell to.</t>
-- trade.find.free script - ImprovedBuildStoragePrioritization - Adjusts the NPC ship filtering so that it actually works but restricts the trades to small and medium ships. This also fixes a bug where player ships would ignore the minimum volume so you shouldn't see large ships with 27 energy cells.</t>
-- trade.station script - StopIgnoringReservations - Stops stations from ignoring reservations for wares that it wants to send to it's build storage. This fixes a lot of failed trades where the ship arrives to a station that no longer has the wares for it.</t>
-- trade.station script - StopBreakingTrades - Stops stations from breaking trades with the extremely slow and buggy calculations/methods used to transfer wares to it's build storage. If a station has the wares at the interval, it will actually send wares to build storage.</t>
-- fight.attack.object.bigtarget - DisablePlayerBoost - Prevents player S/M from using boost when attacking capitals/stations.</t>
-- fight.attack.object.bigtarget - DisableAIBoost - Prevents NPC S/M from using boost when attacking capitals/stations.</t>
-- fight.attack.object.fighter - DisablePlayerBoost - Prevents player S/M from using boost when attacking S/M.</t>
-- fight.attack.object.fighter - DisableAIBoost - Prevents NPC S/M from using boost when attacking S/M.</t>
-- move.attack.object.capital - RemoveAISkillCheckAlso - NPC pilots receive the same skill check skips as player owned pilots.</t>
-- move.attack.object.capital - IgnoreVerticalQuadrants - Ships will no longer consider vertical quadrants.</t>
-- move.attack.object.capital - EnemyQuadrantTweak - Ships will consider all quadrants when attacking an enemy except vertical quadrants if {1111920,5162} is enabled.</t>
-- move.attack.object.capital - DisablePlayerBoost - Prevents player capital ships from using boost when attacking.</t>
-- move.attack.object.capital - DisableAIBoost - Prevents NPC capital ships from using boost when attacking.</t>
-- move.attack.object.capital - TravelDriveTweak - Reduces travel time consideration for using travel drive by half.</t>
-- move.evade - DisablePlayerBoost - Prevents player ships from using boost when performing an evasive manuever.</t>
-- move.evade - DisableAIBoost - Prevents NPC ships from using boost when performing an evasive manuever.</t>
-- move.flee(multiple) - DisablePlayerBoost - Prevents player ships from using boost when fleeing.</t>
-- move.flee(multiple) - DisableAIBoost - Prevents NPC ships from using boost when fleeing.</t>
-- move.flee(multiple) - AIDropCargoLess - Halves the chance that NPC ships will drop cargo when fleeing.</t>
-- move.gate - ForceTravel - Forces travel drive usage for several movements when travelling through gates.</t>
-- move.gate - DisablePlayerBoost - Prevents player ships from using boost when travelling through gates.</t>
-- move.gate - DisableAIBoost - Prevents NPC ships from using boost when travelling through gates.</t>
-- move.gate - FasterExit - Skips exit repositioning after passing through gate if ship has no subordinates to wait for.</t>
-- order.fight.board - DisableBoost - Disables boost when performing a boarding operation.</t>
-- factiongoal_hold_space - IncreaseSearchRange - Increases the search range for ships from 2 clusters to 3 when attempting to form a defensive fleet.</t>
-- factiongoal_hold_space - LargerShipRangeConsideration - Increases the radius ships near an objective are considered for threat and defensive calculations from 20km to 40km.</t>
-- factiongoal_hold_space - PlaceDefStationsNearGates - Adds logic to place defensive stations closer to gates when ordered by faction logic.</t>
-- factiongoal_invade_space - IncreaseSearchRange - Increases the search range for ships from 2 clusters to 3 clusters for non-xenon when forming an invasion fleet. Only applies after save is older than 2 hours.</t>
-- factiongoal_invade_space - AllowMoreOrdering - Allows a faction to order up to half the desired ships for an invasion instead of one quarter. This should prevent some invasions from not gathering enough strength.</t>
-- factiongoal_invade_space - AllowOrderingForExpedition - Allows a faction that performs expeditions to order ships instead of just using whatever is available at the time.</t>
-- job_helper - BuildAtClosestOnly - Adds logic that ensures ships are only ordered at closest shipyard to their job location. This will help prevent the wandering Xenon job ships being ordered across the galaxy from where they are meant to be. Does not affect chance of selecting player shipyards.</t>
-- job_helper - HigherDistanceScaling - Increases the likelyhood that ships will be ordered at the closest shipyard to their job location. This diminishes the affect of high prices but would potentially result in player shipyard being selected less.</t>
-- notifications - IncreasedBountyRange - Adds search for stations further than radar range when checking if player should receive a bounty for enemy kill.</t>
-- notifications - NonDirectCivilianAttackNotifications - Adds check for under attack notifications that will alert player to civilian ships in a trading/mining fleet when their hull percentage + shield percentage is reduced to below 175%.</t>
+- move.generic script - ObjectChangedSector - Ships will recalculate when the object they are moving to an object and it changes sectors.
+- move.generic script - ForceTravel - Ships will be forced to use travel drive in some instances they would slowboat instead.
+- move.generic script - SmallerRadius - Ships will attempt to get closer to their destination point instead of within 10km of it. (Unless they are really really big)
+- engineer.ai script - HullDamageLimitTweak - Objects that can repair themselves are no longer skill limited and will repair to 100%, eventually.
+- engineer.ai script - InternalRepairDrones - Objects that can repair themselves will keep the drones internal and calculations are adjusted for total number of repair drones, not drones that have been launched.
+- interrupt.attacked script - DecideToFlee - Adjusts flee calculations. Civilian ships will flee when they are reduced to less than 150% of hull percentage + shield percentage.
+- interrupt.attacked script - AllowMilitaryFlee - Military ships will be allowed to flee if they are reduced to below than 75% of hull percentage + shield percentage. If the ship has an attack order, it will not flee if it thinks it can destroy it's target before dying.
+- interrupt.attacked script - DecideToFight - Adjusts retaliation calculations. Stops xenon economy ships from always fighting.
+- interrupt.attacked script - AllowCivilianFight - Civilian ships will be allowed to retaliate if they are currently waiting for orders and they think they can destroy their target before dying.
+- interrupt.attacked script - PolicePlayFavorites - Ships will not call for help if the police have a better relationship with the attacker.
+- interrupt.attacked script - Civilian Flee HP Percent - Changes HP percentage of {1111920,5031}.
+- interrupt.attacked script - Military Flee HP Percent - Changes HP percentage of {1111920,5032}.
+- lib.calculate.miningefficiency script - SectorWideProbe - A resource probe anywhere in the sector will provide benefits.
+- lib.respond.inspected script - ComplyWhenLawAbiding - Ships without a set response to being inspected will comply when they have nothing to fear from police.
+- move.collect.ship.smallship script - UseTravelMore - Small ships collecting drops will use their travel drive more for objects further than 5km away.
+- move.collect.ship.smallship script - UseMagnet - Small ships collecting drops will use an instant container magnet for wares within 5km.
+- move.seekenemies script - PoliceResponse - Police will respond more reliably to trouble calls in their sector. This also implements support for ships mimic'ing the police order.
+- move.seekenemies script - DistressCallResponse - Police and patrols will respond more reliably to distress calls in their sector (Yes, patrol ships will actually respond unlike vanilla). This also implements support for ships mimic'ing the patrol/police order.
+- move.seekenemies script - RemoveResponseSkillCheck - Removes the skill check for ships responding to trouble or distress calls further than their radar coverage.
+- order.build.deploy script - PayMe - Sets up payment scale for player owned building ships. Ships earn 1,000,000 Cr per hour of work with a minimum of 500,000 Cr.
+- order.build.deploy script - StopLosingDrones - Fixes bug where ships that move to new task after waiting more than an hour for resources at build storage leave their drones behind.
+- order.build.find.task script - BuildAIStations - Allows player owned building ships to be hired by NPC factions and will respect travel/activity blacklists.
+- order.mining.routine script - RespectMaxRange - Removes the tripling of maxrange applied to player owned ships with 5 star pilot.
+- order.mining.routine script - CheckForDemand - Ships that are set to order multiple wares will always check for demand to determine which ware to gather.
+- order.mining.routine script - CheckActualDemand - Ships that check demand will check stations that they would actually be able to sell at.
+- order.mining.routine script - DropUnsellable - Player owned ships that have unsellable cargo due to lack of demand will drop the wares just like the NPC mining ships do.
+- order.move.recon script - LongerLegalScans - Police ships that are scanning law abiding ships can do so from a longer range.
+- order.move.recon script - AttemptInterceptNotFollow - Police ships that are moving to scan a ship will attempt to move to where the target is going instead of just constantly moving to where the ship was when the move started.
+- order.move.recon script - FasterPoliceScans - Police ships will complete scans much faster than vanilla.
+- order.move.recon script - LessHostilePolice - Should prevent/reduce police going hostile for seemingly no reason.
+- trade.find.free script - BetterSellOfferFiltering - Filters sell offers from stations the ship would actually be able to buy from.
+- trade.find.free script - BetterBuyOfferFiltering - Filters buy offers from stations the ship would actually be able to sell to.
+- trade.find.free script - ImprovedBuildStoragePrioritization - Adjusts the NPC ship filtering so that it actually works but restricts the trades to small and medium ships. This also fixes a bug where player ships would ignore the minimum volume so you shouldn't see large ships with 27 energy cells.
+- trade.station script - StopIgnoringReservations - Stops stations from ignoring reservations for wares that it wants to send to it's build storage. This fixes a lot of failed trades where the ship arrives to a station that no longer has the wares for it.
+- trade.station script - StopBreakingTrades - Stops stations from breaking trades with the extremely slow and buggy calculations/methods used to transfer wares to it's build storage. If a station has the wares at the interval, it will actually send wares to build storage.
+- fight.attack.object.bigtarget - DisablePlayerBoost - Prevents player S/M from using boost when attacking capitals/stations.
+- fight.attack.object.bigtarget - DisableAIBoost - Prevents NPC S/M from using boost when attacking capitals/stations.
+- fight.attack.object.fighter - DisablePlayerBoost - Prevents player S/M from using boost when attacking S/M.
+- fight.attack.object.fighter - DisableAIBoost - Prevents NPC S/M from using boost when attacking S/M.
+- move.attack.object.capital - RemoveAISkillCheckAlso - NPC pilots receive the same skill check skips as player owned pilots.
+- move.attack.object.capital - IgnoreVerticalQuadrants - Ships will no longer consider vertical quadrants.
+- move.attack.object.capital - EnemyQuadrantTweak - Ships will consider all quadrants when attacking an enemy except vertical quadrants if {1111920,5162} is enabled.
+- move.attack.object.capital - DisablePlayerBoost - Prevents player capital ships from using boost when attacking.
+- move.attack.object.capital - DisableAIBoost - Prevents NPC capital ships from using boost when attacking.
+- move.attack.object.capital - TravelDriveTweak - Reduces travel time consideration for using travel drive by half.
+- move.evade - DisablePlayerBoost - Prevents player ships from using boost when performing an evasive manuever.
+- move.evade - DisableAIBoost - Prevents NPC ships from using boost when performing an evasive manuever.
+- move.flee(multiple) - DisablePlayerBoost - Prevents player ships from using boost when fleeing.
+- move.flee(multiple) - DisableAIBoost - Prevents NPC ships from using boost when fleeing.
+- move.flee(multiple) - AIDropCargoLess - Halves the chance that NPC ships will drop cargo when fleeing.
+- move.gate - ForceTravel - Forces travel drive usage for several movements when travelling through gates.
+- move.gate - DisablePlayerBoost - Prevents player ships from using boost when travelling through gates.
+- move.gate - DisableAIBoost - Prevents NPC ships from using boost when travelling through gates.
+- move.gate - FasterExit - Skips exit repositioning after passing through gate if ship has no subordinates to wait for.
+- order.fight.board - DisableBoost - Disables boost when performing a boarding operation.
+- factiongoal_hold_space - IncreaseSearchRange - Increases the search range for ships from 2 clusters to 3 when attempting to form a defensive fleet.
+- factiongoal_hold_space - LargerShipRangeConsideration - Increases the radius ships near an objective are considered for threat and defensive calculations from 20km to 40km.
+- factiongoal_hold_space - PlaceDefStationsNearGates - Adds logic to place defensive stations closer to gates when ordered by faction logic.
+- factiongoal_invade_space - IncreaseSearchRange - Increases the search range for ships from 2 clusters to 3 clusters for non-xenon when forming an invasion fleet. Only applies after save is older than 2 hours.
+- factiongoal_invade_space - AllowMoreOrdering - Allows a faction to order up to half the desired ships for an invasion instead of one quarter. This should prevent some invasions from not gathering enough strength.
+- factiongoal_invade_space - AllowOrderingForExpedition - Allows a faction that performs expeditions to order ships instead of just using whatever is available at the time.
+- job_helper - BuildAtClosestOnly - Adds logic that ensures ships are only ordered at closest shipyard to their job location. This will help prevent the wandering Xenon job ships being ordered across the galaxy from where they are meant to be. Does not affect chance of selecting player shipyards.
+- job_helper - HigherDistanceScaling - Increases the likelyhood that ships will be ordered at the closest shipyard to their job location. This diminishes the affect of high prices but would potentially result in player shipyard being selected less.
+- notifications - IncreasedBountyRange - Adds search for stations further than radar range when checking if player should receive a bounty for enemy kill.
+- notifications - NonDirectCivilianAttackNotifications - Adds check for under attack notifications that will alert player to civilian ships in a trading/mining fleet when their hull percentage + shield percentage is reduced to below 175%.
+- conversations - RemoteInventoryTransfer - Adds communication option to transfer pilot inventory to player remotely.
 
 ##### Save game compatible.
 
