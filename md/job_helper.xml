@@ -3,88 +3,151 @@
   <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/find_waiting_subordinate[@name='$ShipsToBuild']" pos="before">
     <do_if value="true">
       <do_if value="@global.$DATweaks.$JobHelper.$BuildAtClosestOnly">
-        <set_value name="$DATShipyards" exact="table[]"/>
+        <set_value name="$DATShipyards" exact="[]"/>
+        <set_value name="$DATShipyardCount" exact="0"/>
+        <set_value name="$DATWharfs" exact="[]"/>
+        <set_value name="$DATWharfCount" exact="0"/>
+        <set_value name="$DATSkipCheckShipyard" exact="false"/>
+        <set_value name="$DATSkipCheckWharf" exact="false"/>
+        <set_value name="$DATSkipCount" exact="0"/>
+        <set_value name="$DATBuildCount" exact="0"/>
       </do_if>
       <do_elseif value="$DATShipyards?">
         <remove_value name="$DATShipyards"/>
+        <remove_value name="$DATShipyardCount"/>
+        <remove_value name="$DATWharfs"/>
+        <remove_value name="$DATWharfCount"/>
+        <remove_value name="$DATSkipCheckShipyard"/>
+        <remove_value name="$DATSkipCheckWharf"/>
+        <remove_value name="$DATSkipCount"/>
+        <remove_value name="$DATBuildCount"/>
       </do_elseif>
     </do_if>
   </add>
-  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$ShipsToBuild.count']/do_all[@exact='$Shipyards.count'][@counter='$i']/do_if[@value='$FreeBuildModuleTable.keys.count']">
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$ShipsToBuild.count']/do_all[@exact='$Shipyards.count'][@counter='$i']/do_if[@value='$BuildModules.count']/set_value[@name='$QueuedBuilds'][@exact='$Shipyard.builds.queued']" pos="before">
     <do_if value="$DATShipyards?">
-      <set_value name="$DATShipyards.{$Shipyard}" exact="table[]"/>
-      <set_value name="$DATShipyards.{$Shipyard}.$BuildableShipWares" exact="$BuildableShipWares"/>
+      <!-- The count vars are for skipping distance check logic -->
+      <do_if value="$DATShipyardCount? and $Shipyard.isshipyard and (($Faction == $Shipyard.owner) or $Shipyard.isplayerowned)">
+        <append_to_list name="$DATShipyards" exact="$Shipyard" unique="true"/>
+        <do_if value="($Faction == $Shipyard.owner)">
+          <set_value name="$DATShipyardCount" exact="1" operation="add"/>
+        </do_if>
+      </do_if>
+      <do_elseif value="$DATWharfCount? and $Shipyard.iswharf and (($Faction == $Shipyard.owner) or $Shipyard.isplayerowned)">
+        <append_to_list name="$DATWharfs" exact="$Shipyard" unique="true"/>
+        <do_if value="($Faction == $Shipyard.owner)">
+          <set_value name="$DATWharfCount" exact="1" operation="add"/>
+        </do_if>
+      </do_elseif>
     </do_if>
   </add>
-  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$ShipsToBuild.count']/do_all[@exact='$Shipyards.count'][@counter='$i']/do_else[2]">
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$ShipsToBuild.count']/remove_value[@name='$BuildProcessors']" pos="before">
     <do_if value="$DATShipyards?">
-      <set_value name="$DATShipyards.{$Shipyard}" exact="table[]"/>
-      <set_value name="$DATShipyards.{$Shipyard}.$BuildableShipWares" exact="$BuildableShipWares"/>
+      <do_if value="$DATShipyardCount? and (not (($DATShipyardCount lt 0) or ($DATShipyardCount ge 2)))">
+        <!-- Skip the distance check if faction has 0 or 1 sy -->
+        <set_value name="$DATSkipCheckShipyard" exact="true"/>
+      </do_if>
+      <do_if value="$DATWharfCount? and (not (($DATWharfCount lt 0) or ($DATWharfCount ge 2)))">
+        <!-- Skip the distance check if faction has 0 or 1 wharf -->
+        <set_value name="$DATSkipCheckWharf" exact="true"/>
+      </do_if>
     </do_if>
   </add>
   <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_all[@exact='$Shipyards.count'][@counter='$k']" pos="before">
-    <do_if value="$DATShipyards? and $DATShipyards.keys.count">
-      <set_value name="$DATShipyardDistances" exact="table[]"/>
-      <do_for_each name="$DATShipyard" in="$DATShipyards.keys.list">
-        <do_if value="$DATShipyards.{$DATShipyard}.$BuildableShipWares.indexof.{$ShipToBuild.macro.ware}">
-          <set_value name="$DATBuildModules" exact="$DATShipyard.buildmodules"/>
-          <do_if value="$DATBuildModules.count" min="1">
-            <set_value name="$DATCorrectSize" exact="false"/>
-            <do_for_each name="$DATBuildModule" in="$DATBuildModules">
-              <do_if value="$DATBuildModule.dock.{$ShipToBuild.docksize}">
-                <set_value name="$DATCorrectSize" exact="true"/>
-                <break/>
-              </do_if>
-            </do_for_each>
-            <do_if value="$DATCorrectSize">
-              <set_value name="$DATJobCluster" exact="@$ShipToBuild.jobcommander.cluster"/>
-              <do_if value="not $DATJobCluster">
-                <set_value name="$DATJobCluster" exact="@$ShipToBuild.jobmainsector.cluster"/>
-              </do_if>
-              <do_if value="@$DATShipyard.gatedistance.{$DATJobCluster} ge 0">
-                <set_value name="$DATShipyardDistances.{$DATShipyard}" exact="$DATShipyard.gatedistance.{$DATJobCluster}"/>
-              </do_if>
-            </do_if>
+    <do_if value="$DATShipyards?">
+      <do_if value="$DATSkipCheckShipyard? and $DATSkipCheckWharf? and (not ($DATSkipCheckShipyard and $DATSkipCheckWharf))">
+        <set_value name="$DATSingleDebugOutput" exact="true"/>
+        <!-- Create a list of the closest stations + player stations -->
+        <do_if value="(not $DATSkipCheckShipyard) and $DATShipyards? and $DATShipyards.count and $ShipToBuild.macro.isclass.[class.ship_l,class.ship_xl]">
+          <remove_value name="$DATJobCluster"/>
+          <set_value name="$DATJobCluster" exact="@$ShipToBuild.jobcommander.cluster"/>
+          <do_if value="not $DATJobCluster">
+            <set_value name="$DATJobCluster" exact="@$ShipToBuild.jobmainsector.cluster"/>
           </do_if>
-        </do_if>
-      </do_for_each>
-      <do_if value="$DATShipyardDistances.keys.count" min="1">
-        <set_value name="$DATShipyardsByDistance" exact="$DATShipyardDistances.keys.sorted"/>
-        <set_value name="$VanillaShipyardClone" exact="$Shipyards"/>
-        <do_if value="$DATShipyardsByDistance.count and $VanillaShipyardClone.count">
-          <do_for_each name="$DATShipyard" in="$Shipyards">
-            <do_if value="not ((@$DATShipyardsByDistance.indexof.{$DATShipyard} == 1) or ($DATShipyard.isplayerowned))">
-              <remove_from_list name="$VanillaShipyardClone" exact="$DATShipyard" multiple="false"/>
+          <set_value name="$DATValidStations" exact="[]"/>
+          <sort_list list="$DATShipyards" sortbyvalue="loop.element.gatedistance.{$DATJobCluster}"/>
+          <do_for_each name="$DATStation" in="$DATShipyards" counter="$A">
+            <do_if value="(($A == 1) or ($DATValidStations.count == 0)) and ($DATStation.gatedistance.{$DATJobCluster} ge 0)">
+              <append_to_list name="$DATValidStations" exact="$DATStation"/>
+            </do_if>
+            <do_if value="not $DATValidStations.indexof.{$DATStation} and ($DATStation.gatedistance.{$DATJobCluster} ge 0)">
+              <do_if value="$DATStation.gatedistance.{$DATJobCluster} lt $DATValidStations.{1}.gatedistance.{$DATJobCluster}">
+                <clear_list list="$DATValidStations"/>
+                <append_to_list name="$DATValidStations" exact="$DATStation"/>
+              </do_if>
+              <do_elseif value="$DATStation.gatedistance.{$DATJobCluster} == $DATValidStations.{1}.gatedistance.{$DATJobCluster}">
+                <append_to_list name="$DATValidStations" exact="$DATStation"/>
+              </do_elseif>
+              <do_elseif value="$DATStation.isplayerowned">
+                <append_to_list name="$DATValidStations" exact="$DATStation"/>
+              </do_elseif>
             </do_if>
           </do_for_each>
-          <remove_value name="$DATShipyardDistances"/>
-          <remove_value name="$DATShipyardsByDistance"/>
-          <do_if value="$VanillaShipyardClone.count == 0">
-            <remove_value name="$VanillaShipyardClone"/>
-            <continue/>
+        </do_if>
+        <do_elseif value="(not $DATSkipCheckWharf) and $DATWharfs? and $DATWharfs.count and $ShipToBuild.macro.isclass.[class.ship_xs,class.ship_s,class.ship_m]">
+          <remove_value name="$DATJobCluster"/>
+          <set_value name="$DATJobCluster" exact="@$ShipToBuild.jobcommander.cluster"/>
+          <do_if value="not $DATJobCluster">
+            <set_value name="$DATJobCluster" exact="@$ShipToBuild.jobmainsector.cluster"/>
           </do_if>
+          <set_value name="$DATValidStations" exact="[]"/>
+          <sort_list list="$DATWharfs" sortbyvalue="loop.element.gatedistance.{$DATJobCluster}"/>
+          <do_for_each name="$DATStation" in="$DATWharfs" counter="$A">
+            <do_if value="(($A == 1) or ($DATValidStations.count == 0)) and ($DATStation.gatedistance.{$DATJobCluster} ge 0)">
+              <append_to_list name="$DATValidStations" exact="$DATStation"/>
+            </do_if>
+            <do_if value="not $DATValidStations.indexof.{$DATStation} and ($DATStation.gatedistance.{$DATJobCluster} ge 0)">
+              <do_if value="$DATStation.gatedistance.{$DATJobCluster} lt $DATValidStations.{1}.gatedistance.{$DATJobCluster}">
+                <clear_list list="$DATValidStations"/>
+                <append_to_list name="$DATValidStations" exact="$DATStation"/>
+              </do_if>
+              <do_elseif value="$DATStation.gatedistance.{$DATJobCluster} == $DATValidStations.{1}.gatedistance.{$DATJobCluster}">
+                <append_to_list name="$DATValidStations" exact="$DATStation"/>
+              </do_elseif>
+              <do_elseif value="$DATStation.isplayerowned">
+                <append_to_list name="$DATValidStations" exact="$DATStation"/>
+              </do_elseif>
+            </do_if>
+          </do_for_each>
+        </do_elseif>
+        <do_else>
+          <remove_value name="$DATValidStations"/>
+        </do_else>
+      </do_if>
+      <do_else>
+        <remove_value name="$DATValidStations"/>
+      </do_else>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_all[@exact='$Shipyards.count'][@counter='$k']/do_if[@value='$ShipyardTable.{$Shipyard}.$BuildableShipWares.indexof.{$ShipToBuild.macro.ware}']/do_if[@value='$HasSuitableBuildModule']" pos="before">
+    <do_if value="$DATShipyards? and $HasSuitableBuildModule and ($DATSkipCheckShipyard? and $DATSkipCheckWharf?) and (not ($DATSkipCheckShipyard and $DATSkipCheckWharf))">
+      <do_if value="(((not $DATSkipCheckShipyard) and $ShipToBuild.macro.isclass.[class.ship_l,class.ship_xl]) or ((not $DATSkipCheckWharf) and $ShipToBuild.macro.isclass.[class.ship_xs,class.ship_s,class.ship_m])) and $DATValidStations? and (not $DATValidStations.indexof.{$Shipyard})">
+        <set_value name="$HasSuitableBuildModule" exact="false"/>
+        <do_if value="@$DATSingleDebugOutput">
+          <set_value name="$DATDebugString" exact="'MOD: DAT -- Skipped Build -- $Faction: %s -- $ShipToBuild.macro: %s -- $DATJobCluster: %s -- Distance: %s -- BestShipyard: %s(%s)(%s) -- BestDistance: %s'.[$Faction,@$ShipToBuild.macro,@$DATJobCluster.knownname,@$Shipyard.gatedistance.{$DATJobCluster},@$DATValidStations.{1}.knownname,@$DATValidStations.{1}.idcode,@$DATValidStations.{1}.sector.knownname,@$DATValidStations.{1}.gatedistance.{$DATJobCluster}]"/>
+          <remove_value name="$DATSingleDebugOutput"/>
+          <remove_value name="$DATJobCluster"/>
         </do_if>
       </do_if>
     </do_if>
   </add>
   <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_all[@exact='$Shipyards.count'][@counter='$k']/do_if[@value='$ShipyardTable.{$Shipyard}.$BuildableShipWares.indexof.{$ShipToBuild.macro.ware}']/do_if[@value='$HasSuitableBuildModule']/do_elseif[@value='$Shipyard.gatedistance.{$JobCluster} ge 0']">
-    <do_if value="@global.$DATweaks.$JobHelper.$HigherDistanceScaling and (not $Shipyard.isplayerowned)">
-      <set_value name="$ShipyardDistanceTable.{$Shipyard}" exact="$JumpCheckRange * 2"/>
-      <do_if value="$Shipyard.trueowner != $Faction">
-        <set_value name="$ShipyardDistanceTable.{$Shipyard}" exact="$JumpCheckRange * 4"/>
-      </do_if>
+    <do_if value="@global.$DATweaks.$JobHelper.$HigherDistanceScaling">
+      <set_value name="$ShipyardDistanceTable.{$Shipyard}" exact="$Shipyard.gatedistance.{$JobCluster}"/>
     </do_if>
   </add>
-  <replace sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_all[@exact='$PriceOrder.count'][@counter='$k']/do_if[@value='$DistanceOrder.indexof.{$PriceOrder.{$k}}']/set_value[@name='$ScoredShipyardTable.{$PriceOrder.{$k}}'][@exact='$k + $DistanceOrder.indexof.{$PriceOrder.{$k}}']/@exact">$k + $ShipyardDistanceTable.{$PriceOrder.{$k}}</replace>
-  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_if[@value='$ScoredShipyardTable.keys.count']" pos="before">
-    <do_if value="@global.$DATweaks.$JobHelper.$BuildAtClosestOnly and $DATShipyards? and $VanillaShipyardClone? and $VanillaShipyardClone.count">
-      <set_value name="$ScoredShipyardTable" exact="table[]"/>
-      <do_for_each name="$DATShipyard" in="$VanillaShipyardClone">
-        <do_if value="$PriceOrder.indexof.{$DATShipyard} and $DistanceOrder.indexof.{$DATShipyard}">
-          <set_value name="$ScoredShipyardTable.{$DATShipyard}" exact="$PriceOrder.indexof.{$DATShipyard} + $DistanceOrder.indexof.{$DATShipyard}"/>
-        </do_if>
-      </do_for_each>
-      <remove_value name="$VanillaShipyardClone"/>
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_all[@exact='$PriceOrder.count'][@counter='$k']" pos="before">
+    <do_if value="true">
+      <do_if value="$DATShipyards? and $DATDebugString? and (not $DistanceOrder.count)">
+        <set_value name="$DATSkipCount" exact="1" operation="add"/>
+        <debug_text text="$DATDebugString" context="false" filter="scripts"/>
+      </do_if>
+      <remove_value name="$DATDebugString"/>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_all[@exact='$PriceOrder.count'][@counter='$k']/do_if[@value='$DistanceOrder.indexof.{$PriceOrder.{$k}}']">
+    <do_if value="@global.$DATweaks.$JobHelper.$HigherDistanceScaling">
+      <set_value name="$ScoredShipyardTable.{$PriceOrder.{$k}}" exact="$k + $ShipyardDistanceTable.{$PriceOrder.{$k}}"/>
     </do_if>
   </add>
   <replace sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_if[@value='$ScoredShipyardTable.keys.count']/set_value[@name='$SelectedShipyardIndex'][@min='1'][@max='$ScoredShipyardTable.keys.count']">
@@ -97,5 +160,15 @@
   </replace>
   <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_if[@value='$ScoredShipyardTable.keys.count']/set_value[@name='$ScoreOrder'][@exact='$ScoredShipyardTable.keys.sorted']" pos="before">
     <set_value name="$SelectedShipyardIndex" min="1" max="$ScoredShipyardTable.keys.count" profile="decreasing" scale="if $DATScale? then $DATScale else 1"/>
+  </add>
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']/do_all[@exact='$ShipsToBuild.count'][@counter='$i']/do_if[@value='$ScoredShipyardTable.keys.count']/add_build_to_construct_ship[@object='$Shipyard'][@result='$Build']" pos="before">
+    <do_if value="$DATBuildCount?">
+      <set_value name="$DATBuildCount" exact="1" operation="add"/>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/library[@name='Manager']/cues/cue[@name='Process_Ships']/actions/do_if[@value='$Shipyards.count']">
+    <do_if value="$DATSkipCount? and $DATBuildCount? and ($DATSkipCount gt 0)">
+      <debug_text text="'MOD: DAT -- End Result -- $Faction: %s -- Skipped: %s -- Ordered: %s -- LeftToProcess: %s'.[$Faction,$DATSkipCount,$DATBuildCount,@$ShipsToBuild.count - $DATBuildCount]" context="false" filter="scripts"/>
+    </do_if>
   </add>
 </diff>
