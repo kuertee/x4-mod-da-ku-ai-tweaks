@@ -1,73 +1,97 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-	<replace sel="/aiscript/attention[@min='unknown']/actions/do_elseif[@value='$buyspaces.count']/do_if[@value='$filteredwarebasket.count']/do_all[@exact='$buyspaces.count'][@counter='$i']/find_sell_offer[@result='$selloffers'][@space='$buyspaces.{$i}']">
-		<do_if value="true">
-			<do_if value="@global.$DATweaks.$TradeFindFree.$BetterSellOfferFiltering">
-				<find_sell_offer tradepartner="this.assignedcontrolled" space="$buyspaces.{$i}" result="$selloffers" wares="$filteredwarebasket" multiple="true">
-					<match_seller tradesknownto="this.owner" owner="$buyfromfactions" negateownerfilter="not $buyfromfactions.count">
-						<match_content checkoperational="true">
-							<match_dock size="this.assignedcontrolled.docksize" trading="true"/>
-						</match_content>
-						<match_relation_to object="this.assignedcontrolled" relation="dock" comparison="ge"/>
-						<match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.assignedcontrolled"/>
-					</match_seller>
-					<totalvolume min="$practicalminvolume"/>
-					<mintotalvolume max="$practicalfreevolume"/>
-					<relativeprice max="$maxrelprice" tradepartner="if this.ship.isplayerowned then this.ship else null" comment="a value less than 0 means the sellprice must be below average"/>
-				</find_sell_offer>
-			</do_if>
-			<do_else>
-				<find_sell_offer tradepartner="this.ship" space="$buyspaces.{$i}" result="$selloffers" wares="$filteredwarebasket" multiple="true">
-					<match_seller tradesknownto="this.owner" owner="$buyfromfactions" negateownerfilter="not $buyfromfactions.count">
-						<match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.ship"/>
-					</match_seller>
-					<totalvolume min="$practicalminvolume"/>
-					<mintotalvolume max="$practicalfreevolume"/>
-					<relativeprice max="$maxrelprice" tradepartner="if this.ship.isplayerowned then this.ship else null" comment="a value less than 0 means the sellprice must be below average"/>
-				</find_sell_offer>
-			</do_else>
-		</do_if>
-	</replace>
-	<replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/find_buy_offer[@result='$buyoffers'][@space='$sellspaces.{$i}']">
-		<do_if value="true">
-			<do_if value="@global.$DATweaks.$TradeFindFree.$BetterBuyOfferFiltering">
-				<find_buy_offer tradepartner="this.assignedcontrolled" wares="$filteredwarebasket" space="$sellspaces.{$i}" result="$buyoffers" multiple="true">
-					<offervolume min="if $sellcurrentcargo_internal? then 1 else (if $practicalminvolume? then $practicalminvolume else 1)" tradepartner="this.ship"/>
-					<match_buyer tradesknownto="this.owner" owner="$selltofactions" negateownerfilter="not $selltofactions.count">
-						<match_content checkoperational="true">
-							<match_dock size="this.assignedcontrolled.docksize" trading="true"/>
-						</match_content>
-						<match_relation_to object="this.assignedcontrolled" relation="dock" comparison="ge"/>
-						<match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.assignedcontrolled"/>
-					</match_buyer>
-				</find_buy_offer>
-			</do_if>
-			<do_else>
-				<find_buy_offer tradepartner="this.ship" wares="$filteredwarebasket" space="$sellspaces.{$i}" result="$buyoffers" multiple="true">
-					<offervolume min="if $sellcurrentcargo_internal? then 1 else (if $practicalminvolume? then $practicalminvolume else 1)" tradepartner="this.ship"/>
-					<match_buyer tradesknownto="this.owner" owner="$selltofactions" negateownerfilter="not $selltofactions.count">
-						<match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.ship"/>
-					</match_buyer>
-				</find_buy_offer>
-			</do_else>
-		</do_if>
-	</replace>
-	<add sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/do_if[@value='$buyoffers.count']/do_all[@exact='$buyoffers.count'][@counter='$k']/do_if[@value='not $table_buyoffers.{$tradevalue}?']" pos="before">
-		<do_if value="@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and $tradevalue? and $tempoffer.buyer.isclass.buildstorage and this.assignedcontrolled.isclass.[class.ship_s,class.ship_m] and (not this.isplayerowned)">
-			<do_if value="not $tempoffer.buyer.buildmodule.mayrequireconstructionvessel">
-				<set_value name="$tradevalue" exact="50000" operation="add"/>
-			</do_if>
-			<do_elseif value="$tempoffer.buyer.buildmodule.iswaitingforconstructionvessel and (not $tempoffer.buyer.buildmodule.constructionvessel)">
-				<set_value name="$tradevalue" exact="75000" operation="add"/>
-			</do_elseif>
-			<do_elseif value="$tempoffer.buyer.buildmodule.constructionvessel.exists and (not $tempoffer.buyer.buildmodule.iswaitingforresources)">
-				<set_value name="$tradevalue" exact="100000" operation="add"/>
-			</do_elseif>
-			<do_elseif value="$tempoffer.buyer.buildmodule.constructionvessel.exists and $tempoffer.buyer.buildmodule.iswaitingforresources">
-				<set_value name="$tradevalue" exact="300000" operation="add"/>
-			</do_elseif>
-		</do_if>
-	</add>
-	<replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/do_if[@value='$buyoffers.count']/do_all[@exact='$buyoffers.count'][@counter='$k']/do_if[@value='not $table_buyoffers.{$tradevalue}?']/do_if[@value='$tempoffer.buyer.isclass.buildstorage']/@value">$tempoffer.buyer.isclass.buildstorage and ((@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and this.assignedcontrolled.isclass.[class.ship_s,class.ship_m] and (not this.isplayerowned)) or (not @global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization))</replace>
-	<replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/do_if[@value='$buyoffers.count']/do_all[@exact='$buyoffers.count'][@counter='$k']/do_if[@value='not $table_buyoffers.{$tradevalue}?']/do_if[@value='$tempoffer.buyer.isclass.buildstorage and ((@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and this.assignedcontrolled.isclass.[class.ship_s,class.ship_m] and (not this.isplayerowned)) or (not @global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization))']/do_if[@value='not this.isplayerowned']/@value">(@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and false) or ((not @global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization) and (not this.isplayerowned))</replace>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.ship.cargo.free.universal gt 0']" pos="before">
+    <do_if value="true">
+      <set_value name="$DAIncreaseMin" exact="false"/>
+      <do_if value="@global.$DATweaks.$TradeFindFree.$HigherMinVolume">
+        <set_value name="$DAIncreaseMin" exact="true"/>
+      </do_if>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='this.ship.cargo.free.universal gt 0']">
+    <do_if value="@$DAIncreaseMin and this.assignedcontrolled.isclass.[class.ship_m,class.ship_l,class.ship_xl]">
+      <set_value name="$minvolume.{-1}" exact="[$freevolume.{-1}, this.ship.cargo.capacity.universal / 2].min"/>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_else[1]">
+    <do_if value="@$DAIncreaseMin and this.assignedcontrolled.isclass.[class.ship_m,class.ship_l,class.ship_xl]">
+      <set_value name="$minvolume.{waretransport.container}" exact="[$freevolume.{waretransport.container}, this.ship.cargo.capacity.container / 2].min"/>
+      <set_value name="$minvolume.{waretransport.solid}" exact="[$freevolume.{waretransport.solid}, this.ship.cargo.capacity.solid / 2].min"/>
+      <set_value name="$minvolume.{waretransport.liquid}" exact="[$freevolume.{waretransport.liquid}, this.ship.cargo.capacity.liquid / 2].min"/>
+    </do_if>
+  </add>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='$useuniversalstorage?']" pos="before">
+    <remove_value name="$DAIncreaseMin"/>
+  </add>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_elseif[@value='$buyspaces.count']/do_if[@value='$filteredwarebasket.count']/do_all[@exact='$buyspaces.count'][@counter='$i']/find_sell_offer[@result='$selloffers'][@space='$buyspaces.{$i}']">
+    <do_if value="true">
+      <do_if value="@global.$DATweaks.$TradeFindFree.$BetterSellOfferFiltering">
+        <find_sell_offer tradepartner="this.assignedcontrolled" space="$buyspaces.{$i}" result="$selloffers" wares="$filteredwarebasket" multiple="true">
+          <match_seller tradesknownto="this.owner" owner="$buyfromfactions" negateownerfilter="not $buyfromfactions.count">
+            <match_content checkoperational="true">
+              <match_dock size="this.assignedcontrolled.docksize" trading="true"/>
+            </match_content>
+            <match_relation_to object="this.assignedcontrolled" relation="dock" comparison="ge"/>
+            <match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.assignedcontrolled"/>
+          </match_seller>
+          <totalvolume min="$practicalminvolume"/>
+          <mintotalvolume max="$practicalfreevolume"/>
+          <relativeprice max="$maxrelprice" tradepartner="if this.ship.isplayerowned then this.ship else null" comment="a value less than 0 means the sellprice must be below average"/>
+        </find_sell_offer>
+      </do_if>
+      <do_else>
+        <find_sell_offer tradepartner="this.ship" space="$buyspaces.{$i}" result="$selloffers" wares="$filteredwarebasket" multiple="true">
+          <match_seller tradesknownto="this.owner" owner="$buyfromfactions" negateownerfilter="not $buyfromfactions.count">
+            <match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.ship"/>
+          </match_seller>
+          <totalvolume min="$practicalminvolume"/>
+          <mintotalvolume max="$practicalfreevolume"/>
+          <relativeprice max="$maxrelprice" tradepartner="if this.ship.isplayerowned then this.ship else null" comment="a value less than 0 means the sellprice must be below average"/>
+        </find_sell_offer>
+      </do_else>
+    </do_if>
+  </replace>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/do_if[@value='(this.trueowner == faction.xenon) and ($sellspaces.count gt 1)']" type="@chance">0</add>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/find_buy_offer[@result='$buyoffers'][@space='$sellspaces.{$i}']">
+    <do_if value="true">
+      <do_if value="@global.$DATweaks.$TradeFindFree.$BetterBuyOfferFiltering">
+        <find_buy_offer tradepartner="this.assignedcontrolled" wares="$filteredwarebasket" space="$sellspaces.{$i}" result="$buyoffers" multiple="true">
+          <offervolume min="if $sellcurrentcargo_internal? then 1 else (if $practicalminvolume? then $practicalminvolume else 1)" tradepartner="this.ship"/>
+          <match_buyer tradesknownto="this.owner" owner="$selltofactions" negateownerfilter="not $selltofactions.count">
+            <match_content checkoperational="true">
+              <match_dock size="this.assignedcontrolled.docksize" trading="true"/>
+            </match_content>
+            <match_relation_to object="this.assignedcontrolled" relation="dock" comparison="ge"/>
+            <match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.assignedcontrolled"/>
+          </match_buyer>
+        </find_buy_offer>
+      </do_if>
+      <do_else>
+        <find_buy_offer tradepartner="this.ship" wares="$filteredwarebasket" space="$sellspaces.{$i}" result="$buyoffers" multiple="true">
+          <offervolume min="if $sellcurrentcargo_internal? then 1 else (if $practicalminvolume? then $practicalminvolume else 1)" tradepartner="this.ship"/>
+          <match_buyer tradesknownto="this.owner" owner="$selltofactions" negateownerfilter="not $selltofactions.count">
+            <match_use_blacklist group="$blacklistgroup" type="blacklisttype.objectactivity" object="this.ship"/>
+          </match_buyer>
+        </find_buy_offer>
+      </do_else>
+    </do_if>
+  </replace>
+  <add sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/do_if[@value='$buyoffers.count']/do_all[@exact='$buyoffers.count'][@counter='$k']/do_if[@value='not $table_buyoffers.{$tradevalue}?']" pos="before">
+    <do_if value="@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and $tradevalue? and $tempoffer.buyer.isclass.buildstorage and this.assignedcontrolled.isclass.[class.ship_s,class.ship_m] and (not this.isplayerowned)">
+      <do_if value="not $tempoffer.buyer.buildmodule.mayrequireconstructionvessel">
+        <set_value name="$tradevalue" exact="50000" operation="add"/>
+      </do_if>
+      <do_elseif value="$tempoffer.buyer.buildmodule.iswaitingforconstructionvessel and (not $tempoffer.buyer.buildmodule.constructionvessel)">
+        <set_value name="$tradevalue" exact="75000" operation="add"/>
+      </do_elseif>
+      <do_elseif value="$tempoffer.buyer.buildmodule.constructionvessel.exists and (not $tempoffer.buyer.buildmodule.iswaitingforresources)">
+        <set_value name="$tradevalue" exact="100000" operation="add"/>
+      </do_elseif>
+      <do_elseif value="$tempoffer.buyer.buildmodule.constructionvessel.exists and $tempoffer.buyer.buildmodule.iswaitingforresources">
+        <set_value name="$tradevalue" exact="300000" operation="add"/>
+      </do_elseif>
+    </do_if>
+  </add>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/do_if[@value='$buyoffers.count']/do_all[@exact='$buyoffers.count'][@counter='$k']/do_if[@value='not $table_buyoffers.{$tradevalue}?']/do_if[@value='$tempoffer.buyer.isclass.buildstorage']/@value">$tempoffer.buyer.isclass.buildstorage and ((@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and this.assignedcontrolled.isclass.[class.ship_s,class.ship_m] and (not this.isplayerowned)) or (not @global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization))</replace>
+  <replace sel="/aiscript/attention[@min='unknown']/actions/do_all[@exact='$sellspaces.count'][@counter='$i']/do_if[@value='$buyoffers.count']/do_all[@exact='$buyoffers.count'][@counter='$k']/do_if[@value='not $table_buyoffers.{$tradevalue}?']/do_if[@value='$tempoffer.buyer.isclass.buildstorage and ((@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and this.assignedcontrolled.isclass.[class.ship_s,class.ship_m] and (not this.isplayerowned)) or (not @global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization))']/do_if[@value='not this.isplayerowned']/@value">(@global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization and false) or ((not @global.$DATweaks.$TradeFindFree.$ImprovedBuildStoragePrioritization) and (not this.isplayerowned))</replace>
 </diff>
