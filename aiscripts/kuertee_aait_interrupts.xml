@@ -2151,40 +2151,37 @@
 						<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_remove_subordinate'" param2="this.assignedcontrolled" />
 					</do_if>
 				</do_if>
-				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder">
+				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder.exists">
 					<cancel_order order="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder" />
 				</do_if>
-				<!-- <do_if value="@this.assignedcontrolled.order.script == 'order.fight.attack.object'">
-					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_target_attack (edit_order_param $primarytarget): ' + @$kAAIT_target_attack.knownname + ' ' + @$kAAIT_target_attack.idcode + ' canbeattacked: ' + @$kAAIT_target_attack.canbeattacked" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-					<edit_order_param order="this.assignedcontrolled.order" param="'primarytarget'" value="$kAAIT_target_attack"/>
+				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget.exists">
+					<cancel_order order="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget" />
 				</do_if>
-				<do_else> -->
-					<do_if value="@$kAAIT_is_attack_order_tactical">
-						<create_order name="$kAAIT_result_order_attackOther" object="this.assignedcontrolled" id="'TacticalOrder'" immediate="true">
-							<param name="selectedtarget" value="$kAAIT_target_attack" />
-							<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
-							<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
-							<param name="debugchance" value="@$debugchance"/>
-						</create_order>
+				<do_if value="@$kAAIT_is_attack_order_tactical">
+					<create_order name="$kAAIT_result_order_attackOther" object="this.assignedcontrolled" id="'TacticalOrder'" immediate="true">
+						<param name="selectedtarget" value="$kAAIT_target_attack" />
+						<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
+						<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
+						<param name="debugchance" value="@$debugchance"/>
+					</create_order>
+				</do_if>
+				<do_else>
+					<create_order name="$kAAIT_result_order_attackOther" object="this.assignedcontrolled" id="'Attack'" immediate="true">
+						<param name="primarytarget" value="$kAAIT_target_attack" />
+						<param name="secondarytargets" value="@$secondarytargets" />
+						<param name="pursuedistance" value="this.assignedcontrolled.maxradarrange" />
+						<param name="pursuetargets" value="false" />
+						<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
+						<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
+						<param name="debugchance" value="@$debugchance"/>
+					</create_order>
+				</do_else>
+				<do_if value="@$kAAIT_result_order_attackOther.exists">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder" exact="$kAAIT_result_order_attackOther" />
+					<do_if value="not @$kAAIT_target_attack.iscapitalship">
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget" exact="$kAAIT_result_order_attackOther" />
 					</do_if>
-					<do_else>
-						<create_order name="$kAAIT_result_order_attackOther" object="this.assignedcontrolled" id="'Attack'" immediate="true">
-							<param name="primarytarget" value="$kAAIT_target_attack" />
-							<param name="secondarytargets" value="@$secondarytargets" />
-							<param name="pursuedistance" value="this.assignedcontrolled.maxradarrange" />
-							<param name="pursuetargets" value="false" />
-							<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
-							<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
-							<param name="debugchance" value="@$debugchance"/>
-						</create_order>
-					</do_else>
-					<do_if value="@$kAAIT_result_order_attackOther.exists">
-						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder" exact="$kAAIT_result_order_attackOther" />
-						<do_if value="not @$kAAIT_target_attack.iscapitalship">
-							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$attackOrder_smallTarget" exact="$kAAIT_result_order_attackOther" />
-						</do_if>
-					</do_if>
-				<!-- </do_else> -->
+				</do_if>
 			</actions>
 
 			<actions name="kAAIT_Order_Avoid">
