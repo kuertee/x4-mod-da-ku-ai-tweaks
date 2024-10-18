@@ -1,5 +1,75 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='PlayerBoarding']" pos="before">
+    <cue name="DAPlayerOwnedKills" instantiate="true" namespace="this">
+      <conditions>
+        <event_player_owned_killed_object/>
+        <check_value value="@global.$DATweaks.$Notifications.$SubordinateBounties"/>
+        <check_value value="event.param2.isclass.destructible"/>
+        <check_value value="not event.param2.isrelationchangedisabled and (event.param2.isclass.object or not @event.param2.object.isrelationchangedisabled)"/>
+        <check_value value="event.param2.owner and (event.param2.owner != faction.player) and (event.param2.owner != faction.ownerless)"/>
+        <check_value value="event.param2.trueowner.hasrelation.enemy.{faction.player}"/>
+        <check_any>
+          <check_value value="event.param2.isclass.defensible and not event.param2.isvisitor"/>
+          <check_value value="event.param2.defensible and not event.param2.defensible.isvisitor"/>
+          <check_value value="event.param2.owner.iscoalitionally.{faction.player}"/>
+        </check_any>
+      </conditions>
+      <actions>
+        <do_if value="event.param2.isclass.defensible">
+          <set_value name="$object" exact="event.param2"/>
+        </do_if>
+        <do_else>
+          <set_value name="$object" exact="event.param2.defensible"/>
+          <set_value name="$component" exact="event.param2"/>
+        </do_else>
+        <set_value name="$oldrelation" exact="event.param2.relationto.{faction.player}"/>
+        <set_value name="$newrelation" exact="event.param2.relationto.{faction.player}"/>
+        <do_if value="$object">
+          <set_value name="$index" exact="IllegalActivity.$lastvictims.indexof.{$object}"/>
+          <do_if value="$index == 1">
+            <set_value name="$data" exact="IllegalActivity.$lastvictimdata.{1}"/>
+          </do_if>
+          <do_else>
+            <do_if value="not $index">
+              <set_value name="$data" exact="[$object,null,null,null,-IllegalActivity.$timeout,-IllegalActivity.$timeout,false,false,null,0,null,null,null,player.age,null]"/>
+            </do_if>
+            <do_else>
+              <set_value name="$data" exact="IllegalActivity.$lastvictimdata.{$index}"/>
+              <remove_value name="IllegalActivity.$lastvictims.{$index}"/>
+              <remove_value name="IllegalActivity.$lastvictimdata.{$index}"/>
+            </do_else>
+            <set_value name="IllegalActivity.$lastvictims.{1}" operation="insert" exact="event.param2"/>
+            <set_value name="IllegalActivity.$lastvictimdata.{1}" operation="insert" exact="$data"/>
+          </do_else>
+          <set_value name="$data.{2}" exact="event.name"/>
+          <set_value name="$data.{3}" exact="event.param3"/>
+          <set_value name="$data.{4}" exact="@$component"/>
+          <set_value name="$data.{11}" exact="$oldrelation"/>
+          <set_value name="$data.{12}" exact="$newrelation"/>
+          <set_value name="$data.{13}" exact="event.param"/>
+          <set_value name="$data.{15}" exact="relationchangereason.killedobject"/>
+          <signal_cue_instantly cue="AttackResponse" param="$data"/>
+        </do_if>
+      </actions>
+    </cue>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='@event.param.{16}.exists']" pos="before">
+    <do_if value="event.param.{2} == 'event_player_owned_killed_object'">
+      <set_value name="$refobject" exact="event.param.{13}"/>
+      <set_value name="$attacker" exact="event.param.{13}"/>
+    </do_if>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_if[@value='(player.age ge event.param.{5} + IllegalActivity.$timeout) or (event.param.{9} and not event.param.{9}.exists)']" type="@chance">(not (event.param.{2} == 'event_player_owned_killed_object')) * 100</add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/set_value[@name='$commander'][@exact='@$object.commander']" pos="before">
+    <do_elseif value="event.param.{2} == 'event_player_owned_killed_object' and not event.param.{4}">
+      <set_value name="$index" exact="IllegalActivity.$lastvictims.indexof.{$object}"/>
+      <remove_value name="IllegalActivity.$lastvictims.{$index}"/>
+      <remove_value name="IllegalActivity.$lastvictimdata.{$index}"/>
+      <remove_value name="$index"/>
+    </do_elseif>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_elseif[@comment='victim was attacked, or a sub-component was destroyed (victim object itself not destroyed yet)']" type="@chance">(not (event.param.{2} == 'event_player_owned_killed_object')) * 100</add>
   <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_else[2]/do_if[@comment='component is null, i.e. no sub-component killed']/set_value[@name='$beststation'][@exact='null']" pos="before">
     <do_if value="@global.$DATweaks.$Notifications.$SectorWideBounty">
       <find_station name="$stations" multiple="true" space="player.sector">
@@ -13,6 +83,46 @@
     <do_elseif value="@global.$DATweaks.$Notifications.$SectorWideBounty and ($distance le $bestdistance)">
       <set_value name="$beststation" exact="$stations.{$i}"/>
       <set_value name="$bestdistance" exact="$distance"/>
+    </do_elseif>
+  </add>
+  <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='IllegalActivity']/cues/cue[@name='AttackResponse']/actions/do_else[2]">
+    <do_elseif value="event.param.{2} == 'event_player_owned_killed_object' and not event.param.{4}" comment="component is null, i.e. no sub-component killed">
+      <set_value name="$policefaction" exact="$object.zone.policefaction"/>
+      <do_if value="$policefaction">
+        <set_value name="$lawnpc" exact="$policefaction.representative"/>
+        <do_if value="$lawnpc and $policefaction.hasrelation.enemy.{$object}">
+          <set_value name="$policelicence" exact="$policefaction.licence.police"/>
+          <do_if value="$policelicence.exists and faction.player.haslicence.{$policelicence}">
+            <signal_cue_instantly cue="AccumulateRewards" param="[$lawnpc, $object, false, true, relationchangereason.destroyedfactionenemy, null, $debugchance]"/>
+            <set_value name="$alreadygavebounty"/>
+          </do_if>
+        </do_if>
+      </do_if>
+      <find_station name="$stations" multiple="true" space="$refobject.sector">
+        <match owner="faction.player" negate="true"/>
+        <match owner="null" negate="true"/>
+        <match_relation_to faction="$object.owner" relation="enemy"/>
+      </find_station>
+      <set_value name="$beststation" exact="null"/>
+      <set_value name="$bestdistance" exact="1000km"/>
+      <do_all exact="$stations.count" counter="$i">
+        <do_if value="@$stations.{$i}.tradenpc.page != 0 and $stations.{$i}.owner.isprotective and not $stations.{$i}.owner.isrelationlocked">
+          <set_value name="$distance" exact="$stations.{$i}.distanceto.{$refobject}"/>
+          <do_if value="$distance le $stations.{$i}.maxradarrange">
+            <do_if value="$distance le $bestdistance">
+              <set_value name="$beststation" exact="$stations.{$i}"/>
+              <set_value name="$bestdistance" exact="$distance"/>
+            </do_if>
+          </do_if>
+          <do_elseif value="@global.$DATweaks.$Notifications.$SectorWideBounty and ($distance le $bestdistance)">
+            <set_value name="$beststation" exact="$stations.{$i}"/>
+            <set_value name="$bestdistance" exact="$distance"/>
+          </do_elseif>
+        </do_if>
+      </do_all>
+      <do_if value="$beststation">
+        <signal_cue_instantly cue="AccumulateRewards" param="[$beststation.tradenpc, $object, true, false, relationchangereason.destroyedfactionenemy, $alreadygavebounty?, $debugchance]"/>
+      </do_if>
     </do_elseif>
   </add>
   <add sel="/mdscript/cues/cue[@name='Init']/cues/cue[@name='PlayerOwnedAttacked']/conditions/check_any">
