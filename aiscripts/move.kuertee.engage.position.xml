@@ -312,12 +312,14 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$moveTo_space, $moveTo_pos]" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+
+			<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="false" />
+			<set_value name="$kAAIT_result_isTargetInTheWayIgnored" exact="false" />
 			<do_if value="@$kAAIT_attacker_interruptedMove">
-				<add_to_group groupname="$enemiesWithdrawnFrom" object="$kAAIT_attacker_interruptedMove" />
-				<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
-				<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
+				<set_value name="$kAAIT_test_attackTargetInTheWayOrNot" exact="$kAAIT_attacker_interruptedMove" />
+				<include_interrupt_actions ref="kAAIT_GetAttackOrIgnoreTargetInTheWay" />
 			</do_if>
-			<do_if value="not @$kAAIT_result_isAttackerActioned">
+			<do_if value="(not $kAAIT_result_isTargetInTheWayAttacked) and (not $kAAIT_result_isTargetInTheWayIgnored)">
 				<do_if value="$dist gt 3km">
 					<do_if value="$isTargetMoved">
 						<resume label="move_to_engage_position" />

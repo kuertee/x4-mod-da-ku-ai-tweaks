@@ -362,42 +362,43 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$moveTo_space, $moveTo_pos]"/>
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+
+			<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="false" />
+			<set_value name="$kAAIT_result_isTargetInTheWayIgnored" exact="false" />
 			<do_if value="@$kAAIT_attacker_interruptedMove">
-				<set_value name="$kAAIT_test_attacker_isActOn" exact="$kAAIT_attacker_interruptedMove" />
-				<include_interrupt_actions ref="kAAIT_ActOnAttacker" />
+				<set_value name="$kAAIT_test_attackTargetInTheWayOrNot" exact="$kAAIT_attacker_interruptedMove" />
+				<include_interrupt_actions ref="kAAIT_GetAttackOrIgnoreTargetInTheWay" />
 			</do_if>
-			<do_if value="@$kAAIT_result_isAttackerActioned == 'resume start'">
+			<do_if value="$kAAIT_result_isTargetInTheWayAttacked">
 				<resume label="start" />
 			</do_if>
-			<do_elseif value="@$kAAIT_result_isAttackerActioned == 'move_locked_destination'">
+			<do_elseif value="$kAAIT_result_isTargetInTheWayIgnored">
 				<resume label="move_locked_destination" />
 			</do_elseif>
-			<do_elseif value="not @$kAAIT_result_isAttackerActioned">
-				<do_if value="$isTargetMoved">
-					<resume label="start" />
-				</do_if>
-				<do_elseif value="$dist gt 3km">
-					<do_if value="$isEncircleTarget">
-						<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
-						<do_if value="$kAAIT_result_target_found.isoperational">
-							<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
-							<resume label="attack_small_target" />
-						</do_if>
-						<do_else>
-							<resume label="move_locked_destination" />
-						</do_else>
+			<do_elseif value="$isTargetMoved">
+				<resume label="start" />
+			</do_elseif>
+			<do_elseif value="$dist gt 3km">
+				<do_if value="$isEncircleTarget">
+					<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
+					<do_if value="$kAAIT_result_target_found.isoperational">
+						<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
+						<resume label="attack_small_target" />
 					</do_if>
 					<do_else>
-						<set_value name="$kAAIT_test_target_isInTheWay" exact="$defensibleTarget" />
-						<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
-						<do_if value="$kAAIT_result_isTargetInTheWay">
-							<resume label="move_locked_destination" />
-						</do_if>
+						<resume label="move_locked_destination" />
 					</do_else>
-				</do_elseif>
-				<do_elseif value="$isEncircleTarget">
-					<resume label="start" />
-				</do_elseif>
+				</do_if>
+				<do_else>
+					<set_value name="$kAAIT_test_target_isInTheWay" exact="$defensibleTarget" />
+					<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
+					<do_if value="$kAAIT_result_isTargetInTheWay">
+						<resume label="move_locked_destination" />
+					</do_if>
+				</do_else>
+			</do_elseif>
+			<do_elseif value="$isEncircleTarget">
+				<resume label="start" />
 			</do_elseif>
 			<do_else>
 				<resume label="finish" />
