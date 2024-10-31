@@ -425,11 +425,8 @@
 									<check_value value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk" />
 								</check_all>
 								<check_all>
-									<check_any>
-										<check_value value="@$kAAIT_attacker.iscapitalship" />
-										<check_value value="$kAAIT_attacker.threatscore gt this.assignedcontrolled.threatscore * 1.5" />
-									</check_any>
-									<check_value value="$kAAIT_attacker.primarypurpose == purpose.fight" />
+									<check_value value="$kAAIT_attacker.threatscore gt this.assignedcontrolled.threatscore * 1.5" />
+									<check_value value="@$kAAIT_attacker.primarypurpose == purpose.fight" />
 								</check_all>
 							</check_any>
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight attacker checks passed'" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -703,9 +700,11 @@
 					<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" comment="not performing kAAIT order" />
 					<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" comment="not performing kAAIT order" />
 					<check_all>
-						<check_value value="@$kAAIT_attacker.iscapitalship" />
-						<check_any comment="new target needs to be bigger or old target is a station">
-							<check_value value="@$kAAIT_attacker.threatscore gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.threatscore" comment="new target is bigger than current target" />
+						<check_any comment="new target needs to be greater high-risk or old target is a station">
+							<check_all>
+								<check_value value="$kAAIT_attacker.threatscore gt @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.threatscore" comment="new target is bigger than current target" />
+								<check_value value="$kAAIT_attacker.primarypurpose == purpose.fight" />
+							</check_all>
 							<check_value value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.station" comment="new LXL target is more dangerous than current station target" />
 						</check_any>
 						<check_all>
@@ -779,8 +778,8 @@
 									<set_value name="$kAAIT_isTacticalTargetAttacked" exact="true" />
 								</check_all>
 								<check_all>
-									<check_value value="event.param.isclass.ship" />
 									<check_value value="event.param.threatscore gt this.assignedcontrolled.threatscore * 1.5" />
+									<check_value value="event.param.primarypurpose == purpose.fight" />
 									<set_value name="$kAAAIT_isNewBigEnemyAttacked" exact="true" />
 								</check_all>
 							</check_any>
@@ -1675,7 +1674,7 @@
 					<set_value name="$kAAIT_test_target_isTakeRisk" exact="$kAAIT_test_attackTargetInTheWayOrNot" />
 					<include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
 					<do_if value="$kAAIT_result_isTakeRisk">
-						<do_if value="$kAAIT_test_attackTargetInTheWayOrNot.threatscore / this.assignedcontrolled.threatscore gt 0.75">
+						<do_if value="$kAAIT_test_attackTargetInTheWayOrNot.threatscore / this.assignedcontrolled.threatscore gt 0.75 and $kAAIT_test_attackTargetInTheWayOrNot.primarypurpose == purpose.fight">
 							<set_value name="$kAAIT_target_attack" exact="$kAAIT_test_target_isTakeRisk" />
 							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
 							<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="@$kAAIT_result_order_attackOther.exists" />
