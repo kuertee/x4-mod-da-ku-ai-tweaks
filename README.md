@@ -9,16 +9,8 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.1.12, 19 Oct 2024:
--Bug-fix: While performing one of the custom behaviours of Avoid, Withdraw, Move To Engage, enemies in the ship's way were either only attacked or avoided. In this version, they can also be ignored. An example case is when a capital ship is targeting an enemy capital ship on the other side of a station. In previous versions, that capital ship would attack low-risk enemies on the way around the station. In this version, those low-risk enemies are ignored.
--Tweak: The calculation of whether an obstacle is in the way only used its yaw bearing and distance in relation to the ship. In this version, the obstacle's pitch bearing is also used.
--New feature: updated the Russian, German, and Chinese language text files. Included a Japanese language text file.
-
-v7.1.11, 19 Oct 2024:
--New feature: High-risk enemies in the way of a ship's target can now be attacked, ignored or avoided. In previous versions, they were always avoided.
--Tweak: The size aspect of high-risk calculations are now based on the ship's internal threat score instead. In previous versions, it was based on the ship's physical in-world size. I wanted to trigger the behaviours based on "oh sht! that ship is huge." rather than an internal data that is magically known. (But not anymore.)
--New features and tweaks from DA: MANY!
-
+v7.1.13, 02 Nov 2024:
+-Tweak: High-risk determination takes into account the ship's primary purpose along with the ship's threat score.
 
 Attack AI Tweaks:
 =================
@@ -178,14 +170,26 @@ Uninstall
 
 Credits
 =======
-By kuertee.
+Attack AI Tweaks by kuertee.
+DeadAir's AI Tweaks by DeadAir.
 Chinese localisation by Tiomer.
-German localisation by EagleFour. Previous by LeLeon.
-Japanese localisation by Arkblade.
+French localisation by Merlwynn.
+German localisation by EagleFour. Previously by LeLeon.
+Japanese localisation by Schwarzemona. Previously by Arkblade.
 Russian localisation by leonkillerua.
 
 History
 =======
+v7.1.12, 19 Oct 2024:
+-Bug-fix: While performing one of the custom behaviours of Avoid, Withdraw, Move To Engage, enemies in the ship's way were either only attacked or avoided. In this version, they can also be ignored. An example case is when a capital ship is targeting an enemy capital ship on the other side of a station. In previous versions, that capital ship would attack low-risk enemies on the way around the station. In this version, those low-risk enemies are ignored.
+-Tweak: The calculation of whether an obstacle is in the way only used its yaw bearing and distance in relation to the ship. In this version, the obstacle's pitch bearing is also used.
+-New feature: updated the Russian, German, and Chinese language text files. Included a Japanese language text file.
+
+v7.1.11, 19 Oct 2024:
+-New feature: High-risk enemies in the way of a ship's target can now be attacked, ignored or avoided. In previous versions, they were always avoided.
+-Tweak: The size aspect of high-risk calculations are now based on the ship's internal threat score instead. In previous versions, it was based on the ship's physical in-world size. I wanted to trigger the behaviours based on "oh sht! that ship is huge." rather than an internal data that is magically known. (But not anymore.)
+-New features and tweaks from DA: MANY!
+
 v7.0.02, 29 Jun 2024:
 -Tweak: 7.00 hf 1 compatibility.
 -Beta: Tested only so that no errors are thrown. Actual AI performance is in beta.
