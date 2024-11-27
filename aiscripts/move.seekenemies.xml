@@ -11,8 +11,62 @@
         then global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAllowOtherTargets_user
         else true
       ) else true" />
-    </replace>
-	
+  </replace>
+<!--
+	bug to fix: $pursuetargets is ignored.
+	search for 'bug to fix: $pursuetargets' to find related code for the fix.
+	<move_to object="this.ship" destination="$destination" finishonapproach="false" uselocalhighways="false" forceposition="false" forcesteering="false" travel="$travel">
+		<interrupt>
+			<actions>
+				...
+				<do_elseif value="event.name" exact="'event_object_signalled'">
+					...
+					<do_if value="not this.assignedcontrolled.cansee.{$enemy}" chance="[(this.assignedcontrolled.maxradarrange / [this.assignedcontrolled.distanceto.{$enemy}, 1].max) * 100, 80].min">
+						<set_value name="$pursuetargets" exact="true"/>
+-->
+	<add pos="prepend" sel="//move_to[@object=&quot;this.ship&quot;]/interrupt/actions//do_elseif[@value=&quot;event.name&quot;][@exact=&quot;'event_object_signalled'&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (event_object_signalled): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<set_value name="$kAAIT_pursuetargets_orig" exact="$pursuetargets"
+			comment="weird! even if 'ship set to pursue' is not triggered, which is based on the chance of the 'do_if cansee chance', $pursuetargets is still changed to true.
+			as a work-around save the original value of $pursuetargets and reset it back at end of the 'do_if event.name event_object_signalled block'
+			i.e. $pursuetargets is changed to true even without the debug_texts of 'before change' and 'after change' below.
+			note that sometimes it does run, in which case the debug_texts of 'before change' and 'after change' is logged.
+			but when it doesn't run, $pursuetargets is still getting changed.
+			weird!"/>
+		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_pursuetargets_orig: ' + $kAAIT_pursuetargets_orig" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="prepend" sel="//move_to[@object=&quot;this.ship&quot;]/interrupt/actions//do_elseif[@value=&quot;event.name&quot;][@exact=&quot;'event_object_signalled'&quot;]//do_if[@value=&quot;not this.assignedcontrolled.cansee.{$enemy}&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (event_object_signalled chance is checked): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="before" sel="//move_to[@object=&quot;this.ship&quot;]/interrupt/actions//do_elseif[@value=&quot;event.name&quot;][@exact=&quot;'event_object_signalled'&quot;]//set_value[@name=&quot;$pursuetargets&quot;][@exact=&quot;true&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (before change): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="after" sel="//move_to[@object=&quot;this.ship&quot;]/interrupt/actions//do_elseif[@value=&quot;event.name&quot;][@exact=&quot;'event_object_signalled'&quot;]//set_value[@name=&quot;$pursuetargets&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (after change): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add sel="//move_to[@object=&quot;this.ship&quot;]/interrupt/actions//do_elseif[@value=&quot;event.name&quot;][@exact=&quot;'event_object_signalled'&quot;]//do_if[@value=&quot;not this.assignedcontrolled.cansee.{$enemy}&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (finalised chance is checked): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add sel="//move_to[@object=&quot;this.ship&quot;]/interrupt/actions//do_elseif[@value=&quot;event.name&quot;][@exact=&quot;'event_object_signalled'&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (finalised): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<set_value name="$pursuetargets" exact="$kAAIT_pursuetargets_orig" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (forced to $kAAIT_pursuetargets_orig based on orig): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+<!--
+	purpose: debug
+	<run_script name="'move.generic'" result="$movesuccess">
+	<run_script name="'lib.target.selection'">
+	<create_order id="'Attack'" object="this.ship" immediate="true">
+-->
+	<add pos="before" sel="//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (NOT SENT TO run_script move.generic): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="before" sel="//run_script[@name=&quot;'lib.target.selection'&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (run_script lib.target.selection): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="before" sel="//create_order[@id=&quot;'Attack'&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $pursuetargets (create_order Attack): ' + $pursuetargets" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
 	<!-- DeadAir Diffs -->
 	<add sel="/aiscript/attention[@min='unknown']/actions/move_to[@object='this.ship'][@destination='$destination'][@travel='$travel']/interrupt/conditions/check_any/check_all[2]" type="@chance">if @global.$DATweaks.$MoveSeekEnemies.$PoliceResponse then 0 else 100</add>
 	<add sel="/aiscript/attention[@min='unknown']/actions/move_to[@object='this.ship'][@destination='$destination'][@travel='$travel']/interrupt/conditions/check_any/check_all[@chance='if @global.$DATweaks.$MoveSeekEnemies.$PoliceResponse then 0 else 100']" type="@comment">Vanilla PoliceResponse</add>

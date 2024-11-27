@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<diff>
+<!--
+	purpose: bug to fix: $pursuetargets is ignored.
+	search for 'bug to fix: $pursuetargets' to find related code for the fix.
+	note that orders that originate from patrol/protect default orders, $pursuetargets would be false in kuda.
+	the fix: replace these do_ifs with another variable based
+	<do_if value="not $pursuetargets and ($refobject.sector != $target.sector)">
+	<do_if value="not $pursuetargets and $pursuedistance and ($distance gt $pursuedistance)">
+-->
+	<add pos="before" sel="//do_if[@value=&quot;not $pursuetargets and ($refobject.sector != $target.sector)&quot;]">
+		<set_value name="$kAAIT_isPursue"
+			exact="$pursuetargets or
+			($refobject.bboxdistanceto.{$target} le $pursuedistance) or
+			(
+				@this.assignedcontrolled.defaultorder.script == 'order.fight.patrol' and
+				(
+					this.assignedcontrolled.defaultorder.$pursuetargets or
+					$target.sector == this.sector
+				)
+			) or
+			(
+				@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.position' and
+				(
+					this.assignedcontrolled.defaultorder.$pursuetargets or
+					this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$destination} le this.assignedcontrolled.defaultorder.$radius
+				)
+			) or
+			(
+				@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.ship' and
+				(
+					this.assignedcontrolled.defaultorder.$pursuetargets or
+					this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$target} le this.assignedcontrolled.defaultorder.$radius
+				)
+			) or
+			(
+				@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.station' and
+				(
+					this.assignedcontrolled.defaultorder.$pursuetargets or
+					this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$station} le this.assignedcontrolled.defaultorder.$radius
+				)
+			)" />
+	</add>
+	<replace sel="//do_if[@value=&quot;not $pursuetargets and ($refobject.sector != $target.sector)&quot;]/@value">not $kAAIT_isPursue</replace>
+	<replace sel="//do_if[@value=&quot;not $pursuetargets and $pursuedistance and ($distance gt $pursuedistance)&quot;]/@value">not $kAAIT_isPursue</replace>
+</diff>
