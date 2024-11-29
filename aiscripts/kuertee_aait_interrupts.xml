@@ -682,7 +682,7 @@
 							<set_value name="$kAAIT_attacker" exact="event.param" />
 							<set_value name="$kAAIT_signalFrom" exact="event.name" />
 						</check_all>
-						<check_all chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and (not @this.assignedcontrolled.iscapitalship)) then 100 else 0">
+						<!-- <check_all chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and (not @this.assignedcontrolled.iscapitalship)) then 100 else 0">
 							<check_any>
 								<check_all>
 									<event_player_alert />
@@ -693,6 +693,13 @@
 								</check_all>
 							</check_any>
 							<check_value value="(not @this.assignedcontrolled.toplevelcommander.isoperational) and @this.assignedcontrolled.subordinates.count" />
+						</check_all> -->
+						<check_all chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and (not @this.assignedcontrolled.iscapitalship)) then 100 else 0">
+							<event_object_signalled object="this.sector" param="'kAAIT_player_alert'" />
+							<debug_text text="@this.assignedcontrolled.idcode + ' ' + event.name + ' ' + event.param + ' ' + event.param2.{1}.knownname + ' (== ' + this.sector.knownname + '?) ' + event.param2.{2}.knownname + ' ' + event.param2.{2}.idcode" debugchance="global.$kAAIT_Data.$debugChance" />
+							<check_value value="this.sector == event.param2.{1}" />
+							<set_value name="$kAAIT_attacker" exact="event.param2.{2}" />
+							<set_value name="$kAAIT_signalFrom" exact="event.param" />
 						</check_all>
 					</check_any>
 					<check_value value="this.assignedcontrolled != $kAAIT_signalFrom" />
@@ -753,7 +760,10 @@
 							event.name == 'event_player_alert' or
 							(
 								event.name == 'event_object_signalled' and
-								event.param == 'kncpr_enemy_report'
+								(
+									event.param == 'kAAIT_player_alert' or
+									event.param == 'kncpr_enemy_report'
+								)
 							)
 						) and
 						@$kAAIT_target_attack.iscapitalship and
