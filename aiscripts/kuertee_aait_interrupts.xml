@@ -733,6 +733,10 @@
 							<check_value value="@this.assignedcontrolled.orders.{3}.script != 'order.fight.attack.object'" comment="too many attack orders if there's already a 3rd attack order" />
 						</check_all>
 					</check_all>
+					<check_any>
+						<check_value value="@this.assignedcontrolled.order.script != 'order.fight.attack.object'" />
+						<check_value value="@this.assignedcontrolled.order.$allowothertargets" />
+					</check_any>
 				</conditions>
 				<actions>
 					<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
@@ -1680,7 +1684,12 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetAttackOrIgnoreTargetInTheWay $kAAIT_test_attackTargetInTheWayOrNot: ' + @$kAAIT_test_attackTargetInTheWayOrNot.knownname + ' (' + @$kAAIT_test_attackTargetInTheWayOrNot.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="false" />
 				<set_value name="$kAAIT_result_isTargetInTheWayIgnored" exact="false" />
-				<do_if value="$kAAIT_test_attackTargetInTheWayOrNot.isclass.ship">
+				<do_if value="
+					$kAAIT_test_attackTargetInTheWayOrNot.isclass.ship and
+					(
+						@this.assignedcontrolled.order.script != 'order.fight.attack.object' or
+						@this.assignedcontrolled.order.$allowothertargets
+					)">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetAttackOrIgnoreTargetInTheWay $kAAIT_test_attackTargetInTheWayOrNot: ' + @$kAAIT_test_attackTargetInTheWayOrNot.knownname + ' ' + @$kAAIT_test_attackTargetInTheWayOrNot.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<set_value name="$kAAIT_test_target_isTakeRisk" exact="$kAAIT_test_attackTargetInTheWayOrNot" />
 					<include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
