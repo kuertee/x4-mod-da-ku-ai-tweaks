@@ -1684,20 +1684,17 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetAttackOrIgnoreTargetInTheWay $kAAIT_test_attackTargetInTheWayOrNot: ' + @$kAAIT_test_attackTargetInTheWayOrNot.knownname + ' (' + @$kAAIT_test_attackTargetInTheWayOrNot.idcode + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="false" />
 				<set_value name="$kAAIT_result_isTargetInTheWayIgnored" exact="false" />
-				<do_if value="
-					$kAAIT_test_attackTargetInTheWayOrNot.isclass.ship and
-					(
-						@this.assignedcontrolled.order.script != 'order.fight.attack.object' or
-						@this.assignedcontrolled.order.$allowothertargets
-					)">
+				<do_if value="$kAAIT_test_attackTargetInTheWayOrNot.isclass.ship">
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetAttackOrIgnoreTargetInTheWay $kAAIT_test_attackTargetInTheWayOrNot: ' + @$kAAIT_test_attackTargetInTheWayOrNot.knownname + ' ' + @$kAAIT_test_attackTargetInTheWayOrNot.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<set_value name="$kAAIT_test_target_isTakeRisk" exact="$kAAIT_test_attackTargetInTheWayOrNot" />
 					<include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
 					<do_if value="$kAAIT_result_isTakeRisk">
 						<do_if value="$kAAIT_test_attackTargetInTheWayOrNot.threatscore / this.assignedcontrolled.threatscore gt 0.75 and $kAAIT_test_attackTargetInTheWayOrNot.primarypurpose == purpose.fight">
-							<set_value name="$kAAIT_target_attack" exact="$kAAIT_test_target_isTakeRisk" />
-							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-							<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="@$kAAIT_result_order_attackOther.exists" />
+							<do_if value="@this.assignedcontrolled.order.$allowothertargets">
+								<set_value name="$kAAIT_target_attack" exact="$kAAIT_test_target_isTakeRisk" />
+								<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+								<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="@$kAAIT_result_order_attackOther.exists" />
+							</do_if>
 						</do_if>
 						<do_else comment="ignore ship in the way">
 							<set_value name="$kAAIT_result_isTargetInTheWayIgnored" exact="true" />
