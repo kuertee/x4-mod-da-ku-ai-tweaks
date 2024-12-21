@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<diff>
+<!-- add. purpose: kaait data
+	<params>
+-->
+	<add sel="//params">
+		<param name="kAAITParam_iskAAITOrder" required="false" default="false" type="internal" />
+		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
+			if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					((not @this.assignedcontrolled.iscapitalship) or this.assignedcontrolled.primarypurpose != purpose.fight) and
+					@global.$kAAIT_Data.$xssm_isAvoidHighRisk and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					((not @this.assignedcontrolled.iscapitalship) or this.assignedcontrolled.primarypurpose != purpose.fight) and
+					@global.$kAAIT_Data.$xssm_isAvoidHighRisk_allFactions
+				) or
+				(
+					this.assignedcontrolled.isplayerowned and
+					@this.assignedcontrolled.iscapitalship and
+					(@global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip or @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation) and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isAvoidHighRisk_user
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@this.assignedcontrolled.iscapitalship and
+					(@global.$kAAIT_Data.$lxl_isAvoidHighRisk_vShip_allFactions or @global.$kAAIT_Data.$lxl_isAvoidHighRisk_vStation_allFactions)
+				)
+			) then true else false
+		" />
+		<param name="kAAITParam_isStepForwardWithdraw" required="false" type="bool" text="{1111920, 109}" default="
+			if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(
+						(not @this.assignedcontrolled.iscapitalship) or
+						this.assignedcontrolled.primarypurpose != purpose.fight
+					) and
+					@global.$kAAIT_Data.$xssm_isAvoidHighRisk and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(
+						(not @this.assignedcontrolled.iscapitalship) or
+						this.assignedcontrolled.primarypurpose != purpose.fight
+					) and
+					@global.$kAAIT_Data.$xssm_isAvoidHighRisk_allFactions
+				) or
+				(
+					this.assignedcontrolled.isplayerowned and
+					@this.assignedcontrolled.iscapitalship and
+					(
+						@global.$kAAIT_Data.$lxl_isStepForward_vShip or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip or
+						@global.$kAAIT_Data.$lxl_isStepForward_vStation or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation
+					) and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@this.assignedcontrolled.iscapitalship and
+					(
+						@global.$kAAIT_Data.$lxl_isStepForward_vShip_allFactions or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip_allFactions or
+						@global.$kAAIT_Data.$lxl_isStepForward_vStation_allFactions or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation_allFactions
+					) and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user
+					)
+				)
+			) then true else false
+		" />
+		<param name="kAAITParam_isSurroundTheTarget" required="false" type="bool" text="{1111920, 118}" default="false" />
+	</add>
+<!-- replace. purpose: set default attack weaker enemies first to false
+	<param name="weakfirst" type="bool" default="true" />
+-->
+	<replace sel="//param[@name=&quot;weakfirst&quot;][@type=&quot;bool&quot;][@default=&quot;true&quot;]/@default">false</replace>
+<!-- add before. purpose: show movement.
+	<location object="$selectedtarget.toplevelcommander" condition="$selectedtarget.canbeattacked" />
+-->
+	<add pos="before" sel="//location[@object=&quot;$selectedtarget.toplevelcommander&quot;][@condition=&quot;$selectedtarget.canbeattacked&quot;]">
+		<location object="$primarytarget" condition="@$primarytarget.isoperational" />
+		<location object="$selectedtarget" condition="@$selectedtarget.iscapitalship or @$selectedtarget.isclass.station or @$selectedtarget.defensible.isclass.station" />
+	</add>
+<!-- purpose: not required.
+	<location object="$selectedtarget.toplevelcommander" condition="$selectedtarget.canbeattacked" />
+-->
+	<remove sel="//location[@object=&quot;$selectedtarget.toplevelcommander&quot;][@condition=&quot;$selectedtarget.canbeattacked&quot;]" />
+<!-- replace. purpose: if ship is alread an l or xl, do not find commander.
+	<actions name="select_targets">
+		<do_if value="not $primarytarget.isoperational">
+			<do_while value="$primarytarget.commander.canbeattacked and ($primarytarget.commander.sector == $primarytarget.sector)">
+-->
+	<add pos="after" sel="//actions[@name=&quot;select_targets&quot;]//do_while[@value=&quot;$primarytarget.commander.canbeattacked and ($primarytarget.commander.sector == $primarytarget.sector)&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $primarytarget.idcode: ' + @$primarytarget.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<replace sel="//actions[@name=&quot;select_targets&quot;]//do_while[@value=&quot;$primarytarget.commander.canbeattacked and ($primarytarget.commander.sector == $primarytarget.sector)&quot;]/@value">(not $primarytarget.isclass.[class.ship_l, class.ship_xl]) and $primarytarget.commander.canbeattacked and ($primarytarget.commander.sector == $primarytarget.sector)</replace>
+<!-- add. purpose: debug
+-->
+	<add pos="prepend" sel="//actions[@name=&quot;clear_previous_orders&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' clear_previous_orders'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="prepend" sel="//actions[@name=&quot;clear_all_orders&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' clear_all_orders'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="prepend" sel="//actions[@name=&quot;create_orders&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' create_orders ' + $subordinate.knownname + ' ' + $subordinate.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="after" sel="//actions[@name=&quot;create_orders&quot;]//create_order[@object=&quot;$subordinate&quot;][@id=&quot;'MoveWait'&quot;][@immediate=&quot;true&quot;][@name=&quot;$moveorder&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' create_order MoveWait: ' + $moveorder" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="after" sel="//label[@name=&quot;finish&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+	<add pos="prepend" sel="//on_abort">
+		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+	</add>
+</diff>
