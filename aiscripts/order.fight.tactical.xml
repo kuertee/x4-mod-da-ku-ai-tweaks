@@ -101,8 +101,8 @@
 	<location object="$selectedtarget.toplevelcommander" condition="$selectedtarget.canbeattacked" />
 -->
 	<add pos="before" sel="//location[@object=&quot;$selectedtarget.toplevelcommander&quot;][@condition=&quot;$selectedtarget.canbeattacked&quot;]">
-		<location object="$primarytarget" condition="@$primarytarget.isoperational" />
-		<location object="$selectedtarget" condition="@$selectedtarget.iscapitalship or @$selectedtarget.isclass.station or @$selectedtarget.defensible.isclass.station" />
+		<location object="$primarytarget" condition="$primarytarget? and @$primarytarget.isoperational" />
+		<location object="$selectedtarget" condition="$selectedtarget? and @$selectedtarget.iscapitalship or $selectedtarget.isclass.station or @$selectedtarget.defensible.isclass.station" />
 	</add>
 <!-- purpose: not required.
 	<location object="$selectedtarget.toplevelcommander" condition="$selectedtarget.canbeattacked" />
@@ -137,4 +137,43 @@
 	<add pos="prepend" sel="//on_abort">
 		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
+<!-- replace. purpose: create_order instead of run_script attack ai.
+	<run_script name="'order.fight.attack.object'">
+-->
+	<replace sel="//run_script[@name=&quot;'order.fight.attack.object'&quot;]">
+		<label name="kAAIT_label_just_fight" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_just_fight'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}">
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}" exact="table[]" />
+		</do_if>
+		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel" exact="[]" />
+		<do_for_each name="$ordergroup" in="$ORDERS" reverse="true">
+			<do_for_each valuename="$kAAIT_orders" in="$ORDERS.{$ordergroup}" reverse="true">
+				<do_for_each name="$kAAIT_order" in="$kAAIT_orders" reverse="true">
+					<do_if value="$kAAIT_order.exists">
+						<debug_text text="@this.assignedcontrolled.idcode + ' cancel this when done ' + $kAAIT_order.script + ' on ' + @$kAAIT_order.object.knownname + ' ' + @$kAAIT_order.object.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<append_to_list name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel" exact="$kAAIT_order" />
+					</do_if>
+				</do_for_each>
+			</do_for_each>
+		</do_for_each>
+		<create_order object="this.assignedcontrolled" id="'Attack'" immediate="true">
+	        <param name="primarytarget" value="$primarytarget"/>
+			<param name="pursuedistance" value="this.assignedcontrolled.maxradarrange" />
+			<param name="pursuetargets" value="true" />
+	        <param name="allowothertargets" value="false"/>
+	        <param name="allowboost" value="true" />
+	        <param name="squad_attack" value="false"/>
+			<param name="kAAITParam_isAvoidHighRisk" value="@$kAAITParam_isAvoidHighRisk" />
+			<param name="kAAITParam_isStepForwardWithdraw" value="@$kAAITParam_isStepForwardWithdraw" />
+			<param name="kAAITParam_isFromTactical" value="true" />
+		</create_order>
+		<!-- also remove this coordinated attack order -->
+		<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders">
+			<do_if value="$kAAIT_order.script == 'order.fight.tactical' and $kAAIT_order.$selectedtarget == $primarytarget">
+				<append_to_list name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel" exact="$kAAIT_order" />
+				<cancel_order order="$kAAIT_order" />
+			</do_if>
+		</do_for_each>
+	</replace>
 </diff>
