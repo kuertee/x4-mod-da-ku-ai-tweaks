@@ -294,7 +294,7 @@
 			<conditions>
 				<check_any>
 					<check_all comment="target attacked fleet">
-						<event_object_attacked group="$kAAIT_fleetShips" />
+						<event_object_attacked group="$kAAIT_fleetShips" check="false" />
 						<check_any>
 							<check_value value="[$selectedtarget, @$selectedtarget.toplevelcommander].indexof.{event.param}" />
 							<check_all>
@@ -308,6 +308,9 @@
 						<check_value value="event.param.owner == this.assignedcontrolled.owner" />
 					</check_all>
 				</check_any>
+				<check_any value="this.assignedcontrolled.sector" />
+				<check_any value="$selectedtarget.sector" />
+				<check_any value="this.assignedcontrolled.sector == $selectedtarget.sector" />
 			</conditions>
 			<actions>
 				<debug_text text="@this.assignedcontrolled.idcode + ' handler target is attacked. event.name: ' + @event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
@@ -326,25 +329,25 @@
 				<abort_called_scripts resume="start" />
 			</actions>
 		</handler>
-		<handler comment="subordinate added or removed">
+		<!-- remove ship from fleet ships group -->
+		<handler comment="subordinate removed">
 			<conditions>
-				<check_any>
-					<event_object_subordinate_added  object="this.assignedcontrolled" />
-					<event_object_changed_subordinategroup object="this.assignedcontrolled" />
-					<event_object_subordinate_removed  object="this.assignedcontrolled"/>
-				</check_any>
+				<event_object_subordinate_removed  object="this.assignedcontrolled"/>
 				<check_value value="event.param.isoperational" />
 			</conditions>
 			<actions>
-				<debug_text text="@this.assignedcontrolled.idcode + ' handler subordinate added or removed. event.name: ' + @event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-				<do_if value="['event_object_subordinate_added', 'event_object_changed_subordinategroup'].indexof.{event.name}">
-					<add_to_group groupname="$kAAIT_fleetShips" object="event.param" />
-				</do_if>
-				<do_elseif value="event.name == 'event_object_subordinate_removed'">
-					<remove_from_group group="$kAAIT_fleetShips" object="event.param" />
-				</do_elseif>
+				<debug_text text="@this.assignedcontrolled.idcode + ' handler subordinate removed. event.name: ' + @event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<remove_from_group group="$kAAIT_fleetShips" object="event.param" />
 			</actions>
 		</handler>
+	</add>
+	<!--
+		add new ship to fleet ships group 
+		<handler comment="Subordinate added (either a new one or a promoted one)">
+			<actions>-->
+	<add sel="//handler[@comment=&quot;Subordinate added (either a new one or a promoted one)&quot;]//actions">
+		<debug_text text="@this.assignedcontrolled.idcode + ' handler subordinate added. event.name: ' + @event.name" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<add_to_group groupname="$kAAIT_fleetShips" object="event.param" />
 	</add>
 	<add sel="//init">
 		<create_group groupname="$kAAIT_fleetShips" />

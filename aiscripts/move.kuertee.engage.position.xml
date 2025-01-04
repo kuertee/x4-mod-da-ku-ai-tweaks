@@ -161,20 +161,9 @@
 			<create_position name="$posTarget" space="$moveTo_space" object="$target" />
 
 			<!-- start: get distance from target -->
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$target.size * 0.5 + $defensibleTarget.size * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
-			<do_if value="
-				this.assignedcontrolled.primarypurpose != purpose.fight or
-				(not @this.assignedcontrolled.iscapitalship)
-			">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5 * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
-			</do_if>
-			<do_else>
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
-			</do_else>
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="[
-				this.assignedcontrolled.maxradarrange * 0.5,
-				global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom
-			].min" />
+			<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
+			<set_value name="$kAAIT_engagePosDist" exact="$kAAIT_result_engagePosDist" />
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$kAAIT_result_engagePosDist" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$distance_attackFrom: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			<!-- end: get distance from target -->
 

@@ -67,11 +67,8 @@
 					(not @$target.travel.active)
 				">
 					<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-					<set_value name="$kAAIT_engagePosDist" exact="
-						[
-							this.assignedcontrolled.maxradarrange * 0.5,
-							$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult
-						].min" />
+					<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
+					<set_value name="$kAAIT_engagePosDist" exact="$kAAIT_result_engagePosDist" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $target: ' + $target + ' (' + $target.knownname + ' , ' + @$target.hullpercentage + ') $moduleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget + ' (' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget.knownname + ', ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget.hullpercentage + ')'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<do_if value="$target.isrealclass.module and $target != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget">
 						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
@@ -230,7 +227,8 @@
 
 		<label name="kAAIT_label_move_to_engage_position" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_move_to_engage_position'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-		<set_value name="$kAAIT_engagePosDist" exact="$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult" />
+		<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
+		<set_value name="$kAAIT_engagePosDist" exact="$kAAIT_result_engagePosDist" />
 		<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
 		<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
 		<wait min="1s" max="3s" comment="stop this order from continuing as the new order is created" />
@@ -311,6 +309,28 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $frontweapon (kuda, forced): ' + @$frontweapon" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		</do_if>
 	</add> -->
+<!--
+	in kuda ...
+	1. poor-skilled captains are more reckless and attack from a nearer distance to the target
+	2. better-skilled captains are more cautious and attack from 90% max combat range
+	3. aimdist = max combat range * (skill-based dist mult from target + number of withdraws). the more withdraws, the further.
+	4. min move threshold is min combat range and doesn't include aimdist component like in base-game attacks
+	5. max move threshold is max combat range
+-->
+<!--
+	override aim distance based on engage pos distance
+	<set_value name="$movethreshold_min" exact="[$maxeffectivecombatrange * 0.5, $aimdist - 1m].min"/>
+-->
+	<add pos="before" sel="//set_value[@name=&quot;$movethreshold_min&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+			<do_if value="not $kAAIT_result_engagePosDist?">
+				<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
+			</do_if>
+			<set_value name="$aimdist" exact="$kAAIT_result_engagePosDist - $target.size * 0.5"
+				comment="remove the target's size component as the attack pos is the ship's bboxdistance to the target + aimdistance.
+				i.e. the target's size component, the ship's bboxdistance to the target, will be added aimdist when calculating attack pos" />
+		</do_if>
+	</add>
 <!-- add after. purpose: hijack effective range and move thresholds to limit the ship's movements to step forward or withdraw behaviours.
 	<do_if value="$frontweapon?">
 		<set_value name="$movethreshold_max" exact="$maxeffectivecombatrange"/>

@@ -1075,6 +1075,7 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsTakeRisk $kAAIT_test_target_isTakeRisk: ' + @$kAAIT_test_target_isTakeRisk.knownname + ' ' + @$kAAIT_test_target_isTakeRisk.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 				<set_value name="$kAAIT_test_target_isHighRisk" exact="$kAAIT_test_target_isTakeRisk" />
 				<include_interrupt_actions ref="kAAIT_GetIsHighRisk" />
+				<set_value name="$kAAIT_isPotentialHighRisk" exact="$kAAIT_result_isPotentialHighRisk" />
 				<set_value name="$kAAIT_isHighRisk" exact="$kAAIT_result_isHighRisk" />
 				<set_value name="$kAAIT_result_isShieldsLow_vsStation" exact="false" />
 				<set_value name="$kAAIT_result_isShieldsLow_vsShip" exact="false" />
@@ -1102,7 +1103,10 @@
 					this.assignedcontrolled.weapons.all.count and
 					this.assignedcontrolled.weapons.operational.count / (this.assignedcontrolled.weapons.all.count)f gt 0.25 and
 					(
-						(not $kAAIT_isHighRisk) or
+						(
+							(not $kAAIT_isPotentialHighRisk) and
+							(not $kAAIT_isHighRisk)
+						) or
 						(
 							(not $kAAIT_test_target_isTakeRisk.isclass.station) and
 							(not $kAAIT_test_target_isTakeRisk.isclass.ship)
@@ -2125,6 +2129,33 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_avoidYaw: ' + $kAAIT_result_avoidYaw" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</actions>
 
+			<actions name="KAAIT_GetEngagePosDistance" comment="engage pos = half target size + max combat range * (skill + withdraw count). used in move.attack.object.capital">
+				<set_value name="$kAAIT_skillAndWithdrawCountMult" exact="
+					  @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult
+					+ @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount * 0.5" />
+				<do_if value="not $kAAIT_skillAndWithdrawCountMult">
+					<set_value name="$kAAIT_skillAndWithdrawCountMult" exact="1" />
+				</do_if>
+				<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $kAAIT_skillAndWithdrawCountMult: ' + $kAAIT_skillAndWithdrawCountMult" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<do_if value="
+					this.assignedcontrolled.primarypurpose != purpose.fight or
+					(not @this.assignedcontrolled.iscapitalship)
+				">
+					<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance this.assignedcontrolled.maxradarrange * 0.5: ' + (this.assignedcontrolled.maxradarrange * 0.5)" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<set_value name="$kAAIT_result_engagePosDist" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5 * $kAAIT_skillAndWithdrawCountMult" />
+					<do_if value="$kAAIT_result_engagePosDist lt $target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5">
+						<set_value name="$kAAIT_result_engagePosDist" exact="$target.size * 0.5 + this.assignedcontrolled.maxradarrange * 0.5" />
+					</do_if>
+				</do_if>
+				<do_else>
+					<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $attackData.$combatRange_max: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+					<set_value name="$kAAIT_result_engagePosDist" exact="$target.size * 0.5 + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max * $kAAIT_skillAndWithdrawCountMult" />
+					<do_if value="$kAAIT_result_engagePosDist gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max">
+						<set_value name="$kAAIT_result_engagePosDist" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max" />
+					</do_if>
+				</do_else>
+				<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $kAAIT_result_engagePosDist: ' + $kAAIT_result_engagePosDist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			</actions>
 			<!--
 				 dP"Yb  88""Yb 8888b.  888888 88""Yb .dP"Y8
 				dP   Yb 88__dP  8I  Yb 88__   88__dP `Ybo."
