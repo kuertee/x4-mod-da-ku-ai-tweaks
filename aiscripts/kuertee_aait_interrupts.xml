@@ -197,18 +197,6 @@
 					<event_universe_generated />
 				</conditions>
 				<actions>
-					<!-- <do_if value="
-						@global.$kAAIT.exists and
-						global.$kAAIT.version != @$kAAIT_version and
-						(
-							@$kAAITParam_iskAAITOrder or
-							@$kAAITParam_isStepForwardWithdraw or
-							(
-								@$kAAITParam_isAvoidHighRisk and
-								(not @this.assignedcontrolled.iscapitalship)
-							)
-						)
-					" comment="update only kaait-affected orders"> -->
 					<do_if value="not $kAAIT_original_name?">
 						<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.knownname" />
 					</do_if>
@@ -2056,6 +2044,7 @@
 			</actions>
 
 			<actions name="kAAIT_GetIsRepairQueued">
+				<!-- input: $kAAIT_test_target_isRepairQueued -->
 				<!-- valid repair queues are:
 					1. order.repair
 					2. order.dock, order.repair
@@ -2063,7 +2052,7 @@
 					3. order.dock.wait, order.repair
 				-->
 				<set_value name="$kAAIT_orderScripts" exact="[]" />
-				<do_for_each name="$order_inList" in="this.assignedcontrolled.orders">
+				<do_for_each name="$order_inList" in="$kAAIT_test_target_isRepairQueued.orders">
 					<append_to_list name="$kAAIT_orderScripts" exact="$order_inList.script" />
 				</do_for_each>
 				<set_value name="$kAAIT_result_isRepairQueued" exact="
@@ -2075,7 +2064,7 @@
 						@$kAAIT_orderScripts.{3} == 'order.repair'
 					)
 				" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsRepairQueued $kAAIT_result_isRepairQueued: ' + $kAAIT_result_isRepairQueued" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@$kAAIT_test_target_isRepairQueued.idcode + ' kAAIT_GetIsRepairQueued $kAAIT_result_isRepairQueued: ' + $kAAIT_result_isRepairQueued" chance="if @$kAAIT_test_target_isRepairQueued.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</actions>
 
 			<actions name="kAAIT_GetIsUndockQueued">
