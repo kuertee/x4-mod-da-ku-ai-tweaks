@@ -19,7 +19,7 @@
 				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel">
 					<do_for_each name="$kAAIT_order" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel">
 						<do_if value="@$kAAIT_order.exists and $kAAIT_order.script != 'order.fight.attack.object'">
-							<debug_text text="@this.assignedcontrolled.idcode + ' cancelled ' + $kAAIT_order.script + ' on ' + @$kAAIT_order.object.knownname + ' ' + @$kAAIT_order.object.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+							<debug_text text="@this.assignedcontrolled.idcode + ' cancel_order ' + $kAAIT_order.script + ' on ' + @$kAAIT_order.object.knownname + ' ' + @$kAAIT_order.object.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 							<set_order_syncpoint_reached order="$kAAIT_order" />
 							<unassign_order_syncpoint_from_order order="$kAAIT_order" />
 							<cancel_order order="$kAAIT_order" />
@@ -381,18 +381,6 @@
 							<set_value name="$kAAIT_eventType" exact="'avoid'" />
 						</check_all>
 					</check_any>
-					<!-- <debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight @this.assignedcontrolled.order.script: ' + @this.assignedcontrolled.order.script" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-					<check_value value="
-						not [
-							'order.assign.commander',
-							'order.dock',
-							'order.dock.wait',
-							'order.repair',
-							'move.undock',
-							'move.flee'
-						].indexof.{@this.assignedcontrolled.order.script}" /> -->
-					<!-- <check_value value="player.age - @$kAAIT_time_lastAvoidWithdrawEvent ge 1s" />
-					<set_value name="$kAAIT_time_lastAvoidWithdrawEvent" exact="player.age" /> -->
 					<set_value name="$kAAIT_isInterrupted" exact="true" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight @$kAAIT_eventType: ' + @$kAAIT_eventType" debugchance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 					<check_value value="@$kAAIT_eventType" />
@@ -778,97 +766,6 @@
 					<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
 				</actions>
 			</handler>
-
-			<!-- <handler name="kAAIT_Handler_TacticalSubordinateAttack">
-				<conditions>
-					<check_any>
-						<check_all comment="attack events" chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and (not @this.assignedcontrolled.iscapitalship)) then 100 else 0">
-							<check_any>
-								<event_object_attacked object="this.assignedcontrolled" />
-								<event_object_attacked_object object="this.assignedcontrolled" />
-							</check_any>
-							<check_value value="this.assignedcontrolled.isplayerowned" />
-							<check_any>
-								<check_all>
-									<check_value value="event.param == @$kAAITParam_tacticalOrderTarget" />
-									<set_value name="$kAAIT_isTacticalTargetAttacked" exact="true" />
-								</check_all>
-								<check_all>
-									<check_value value="event.param.threatscore gt this.assignedcontrolled.threatscore * 1.5" />
-									<check_value value="event.param.primarypurpose == purpose.fight" />
-									<set_value name="$kAAAIT_isNewBigEnemyAttacked" exact="true" />
-								</check_all>
-							</check_any>
-						</check_all>
-						<check_all comment="movement events" chance="if @$kAAITParam_iskAAITOrder or @$kAAITParam_isStepForwardWithdraw or (@$kAAITParam_isAvoidHighRisk and (not @this.assignedcontrolled.iscapitalship)) then 100 else 0">
-							<check_any>
-								<event_object_changed_zone object="this.assignedcontrolled" />
-								<event_object_changed_zone object="if @$kAAITParam_tacticalOrderTarget.isoperational then $kAAITParam_tacticalOrderTarget else null" check="false" />
-							</check_any>
-							<check_any>
-								<check_all comment="target is near">
-									<check_value value="@$kAAITParam_tacticalOrderTarget.isoperational" />
-									<check_value value="this.assignedcontrolled.bboxdistanceto.{$kAAITParam_tacticalOrderTarget} le this.assignedcontrolled.maxradarrange * 0.5" />
-									<set_value name="$kAAIT_isTacticalTargetNear" exact="true" />
-								</check_all>
-								<check_all comment="no target position recorded">
-									<check_value value="@$kAAITParam_tacticalOrderTarget.isoperational" />
-									<check_value value="not $kAAIT_pos_tacticatTarget?" />
-									<set_value name="$kAAIT_pos_tacticatTarget" exact="$kAAITParam_tacticalOrderTarget.position" />
-									<set_value name="$kAAIT_isTacticalTargetMoved" exact="true" />
-								</check_all>
-								<check_all comment="moved away from recorded target position">
-									<check_value value="@$kAAITParam_tacticalOrderTarget.isoperational" />
-									<check_value value="$kAAIT_pos_tacticatTarget?" />
-									<check_value value="$kAAITParam_tacticalOrderTarget.bboxdistanceto.[$kAAITParam_tacticalOrderTarget.zone, $kAAIT_pos_tacticatTarget] gt this.assignedcontrolled.maxradarrange * 0.25" />
-									<set_value name="$kAAIT_pos_tacticatTarget" exact="$kAAITParam_tacticalOrderTarget.position" />
-									<set_value name="$kAAIT_isTacticalTargetMoved" exact="true" />
-								</check_all>
-							</check_any>
-						</check_all>
-					</check_any>
-					<check_value value="@$kAAITParam_tacticalOrderTarget.isoperational" />
-				</conditions>
-				<actions>
-					<do_if value="(not this.isplayerowned) and (not @$kAAITParam_isAvoidHighRisk) and (not @$kAAITParam_isStepForwardWithdraw) and (not @$kAAITParam_iskAAITOrder)">
-						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_TacticalSubordinateAttack event.name: ' + event.name + ' order: ' + @this.assignedcontrolled.order.script" />
-						<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP =================='" />
-					</do_if>
-					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_TacticalSubordinateAttack event.name: ' + @event.name + ' event.param: ' + @event.param.knownname + ', ' + @event.param.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' ======================================= order: ' + @this.assignedcontrolled.order.script" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
-					<do_if value="@$kAAAIT_isNewBigEnemyAttacked">
-						<do_if value="@$kAAITParam_tacticalOrderTarget.isoperational and @$kAAITParam_tacticalOrderTarget.bboxdistanceto.{event.param} le this.assignedcontrolled.maxradarrange * 0.5"
-							comment="other big enemy nearby, release all from tactical order and just attack">
-							<do_if value="this.assignedcontrolled.commander.isoperational">
-								<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_just_attack'" param2="table[$eventName = event.name, $eventObject = this.assignedcontrolled, $eventParam = event.param]" />
-							</do_if>
-						</do_if>
-						<do_else comment="release self from tactical order and attack new">
-							<set_value name="$kAAIT_target_attack" exact="event.param" />
-							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-						</do_else>
-					</do_if>
-					<do_elseif value="@$kAAIT_isTacticalTargetAttacked" comment="release all from tactical order and just attack">
-						<do_if value="this.assignedcontrolled.commander.isoperational">
-							<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_just_attack'" param2="table[$eventName = event.name, $eventObject = this.assignedcontrolled, $eventParam = event.param]" />
-						</do_if>
-					</do_elseif>
-					<do_elseif value="@$kAAIT_isTacticalTargetNear" comment="release all from tactical order and just attack">
-						<do_if value="this.assignedcontrolled.commander.isoperational">
-							<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_just_attack'" param2="table[$eventName = event.name, $eventObject = this.assignedcontrolled, $eventParam = event.param]" />
-						</do_if>
-					</do_elseif>
-					<do_elseif value="@$kAAIT_isTacticalTargetMoved" comment="target moved away">
-						<do_if value="this.assignedcontrolled.commander.isoperational">
-							<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_tactical_reset_rally_points'" param2="table[$eventName = event.name, $eventObject = this.assignedcontrolled, $eventParam = event.param]" />
-						</do_if>
-					</do_elseif>
-					<remove_value name="$kAAAIT_isNewBigEnemyAttacked" />
-					<remove_value name="$kAAIT_isTacticalTargetAttacked" />
-					<remove_value name="$kAAIT_isTacticalTargetNear" />
-					<remove_value name="$kAAIT_isTacticalTargetMoved" />
-				</actions>
-			</handler> -->
 
 			<handler name="kAAIT_Handler_OrderNewSubordinateToAttack" comment="handler valid only in order.fight.attack.object.xml">
 				<conditions>
@@ -2156,6 +2053,52 @@
 					</do_if>
 				</do_else>
 				<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $kAAIT_result_engagePosDist: ' + $kAAIT_result_engagePosDist" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			</actions>
+
+			<actions name="kAAIT_GetIsRepairQueued">
+				<!-- valid repair queues are:
+					1. order.repair
+					2. order.dock, order.repair
+					3. order.dock, order.dock.wait, order.repair
+					3. order.dock.wait, order.repair
+				-->
+				<set_value name="$kAAIT_orderScripts" exact="[]" />
+				<do_for_each name="$order_inList" in="this.assignedcontrolled.orders">
+					<append_to_list name="$kAAIT_orderScripts" exact="$order_inList.script" />
+				</do_for_each>
+				<set_value name="$kAAIT_result_isRepairQueued" exact="
+					@$kAAIT_orderScripts.{1} == 'order.repair' or
+					@$kAAIT_orderScripts.{2} == 'order.repair' or
+					(
+						@$kAAIT_orderScripts.{1} == 'order.dock' and
+						@$kAAIT_orderScripts.{2} == 'order.dock.wait' and
+						@$kAAIT_orderScripts.{3} == 'order.repair'
+					)
+				" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsRepairQueued $kAAIT_result_isRepairQueued: ' + $kAAIT_result_isRepairQueued" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			</actions>
+
+			<actions name="kAAIT_GetIsUndockQueued">
+				<!-- valid undock queues are:
+					1. move.undock
+					2. order.dock, move.undock
+					3. order.dock, order.dock.wait, move.undock
+					3. order.dock.wait, move.undock
+				-->
+				<set_value name="$kAAIT_orderScripts" exact="[]" />
+				<do_for_each name="$order_inList" in="this.assignedcontrolled.orders">
+					<append_to_list name="$kAAIT_orderScripts" exact="$order_inList.script" />
+				</do_for_each>
+				<set_value name="$kAAIT_result_isUndockQueued" exact="
+					@$kAAIT_orderScripts.{1} == 'move.undock' or
+					@$kAAIT_orderScripts.{2} == 'move.undock' or
+					(
+						@$kAAIT_orderScripts.{1} == 'order.dock' and
+						@$kAAIT_orderScripts.{2} == 'order.dock.wait' and
+						@$kAAIT_orderScripts.{3} == 'move.undock'
+					)
+				" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsUndockQueued $kAAIT_result_isUndockQueued: ' + $kAAIT_result_isUndockQueued" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 			</actions>
 			<!--
 				 dP"Yb  88""Yb 8888b.  888888 88""Yb .dP"Y8

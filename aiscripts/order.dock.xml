@@ -1,7 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-	<!-- debug
-	-->
+	<!-- debug -->
+	<add sel="//init">
+		<set_value name="$debugchance" exact="100" chance="if $debugchance then 100 else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+	</add>
 	<add pos="before" sel="//move_docking">
 		<debug_text text="@this.assignedcontrolled.idcode + ' move_docking'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
@@ -30,27 +32,20 @@
 	<add sel="//interrupts">
 		<library>
 			<actions name="CancelWaitOrdersWhenOrderChanges">
+				<debug_text text="@this.assignedcontrolled.idcode + ' CancelWaitOrdersWhenOrderChanges $kAAIT_order_waitforsignal: ' + @$kAAIT_order_waitforsignal" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' CancelWaitOrdersWhenOrderChanges $destination.idcode: ' + $destination.idcode + ' $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal'" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
 				<do_if value="@$kAAIT_order_waitforsignal.exists">
-					<cancel_order order="$kAAIT_order_waitforsignal" />
-					<!-- start: when this is changed, ensure that the other cancellation order process in this file is also changed -->
-					<set_value name="$kAAIT_ordersToCancel" exact="['order.dock', 'order.dock.wait', 'order.repair']" />
-					<do_if value="@this.assignedcontrolled.order.script == 'order.dock'" comment="if a new order overrode 'order.dock', then allow Repair after that order is done. otherwise, this Dock order was simply cancelled, so remove the Repair order as well.">
-						<set_value name="$kAAIT_ordersToCancel" exact="['order.dock', 'order.dock.wait']" />
+					<include_interrupt_actions ref="kAAIT_GetIsRepairQueued" />
+					<do_if value="not $kAAIT_result_isRepairQueued">
+						<debug_text text="@this.assignedcontrolled.idcode + ' CancelWaitOrdersWhenOrderChanges signal_object $kAAIT_order_waitforsignal.$releasesignal: ' + @$kAAIT_order_waitforsignal.$releasesignal" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+						<signal_objects object="$destination" param="$kAAIT_order_waitforsignal.$releasesignal.{1}" param2="@$kAAIT_order_waitforsignal.$releasesignal.{2}" />
 					</do_if>
-					<do_if value="this.assignedcontrolled.orders.count">
-						<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders" reverse="true">
-							<do_if value="
-								$kAAIT_ordersToCancel.indexof.{$kAAIT_order.script} and
-								$kAAIT_order != this.assignedcontrolled.defaultorder">
-								<debug_text text="@this.assignedcontrolled.idcode + ' cancel_order ' + $kAAIT_order.script" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
-								<cancel_order order="$kAAIT_order" />
-							</do_if>
-						</do_for_each>
-					</do_if>
-					<!-- end: when this is changed, ensure that the other cancellation order process in this file is also changed -->
 				</do_if>
 			</actions>
 		</library>
+	</add>
+	<add pos="before" sel="//create_order[@id=&quot;'WaitForSignal'&quot;][@object=&quot;$destination&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' WaitForSignal $destination: ' + @$destination.knownname + ' ' + @$destination.idcode" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 	</add>
 	<add sel="//create_order[@id=&quot;'WaitForSignal'&quot;][@object=&quot;$destination&quot;]" type="@name">$kAAIT_order_waitforsignal</add>
 	<add pos="before" sel="//return[1]">
@@ -60,25 +55,23 @@
 		<include_interrupt_actions ref="CancelWaitOrdersWhenOrderChanges" />
 	</add>
 	<add sel="//on_abort">
-		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_order_waitforsignal: ' + @$kAAIT_order_waitforsignal + ' cancel wait for signal on destination'" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_order_waitforsignal: ' + @$kAAIT_order_waitforsignal" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $destination.idcode: ' + $destination.idcode + ' $kAAIT_order_waitforsignal: ' + $kAAIT_order_waitforsignal + ' cancel wait for signal'" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
 		<do_if value="@$kAAIT_order_waitforsignal.exists">
-			<!-- start: when this is changed, ensure that the other cancellation order process in this file is also changed -->
-			<set_value name="$kAAIT_ordersToCancel" exact="['order.dock', 'order.dock.wait', 'order.repair']" />
-			<do_if value="@this.assignedcontrolled.order.script == 'order.dock'" comment="if a new order overrode 'order.dock', then allow Repair after that order is done. otherwise, this Dock order was simply cancelled, so remove the Repair order as well.">
-				<set_value name="$kAAIT_ordersToCancel" exact="['order.dock', 'order.dock.wait']" />
+			<!-- <include_interrupt_actions ref="kAAIT_GetIsRepairQueued" /> -->
+			<!-- because include_interrupt_actions do not run on_abort, copy kAAIT_GetIsRepairQueued here -->
+			<set_value name="$kAAIT_result_isRepairQueued" exact="false" />
+			<do_for_each name="$order_inList" in="this.assignedcontrolled.orders">
+				<do_if value="$order_inList.script == 'order.repair'">
+					<set_value name="$kAAIT_result_isRepairQueued" exact="true" />
+					<break />
+				</do_if>
+			</do_for_each>
+			<debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_result_isRepairQueued: ' + $kAAIT_result_isRepairQueued" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+			<do_if value="not $kAAIT_result_isRepairQueued">
+				<debug_text text="@this.assignedcontrolled.idcode + ' on_abort signal_object $kAAIT_order_waitforsignal.$releasesignal: ' + @$kAAIT_order_waitforsignal.$releasesignal" chance="if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0" />
+				<signal_objects object="$destination" param="$kAAIT_order_waitforsignal.$releasesignal.{1}" param2="@$kAAIT_order_waitforsignal.$releasesignal.{2}" />
 			</do_if>
-			<do_if value="this.assignedcontrolled.orders.count">
-				<do_for_each name="$kAAIT_order" in="this.assignedcontrolled.orders" reverse="true">
-					<do_if value="
-						$kAAIT_ordersToCancel.indexof.{$kAAIT_order.script} and
-						$kAAIT_order != this.assignedcontrolled.defaultorder">
-						<debug_text text="@this.assignedcontrolled.idcode + ' cancel_order ' + $kAAIT_order.script" chance="if @$destination.idcode == @global.$kAAIT.$debugChance_idCode then @global.$kAAIT_Data.$debugChance else 0" />
-						<cancel_order order="$kAAIT_order" />
-					</do_if>
-				</do_for_each>
-			</do_if>
-			<!-- end: when this is changed, ensure that the other cancellation order process in this file is also changed -->
 		</do_if>
 	</add>
 </diff>
