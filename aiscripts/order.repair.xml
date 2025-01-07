@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+  <!-- debug -->
+  <add sel="//init">
+    <set_value name="$debugchance" exact="100" chance="if $debugchance then 100 else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0))" />
+  </add>
+  <!--
+    ========================================================
+    bug-fix base game: signal unpark if undock is not queued
+    ========================================================
+    <label name="finish"/>
+    <on_abort>
+  -->
+  <add pos="after" sel="//label[@name=&quot;finish&quot;]">
+    <do_if value="@this.$unparkreleasesignal">
+      <include_interrupt_actions ref="kAAIT_GetIsUndockQueued" />
+      <do_if value="not $kAAIT_result_isUndockQueued" comment="undock is no longer queued, and therefore unpark will never send its unparkreleasesignal">
+        <signal_objects object="$destination" param="this.$unparkreleasesignal.{1}" param2="@this.$unparkreleasesignal.{2}"/>
+        <remove_value name="this.$unparkreleasesignal"/>
+      </do_if>
+    </do_if>
+  </add>
+  <add pos="prepend" sel="//on_abort">
+    <do_if value="@this.$unparkreleasesignal">
+      <!-- <include_interrupt_actions ref="kAAIT_GetIsUndockQueued" /> -->
+      <!-- because include_interrupt_actions do not run on_abort, copy kAAIT_GetIsUndockQueued here -->
+      <set_value name="$kAAIT_result_isUndockQueued" exact="false" />
+      <do_for_each name="$order_inList" in="this.assignedcontrolled.orders">
+        <do_if value="$order_inList.script == 'move.undock'">
+          <set_value name="$kAAIT_result_isUndockQueued" exact="true" />
+          <break />
+        </do_if>
+      </do_for_each>
+      <debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_result_isUndockQueued: ' + $kAAIT_result_isUndockQueued" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+      <do_if value="not $kAAIT_result_isUndockQueued" comment="undock is no longer queued, and therefore unpark will never send its unparkreleasesignal">
+        <signal_objects object="$destination" param="this.$unparkreleasesignal.{1}" param2="@this.$unparkreleasesignal.{2}"/>
+        <remove_value name="this.$unparkreleasesignal"/>
+      </do_if>
+    </do_if>
+  </add>
+</diff>

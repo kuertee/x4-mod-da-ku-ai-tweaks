@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<diff>
+	<!-- releases any waits for repairs where signaller is not queued for repair -->
+	<add pos="prepend" sel="//interrupts">
+		<handler>
+			<conditions>
+				<event_universe_generated />
+			</conditions>
+			<actions>
+				<!-- release if signaller has no queued repairs -->
+				<do_if value="this.assignedcontrolled.primarypurpose == purpose.auxiliary">
+					<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled: ' + this.assignedcontrolled.knownname + ' ' + this.assignedcontrolled.idcode" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $signaller: ' + $signaller.knownname + ' ' + $signaller.idcode" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $releasesignal: ' + $releasesignal" />
+					<do_if value="$releasesignal.{1} == 'resupply_proceed'">
+						<set_value name="$kAAIT_releasedFromEvent" exact="event.name" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_releasedFromEvent: ' + $kAAIT_releasedFromEvent" />
+						<set_value name="$kAAIT_test_target_isRepairQueued" exact="this.assignedcontrolled.order.$signaller" />
+						<include_interrupt_actions ref="kAAIT_GetIsRepairQueued" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_isRepairQueued: ' + $kAAIT_result_isRepairQueued" />
+						<do_if value="not $kAAIT_result_isRepairQueued">
+							<debug_text text="@this.assignedcontrolled.idcode + ' signal_objects this.object: ' + this.object.knownname + ' ' + this.object.idcode + ' $releasesignal ' + $releasesignal" />
+							<signal_objects object="this.object" param="$releasesignal.{1}" param2="@$releasesignal.{2}" />
+						</do_if>
+					</do_if>
+				</do_if>
+			</actions>
+		</handler>
+	</add>
+	<!--
+		<handler consume="false">
+			...
+			<event_object_signalled object="this.object" param="$releasesignal.{1}" param2="@$releasesignal.{2}"/>
+			<actions>
+				...
+				<do_if value="event.name == 'event_object_signalled'">
+	-->
+	<add pos="before" sel="//handler//do_if[@value=&quot;event.name == 'event_object_signalled'&quot;]">
+		<do_if value="@$kAAIT_releasedFromEvent == 'event_universe_generated'">
+			<set_value name="$debugchance" exact="100" />
+		</do_if>
+	</add>
+	<!-- debug -->
+	<add sel="//init">
+		<set_value name="$debugchance" exact="100" chance="if $debugchance then 100 else (if @$signaller.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+	</add>
+</diff>
