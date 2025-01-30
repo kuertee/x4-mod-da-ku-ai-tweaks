@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
 	<!--
-	purpose, do not restock if
+	purpose: do not restock if
 	engines are busted. otherwise, auxilliary will forever wait.
 	busted engines = will take more than 2 min to reach supply destination
 	<do_if value="not $cleanup_interrupt?">
@@ -15,4 +15,16 @@
 		</do_if>
 	</add>
 	<replace sel="(//do_if[@value=&quot;not $cleanup_interrupt?&quot;]/do_if[@value=&quot;$destination_station_interrupt?&quot;])[2]/@value">$kAAIT_isOkToResupply</replace>
+	<!-- debug
+	<actions name="ResupplyCheck"> -->
+	<add pos="prepend" sel="//actions[@name=&quot;ResupplyCheck&quot;]">
+		<set_value name="$debugchance_interrupt" exact="if @$debugchance_interrupt then $debugchance_interrupt else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+	</add>
+	<!-- debug
+	<find_object_component name="$damaged_components_interrupt" object="this.ship" class="class.destructible" checkoperational="false" multiple="true"> -->
+	<add pos="after" sel="//find_object_component[@name=&quot;$damaged_components_interrupt&quot;]">
+		<do_for_each name="$kAAIT_damagedComponent" in="$damaged_components_interrupt" chance="if @$debugchance_interrupt then $debugchance_interrupt else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)">
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_damagedComponent: ' + $kAAIT_damagedComponent + ' ' + @$kAAIT_damagedComponent.knownname + ' ' + @$kAAIT_damagedComponent.macro.name + ' ' + @$kAAIT_damagedComponent.hull + ' / ' + @$kAAIT_damagedComponent.maxhull" />
+		</do_for_each>
+	</add>
 </diff>
