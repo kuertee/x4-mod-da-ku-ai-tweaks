@@ -353,6 +353,7 @@
 										<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight far from position $targetsector: ' + @$targetsector + ' $position: ' + @$position" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
 									</check_all>
 									<check_all>
+										<check_value value="@$target" />
 										<check_any>
 											<check_value value="@this.assignedcontrolled.order.script != 'order.fight.protect.ship'" comment="target is $target" />
 											<check_value value="$kAAIT_attacker.distanceto.{$target} gt this.assignedcontrolled.maxradarrange" />
@@ -360,6 +361,7 @@
 										<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_attacker (' + $kAAIT_attacker + ') far from protected ship $target (' + @$target + ')'" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
 									</check_all>
 									<check_all>
+										<check_value value="@$station" />
 										<check_any>
 											<check_value value="@this.assignedcontrolled.order.script != 'order.fight.protect.station'" comment="target is $station" />
 											<check_value value="$kAAIT_attacker.distanceto.{$station} gt this.assignedcontrolled.maxradarrange" />
@@ -1879,6 +1881,7 @@
 
 			<actions name="kAAIT_GetIsOkToResupply">
 				<set_value name="$kAAIT_result_isOkToResupply" exact="true" />
+				<set_value name="$kAAIT_result_isOkToResupply_reason" exact="'no reason, should be ok to repair'" />
 				<do_if value="
 					(this.assignedcontrolled.hullpercentage gt 25) or
 					(
@@ -1888,28 +1891,52 @@
 				">
 					<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
 					<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
-					<do_if value="this.assignedcontrolled.commander.isoperational">
+					<do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue (self): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_lxl_repair_queue.knownname + ' ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_lxl_repair_queue.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue (commander): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue.knownname + ' ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+					</do_if>
+					<do_if value="@$kAAIT_result_bigEnemy.isoperational">
+						<set_value name="$kAAIT_result_isOkToResupply" exact="false" />
+						<set_value name="$kAAIT_result_isOkToResupply_reason" exact="'big enemy'" />
+					</do_if>
+					<!--
+						=========================================
+						limit l and xl ships going to repair to 1
+						=========================================
+						search for $kAAIT_lxl_repair_queue
+					-->
+					<do_elseif value="
+						this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl] and
+						(
+							@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_lxl_repair_queue.exists or
+							@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue.exists
+						)
+					">
+						<set_value name="$kAAIT_result_isOkToResupply" exact="false" />
+						<set_value name="$kAAIT_result_isOkToResupply_reason" exact="'lxl in fleet already repairing'" />
+					</do_elseif>
+					<do_elseif value="this.assignedcontrolled.commander.isoperational">
 						<do_if value="
-							@$kAAIT_result_bigEnemy.isoperational or
 							@this.assignedcontrolled.commander.order.script == 'order.fight.attack.object' or
 							@this.assignedcontrolled.commander.nextorder.script == 'order.fight.attack.object' or
 							@this.assignedcontrolled.commander.order.script == 'order.fight.tactical' or
 							@this.assignedcontrolled.commander.nextorder.script == 'order.fight.tactical'">
 							<set_value name="$kAAIT_result_isOkToResupply" exact="false" />
+							<set_value name="$kAAIT_result_isOkToResupply_reason" exact="'commander in combat'" />
 						</do_if>
-					</do_if>
+					</do_elseif>
 					<do_else>
 						<do_if value="
-							@$kAAIT_result_bigEnemy.isoperational or
 							@this.assignedcontrolled.order.script == 'order.fight.attack.object' or
 							@this.assignedcontrolled.nextorder.script == 'order.fight.attack.object' or
 							@this.assignedcontrolled.order.script == 'order.fight.tactical' or
 							@this.assignedcontrolled.nextorder.script == 'order.fight.tactical'">
 							<set_value name="$kAAIT_result_isOkToResupply" exact="false" />
+							<set_value name="$kAAIT_result_isOkToResupply_reason" exact="'in combat'" />
 						</do_if>
 					</do_else>
 				</do_if>
-				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_isOkToResupply: ' + $kAAIT_result_isOkToResupply" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_isOkToResupply ($kAAIT_lxl_repair_queue: ' + $kAAIT_result_isOkToResupply_reason + '): ' + $kAAIT_result_isOkToResupply" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
 				<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_isOkToResupply: ' + $kAAIT_result_isOkToResupply" /> -->
 			</actions>
 
