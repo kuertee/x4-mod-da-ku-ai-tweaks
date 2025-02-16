@@ -85,6 +85,14 @@
 	</init>
 	<attention min="unknown">
 		<actions>
+			<resume label="start" />
+
+			<label name="kAAIT_label_avoid" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_avoid'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+			<include_interrupt_actions ref="kAAIT_Order_Avoid" />
+			<wait min="1s" max="3s" comment="stop this order from continuing as the new order is created" />
+			<resume label="start" comment="in case the new order fails, do this" />
+
 			<label name="start" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
 			<do_if value="not $kAAIT_original_name?">
@@ -166,6 +174,22 @@
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="$kAAIT_result_engagePosDist" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$distance_attackFrom: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
 			<!-- end: get distance from target -->
+
+			<!-- start: see if there's a big enemy in the way first -->
+			<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
+			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetAvoidOrNot $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+			<do_if value="@$kAAIT_result_bigEnemy.isoperational">
+				<do_if value="$kAAIT_result_bigEnemy != @$target">
+					<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_result_bigEnemy" />
+					<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$target" />
+					<do_if value="not $kAAIT_result_isTargetInTheWay">
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_bigEnemy" />
+						<resume label="kAAIT_label_avoid" />
+					</do_if>
+				</do_if>
+			</do_if>
+			<!-- end: see if there's a big enemy in the way first -->
 
 			<set_value name="$ship_yaw_deg" exact="null" />
 			<do_if value="$target.isrealclass.module">
