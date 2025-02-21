@@ -12,9 +12,13 @@ Updates
 v7.5.01, 21 Feb 2025:
 -Bug-fixes: 7.5 compatibility updates.
 -Tweak: re-enable step forward every 60 seconds.
--Bug-fix: move to engage angle when targeting modules.
--Tweak: prevent new module targets if old module target is still operational.
--Bug-fix: ships in Coordinated Attack wait orders were not acquiring new big targets.
+-Tweak: Increase threshold of determining nearby high-risk enemies. Useful when two enemy stations are near each other.
+-Bug-fix: Do not acquire stations as new big targets. Only allow capital ships as new big targets. Note: Attack All Enemies settings need to be enabled in the ship's attack orders for them to acquire new big targets.
+-Bug-fix: Ships in Coordinated Attack wait orders were not acquiring new big targets.
+-Bug-fix: Better Move To Engage vectors when targeting modules.
+-Tweak: Prevent new module targets if the old module target is still operational.
+-Bug-fix: Coordinated Attack wait orders were released too far from the target.
+-Bug-fix: Move To Engage position behaviour now avoids high-risk enemies blocking their targets.
 -Tweak: L and XL ships of a fleet will repair/resupply one at a time only instead of all together.
 -Tweak: removed fixes to pursue targets because they are now in 7.5. beta 9 of the base game
 
