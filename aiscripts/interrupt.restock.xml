@@ -1,18 +1,42 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-	<!--
-	purpose, do not restock if
-	engines are busted. otherwise, auxilliary will forever wait.
-	busted engines = will take more than 2 min to reach supply destination
-	<do_if value="not $cleanup_interrupt?">
-		<do_if value="$destination_station_interrupt?">
-	-->
-	<add pos="before" sel="//do_if[@value=&quot;not $cleanup_interrupt?&quot;]/do_if[@value=&quot;$destination_station_interrupt?&quot;]">
-		<set_value name="$kAAIT_isOkToResupply" exact="false" />
-		<do_if value="$destination_station_interrupt?">
-			<estimate_travel_time result="$kAAIT_eta" start="this.assignedcontrolled" target="$destination_station_interrupt" ship="this.assignedcontrolled" />
-			<set_value name="$kAAIT_isOkToResupply" exact="$kAAIT_eta le 3min" />
-		</do_if>
-	</add>
-	<replace sel="(//do_if[@value=&quot;not $cleanup_interrupt?&quot;]/do_if[@value=&quot;$destination_station_interrupt?&quot;])[2]/@value">$kAAIT_isOkToResupply</replace>
+  <!--
+    =========================================
+    limit l and xl ships going to repair to 1
+    =========================================
+    search for $kAAIT_lxl_repair_queue
+
+    <handler name="ResupplyHandler">
+        <conditions>
+          <event_object_signalled object="this.ship" param="'resupply'"/>
+          <check_value value="not this.assignedcontrolled.isunit"/>
+          <check_value value="@this.assignedcontrolled.trueowner.doesresupply"/>
+  -->
+  <add sel="//handler[@name=&quot;ResupplyHandler&quot;]/conditions">
+	<check_any>
+		<check_all>
+			<check_value value="not this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]" />
+			<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue: ok to repair? yes, not lxl'" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" /> -->
+		</check_all>
+		<check_all>
+			<check_value value="not @this.assignedcontrolled.commander.exists" />
+			<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue: ok to repair? no commander'" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" /> -->
+		</check_all>
+		<check_all>
+			<check_value value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}?" />
+			<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue: ok to repair? yes, not kuda-controlled'" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" /> -->
+		</check_all>
+		<check_all>
+			<check_value value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}?" />
+			<!-- <debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue: ok to repair? yes, commander is not kuda-controlled'" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" /> -->
+		</check_all>
+		<check_all>
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue: ok to repair? proceed if repair queue is free. $kAAIT_lxl_repair_queue: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue.exists" />
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_lxl_repair_queue" exact="this.assignedcontrolled" />
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue" exact="this.assignedcontrolled" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_lxl_repair_queue: ok to repair? yes, repair queue is free. $kAAIT_lxl_repair_queue: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		</check_all>
+	</check_any>
+  </add>
 </diff>

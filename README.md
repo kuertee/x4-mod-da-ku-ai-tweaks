@@ -9,8 +9,14 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.1.13, 02 Nov 2024:
--Tweak: High-risk determination takes into account the ship's primary purpose along with the ship's threat score.
+v7.5.01, 21 Feb 2025:
+-Bug-fixes: 7.5 compatibility updates.
+-Tweak: re-enable step forward every 60 seconds.
+-Bug-fix: move to engage angle when targeting modules.
+-Tweak: prevent new module targets if old module target is still operational.
+-Bug-fix: ships in Coordinated Attack wait orders were not acquiring new big targets.
+-Tweak: L and XL ships of a fleet will repair/resupply one at a time only instead of all together.
+-Tweak: removed fixes to pursue targets because they are now in 7.5. beta 9 of the base game
 
 Attack AI Tweaks:
 =================
@@ -173,13 +179,24 @@ Credits
 Attack AI Tweaks by kuertee.
 DeadAir's AI Tweaks by DeadAir.
 Chinese localisation by Tiomer.
-French localisation by Merlwynn.
+French localisation by Merlwynn (pre 7.5) and Calvitix (post 7.5).
 German localisation by EagleFour. Previously by LeLeon.
 Japanese localisation by Schwarzemona. Previously by Arkblade.
 Russian localisation by leonkillerua.
 
 History
 =======
+v7.1.17, 10 Dec 2024:
+-Bug-fix: Deteminating a ship's behaviour towards an enemy in the way towards the ship's attack target or flight destination could result in the ship avoiding a non-high risk enemy. Bug introduced in last version when I added the option "Attack all enemies" to this determination. In this version, the ship would ignore low-risk enemies that are in the way and decide to either attack or avoid high-risk enemies in the way. Previously, the ship would either only attack or avoid and not acquire the ignore behaviour.
+
+v7.1.16, 03 Dec 2024:
+-Bug-fix: The Alerts set in the Global Orders of the Player Information menu were getting minimised to near suppression.
+-New feature: The Pursue Targets settings of the patrol and protect orders were getting ignored. This was a base-game bug.
+-Tweak: The Wait For Signal for 1 hour on auxilliary ships are now removed when the orders of ships requesting to dock for repairs change. The WaitForSignal getting stuck could be caused by the base game.
+
+v7.1.13, 02 Nov 2024:
+-Tweak: High-risk determination takes into account the ship's primary purpose along with the ship's threat score.
+
 v7.1.12, 19 Oct 2024:
 -Bug-fix: While performing one of the custom behaviours of Avoid, Withdraw, Move To Engage, enemies in the ship's way were either only attacked or avoided. In this version, they can also be ignored. An example case is when a capital ship is targeting an enemy capital ship on the other side of a station. In previous versions, that capital ship would attack low-risk enemies on the way around the station. In this version, those low-risk enemies are ignored.
 -Tweak: The calculation of whether an obstacle is in the way only used its yaw bearing and distance in relation to the ship. In this version, the obstacle's pitch bearing is also used.

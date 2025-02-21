@@ -1,8 +1,34 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
-  <!-- debug -->
   <add sel="//init">
-    <set_value name="$debugchance" exact="100" chance="if $debugchance then 100 else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0))" />
+    <set_value name="$debugchance" exact="100" chance="if $debugchance then 100 else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0))" />
+    <debug_text text="@this.assignedcontrolled.idcode + ' init'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+  </add>
+  <!--
+    =========================================
+    limit l and xl ships going to repair to 1
+    =========================================
+    search for $kAAIT_lxl_repair_queue
+  -->
+  <add pos="after" sel="//label[@name=&quot;finish&quot;]">
+    <do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+      <do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}?">
+        <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_lxl_repair_queue" />
+      </do_if>
+      <do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}?">
+        <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue" />
+      </do_if>
+    </do_if>
+  </add>
+  <add pos="prepend" sel="//on_abort">
+    <do_if value="this.assignedcontrolled.isclass.[class.ship_l, class.ship_xl]">
+      <do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}?">
+        <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_lxl_repair_queue" />
+      </do_if>
+      <do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}?">
+        <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$kAAIT_lxl_repair_queue" />
+      </do_if>
+    </do_if>
   </add>
   <!--
     ========================================================
@@ -14,7 +40,9 @@
   <add pos="after" sel="//label[@name=&quot;finish&quot;]">
     <do_if value="@this.$unparkreleasesignal">
       <include_interrupt_actions ref="kAAIT_GetIsUndockQueued" />
-      <do_if value="not $kAAIT_result_isUndockQueued" comment="undock is no longer queued, and therefore unpark will never send its unparkreleasesignal">
+      <do_if value="not $kAAIT_result_isUndockQueued"
+        comment="pre 7.5: undock is no longer queued, and therefore unpark will never send its unparkreleasesignal
+        i think it's fixed in 7.5. this fix is still just in case.">
         <signal_objects object="$destination" param="this.$unparkreleasesignal.{1}" param2="@this.$unparkreleasesignal.{2}"/>
         <remove_value name="this.$unparkreleasesignal"/>
       </do_if>
@@ -31,7 +59,7 @@
           <break />
         </do_if>
       </do_for_each>
-      <debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_result_isUndockQueued: ' + $kAAIT_result_isUndockQueued" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or @global.$kAAIT.$debugChance_idCode == 'all' then @global.$kAAIT_Data.$debugChance else 0)" />
+      <debug_text text="@this.assignedcontrolled.idcode + ' on_abort $kAAIT_result_isUndockQueued: ' + $kAAIT_result_isUndockQueued" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
       <do_if value="not $kAAIT_result_isUndockQueued" comment="undock is no longer queued, and therefore unpark will never send its unparkreleasesignal">
         <signal_objects object="$destination" param="this.$unparkreleasesignal.{1}" param2="@this.$unparkreleasesignal.{2}"/>
         <remove_value name="this.$unparkreleasesignal"/>

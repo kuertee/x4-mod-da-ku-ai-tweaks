@@ -1,14 +1,48 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <diff>
 <!--
+	purpose:
+	==========================================================================
+	do not change module target if previous module target is still operational
+	==========================================================================
+	search for $targetSelection_primaryTarget or $targetSelection_closestModule
+
+	override $closestmodule if same $primarytarget
+	<set_value name="$closestmodule" exact="$targets.{1}"/>
+-->
+	<add pos="after" sel="//set_value[@name=&quot;$closestmodule&quot;][@exact=&quot;$targets.{1}&quot;]">
+		<do_if value="@this.assignedcontrolled.order.$kAAITParam_isAvoidHighRisk or @this.assignedcontrolled.order.$kAAITParam_isStepForwardWithdraw or @this.assignedcontrolled.order.$kAAITParam_iskAAITOrder">
+			<debug_text text="@this.assignedcontrolled.idcode + ' $closestmodule: ' + @$closestmodule.knownname + ' ' + @$closestmodule.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<do_if value="@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetSelection_primaryTarget == $primarytarget">
+				<do_if value="$closestmodule != @global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetSelection_closestModule and @global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetSelection_closestModule.isoperational">
+					<set_value name="$closestmodule" exact="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetSelection_closestModule" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $closestmodule (overridden with previous $closestmodule): ' + @$closestmodule.knownname + ' ' + @$closestmodule.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				</do_if>
+			</do_if>
+			<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetSelection_primaryTarget" exact="$primarytarget" />
+			<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetSelection_closestModule" exact="$closestmodule" />
+		</do_if>
+	</add>
+<!--
+	ensure closestmodule var is actual closest module
+	<set_value name="$closestmodule" exact="$targets.{1}"/>
+	DISABLED because from debug logs, it looks like it's always the closest module
+-->
+	<!-- <add pos="before" sel="//set_value[@name=&quot;$closestmodule&quot;][@exact=&quot;$targets.{1}&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $targets.{1} (pre sort): ' + @$targets.{1}.knownname + ' ' + @$targets.{1}.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<sort_list list="$targets" sortbyvalue="loop.element.distanceto.{$refobject}" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' $targets.{1} (post sort): ' + @$targets.{1}.knownname + ' ' + @$targets.{1}.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+	</add> -->
+<!--
 	purpose: bug to fix: $pursuetargets is ignored.
 	search for 'bug to fix: $pursuetargets' to find related code for the fix.
 	note that orders that originate from patrol/protect default orders, $pursuetargets would be false in kuda.
 	the fix: replace these do_ifs with another variable based
 	<do_if value="not $pursuetargets and ($refobject.sector != $target.sector)">
 	<do_if value="not $pursuetargets and $pursuedistance and ($distance gt $pursuedistance)">
+	DISABLED because fix is now in the base 7.5. beta 9.
 -->
-	<add pos="before" sel="//do_if[@value=&quot;not $pursuetargets and ($refobject.sector != $target.sector)&quot;]">
+	<!-- <add pos="before" sel="//do_if[@value=&quot;not $pursuetargets and ($refobject.sector != $target.sector)&quot;]">
 		<set_value name="$kAAIT_isPursue"
 			exact="$pursuetargets or
 			($refobject.bboxdistanceto.{$target} le $pursuedistance) or
@@ -42,5 +76,5 @@
 			)" />
 	</add>
 	<replace sel="//do_if[@value=&quot;not $pursuetargets and ($refobject.sector != $target.sector)&quot;]/@value">not $kAAIT_isPursue</replace>
-	<replace sel="//do_if[@value=&quot;not $pursuetargets and $pursuedistance and ($distance gt $pursuedistance)&quot;]/@value">not $kAAIT_isPursue</replace>
+	<replace sel="//do_if[@value=&quot;not $pursuetargets and $pursuedistance and ($distance gt $pursuedistance)&quot;]/@value">not $kAAIT_isPursue</replace> -->
 </diff>
