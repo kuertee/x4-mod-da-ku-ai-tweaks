@@ -2094,6 +2094,112 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_avoidYaw: ' + $kAAIT_result_avoidYaw" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			</actions>
 
+			<actions name="kAAIT_GetIsMoveToEngage">
+				<set_value name="$kAAIT_result_isMovetoEngage" exact="false" />
+				<do_if value="
+					($kAAIT_test_target_getIsMoveToEngage.isclass.station or $kAAIT_test_target_getIsMoveToEngage.defensible.isclass.station) and
+					(
+						this.assignedcontrolled.type != shiptype.carrier or
+						(
+							(
+								this.isplayerowned and
+								global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
+							) or
+							(
+								(not this.isplayerowned) and
+								global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
+							)
+						)
+					) and
+					(
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetHighRisk or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isTargetPotentialHighRisk
+					)
+				">
+					<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_getIsMoveToEngage}" />
+					<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
+					<set_value name="$kAAIT_engagePosDist" exact="$kAAIT_result_engagePosDist" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $kAAIT_test_target_getIsMoveToEngage: ' + $kAAIT_test_target_getIsMoveToEngage + ' (' + $kAAIT_test_target_getIsMoveToEngage.knownname + ' , ' + @$kAAIT_test_target_getIsMoveToEngage.hullpercentage + ') $moduleTarget: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget + ' (' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget.knownname + ', ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget.hullpercentage + ')'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $defensibleTarget: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget + ' (' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.knownname + ' , ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.hullpercentage + ') $defensibleTarget_stoppedKamikaze: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget_stoppedKamikaze + ' (' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget_stoppedKamikaze.knownname + ', ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget_stoppedKamikaze.hullpercentage + ')'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<do_if value="$kAAIT_test_target_getIsMoveToEngage.isclass.module and $kAAIT_test_target_getIsMoveToEngage != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget">
+						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
+					</do_if>
+					<do_if value="
+						(not $kAAIT_result_isMovetoEngage) and
+						global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget_stoppedKamikaze and
+						(
+							(
+								global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.station and
+								$kAAIT_distToTarget gt $kAAIT_engagePosDist
+							) or
+							(
+								global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.ship and
+								(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget.isclass.ship.travel.active) and
+								$kAAIT_distToTarget gt $kAAIT_engagePosDist
+							)
+						)
+					">
+						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
+					</do_if>
+					<do_if value="(not $kAAIT_result_isMovetoEngage) and $kAAIT_test_target_getIsMoveToEngage.isclass.module and $kAAIT_test_target_getIsMoveToEngage.defensible.isclass.station">
+						<!-- <find_module name="$kAAIT_nearestModule" object="$kAAIT_test_target_getIsMoveToEngage.defensible" checkoperational="false" indestructible="true" invulnerable="false" sortbydistanceto="this.assignedcontrolled" multiple="false" /> -->
+						<find_module name="$kAAIT_nearestModule" checkoperational="false" object="$kAAIT_test_target_getIsMoveToEngage.defensible" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $kAAIT_nearestModule: ' + $kAAIT_nearestModule + ' ' + @$kAAIT_nearestModule.knownname + ' ' + @$kAAIT_nearestModule.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+						<do_if value="$kAAIT_nearestModule">
+							<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_nearestModule" />
+							<set_value name="$kAAIT_test_target_isInTheWayOf" exact="$kAAIT_test_target_getIsMoveToEngage" />
+							<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
+							<remove_value name="$kAAIT_test_target_isInTheWay" />
+							<remove_value name="$kAAIT_test_target_isInTheWayOf" />
+							<set_value name="$kAAIT_result_isMovetoEngage" exact="$kAAIT_result_isTargetInTheWay" />
+						</do_if>
+					</do_if>
+				</do_if>
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage $kAAIT_result_isMovetoEngage: ' + $kAAIT_result_isMovetoEngage" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			</actions>
+
+			<actions name="kAAIT_GetIsStepForward">
+				<set_value name="$kAAIT_result_isStepForward" exact="false" />
+				<set_value name="$time_nextStepForward" exact="1min" />
+				<do_if value="$kAAIT_test_target_getIsStepForward.isclass.ship">
+					<set_value name="$time_nextStepForward" exact="10s" />
+				</do_if>
+				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_test_target_getIsStepForward.iscapitalship: ' + @$kAAIT_test_target_getIsStepForward.iscapitalship" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_test_target_getIsStepForward.isclass.station: ' + $kAAIT_test_target_getIsStepForward.isclass.station + ' $kAAIT_test_target_getIsStepForward.defensible.isclass.station: ' + $kAAIT_test_target_getIsStepForward.defensible.isclass.station" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $time_nextStepForward: ' + $time_nextStepForward" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $time_lastStepForward: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' gt $time_nextStepForward: ' + (player.age - @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward gt $time_nextStepForward)" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<do_if value="
+					($kAAIT_test_target_getIsStepForward.isclass.station or $kAAIT_test_target_getIsStepForward.defensible.isclass.station) and
+					player.age - @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward gt $time_nextStepForward
+				">
+					<!-- <set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget}" /> -->
+					<set_value name="$kAAIT_distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_getIsStepForward}" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_distToTarget: ' + $kAAIT_distToTarget" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $combatRange_min: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $combatRange_max: ' + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<do_if value="$kAAIT_distToTarget gt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min">
+						<debug_text text="@this.assignedcontrolled.idcode + ' type: ' + this.assignedcontrolled.type" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+						<do_if value="
+							this.assignedcontrolled.type != shiptype.carrier or
+							(
+								(
+									this.isplayerowned and
+									global.$kAAIT_Data.$isCarriersAttackLikeDestroyers
+								) or
+								(
+									(not this.isplayerowned) and
+									global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions
+								)
+							)
+						">
+							<set_value name="$kAAIT_result_isStepForward" exact="true" />
+						</do_if>
+					</do_if>
+				</do_if>
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsStepForward $kAAIT_result_isStepForward: ' + $kAAIT_result_isStepForward" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			</actions>
+
 			<actions name="KAAIT_GetEngagePosDistance" comment="engage pos = half target size + max combat range * (skill + withdraw count). used in move.attack.object.capital">
 				<set_value name="$kAAIT_skillAndWithdrawCountMult" exact="
 					  @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_engagePosition_mult
