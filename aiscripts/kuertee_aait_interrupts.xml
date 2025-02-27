@@ -599,22 +599,20 @@
 					</do_if>
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight event.name: ' + event.name + ' $kAAIT_eventType: ' + @$kAAIT_eventType + ' order: ' + @this.assignedcontrolled.order.script" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ====================================== $kAAIT_attacker: ' + @$kAAIT_attacker.knownname + ', ' + @$kAAIT_attacker.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-					<!-- <do_if value="@$kAAIT_eventType == 'withdraw'"> -->
-						<do_if value="(@$kAAIT_attacker.iscapitalship or $kAAIT_attacker.isclass.station) and $kAAIT_attacker != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" comment="new target">
-							<do_if value="
-								(not this.assignedcontrolled.commander) and
-								@this.assignedcontrolled.subordinates.count">
-								<debug_text text="@this.assignedcontrolled.idcode + ' signal_objects (subordinates) kAAIT_new_big_target'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-								<signal_objects object="this.assignedcontrolled" param="'kAAIT_new_big_target'" param2="table[$attacker = $kAAIT_attacker, $from = this.assignedcontrolled]" />
-							</do_if>
-							<do_elseif value="
-								@this.assignedcontrolled.commander.iscapitalship and
-								this.assignedcontrolled.commander.sector == this.sector">
-								<debug_text text="@this.assignedcontrolled.idcode + ' signal_objects (commander) kAAIT_new_big_target'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-								<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_new_big_target'" param2="table[$attacker = $kAAIT_attacker, $from = this.assignedcontrolled]" />
-							</do_elseif>
+					<do_if value="@$kAAIT_attacker.iscapitalship and $kAAIT_attacker != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" comment="new target">
+						<do_if value="
+							(not this.assignedcontrolled.commander) and
+							@this.assignedcontrolled.subordinates.count">
+							<debug_text text="@this.assignedcontrolled.idcode + ' signal_objects (subordinates) kAAIT_new_big_target'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+							<signal_objects object="this.assignedcontrolled" param="'kAAIT_new_big_target'" param2="table[$attacker = $kAAIT_attacker, $from = this.assignedcontrolled]" />
 						</do_if>
-					<!-- </do_if> -->
+						<do_elseif value="
+							@this.assignedcontrolled.commander.iscapitalship and
+							this.assignedcontrolled.commander.sector == this.sector">
+							<debug_text text="@this.assignedcontrolled.idcode + ' signal_objects (commander) kAAIT_new_big_target'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+							<signal_objects object="this.assignedcontrolled.commander" param="'kAAIT_new_big_target'" param2="table[$attacker = $kAAIT_attacker, $from = this.assignedcontrolled]" />
+						</do_elseif>
+					</do_if>
 					<do_if value="@$kAAIT_isActOnEventNow">
 						<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_attacker: ' + @$kAAIT_attacker.knownname + ', ' + @$kAAIT_attacker.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 						<!-- <do_if value="@this.assignedcontrolled.order.script == 'order.fight.attack.object'">
@@ -720,15 +718,15 @@
 							<event_object_signalled object="this.sector" param="'kAAIT_player_alert'" />
 							<check_value value="not @this.assignedcontrolled.orders.{1}.exists" />
 							<check_value value="this.sector == event.param2.{1}" />
-							<debug_text text="@this.assignedcontrolled.idcode + ' ' + event.name + ' ' + event.param + ' ' + event.param2.{1}.knownname + ' (== ' + this.sector.knownname + '?) ' + event.param2.{2}.knownname + ' ' + event.param2.{2}.idcode" debugchance="global.$kAAIT_Data.$debugChance" />
+							<!-- <debug_text text="@this.assignedcontrolled.idcode + ' ' + event.name + ' ' + event.param + ' ' + event.param2.{1}.knownname + ' (== ' + this.sector.knownname + '?) ' + event.param2.{2}.knownname + ' ' + event.param2.{2}.idcode" debugchance="global.$kAAIT_Data.$debugChance" /> -->
 							<set_value name="$kAAIT_attacker" exact="event.param2.{2}" />
 							<set_value name="$kAAIT_signalFrom" exact="event.param" />
 						</check_all>
 					</check_any>
 					<check_value value="$kAAIT_attacker.hasrelation.enemy.{this.assignedcontrolled}" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget ' + event.name + ' ' + event.param" debugchance="global.$kAAIT_Data.$debugChance" />
+					<!-- <debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget ' + event.name + ' ' + event.param" debugchance="global.$kAAIT_Data.$debugChance" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget $kAAIT_attacker: ' + $kAAIT_attacker + ' ' + @$kAAIT_attacker.knownname + ' ' + @$kAAIT_attacker.idcode" debugchance="global.$kAAIT_Data.$debugChance" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget $kAAIT_signalFrom: ' + $kAAIT_signalFrom + ' ' + @$kAAIT_signalFrom.knownname + ' ' + @$kAAIT_signalFrom.idcode" debugchance="global.$kAAIT_Data.$debugChance" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_NewBigTarget $kAAIT_signalFrom: ' + $kAAIT_signalFrom + ' ' + @$kAAIT_signalFrom.knownname + ' ' + @$kAAIT_signalFrom.idcode" debugchance="global.$kAAIT_Data.$debugChance" /> -->
 					<check_value value="this.assignedcontrolled != $kAAIT_signalFrom" />
 					<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isAvoiding" comment="not performing kAAIT order" />
 					<check_value value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isWithdrawing" comment="not performing kAAIT order" />
@@ -964,7 +962,7 @@
 					<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetAvoidOrNot $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<do_if value="@$kAAIT_result_bigEnemy.isoperational">
-						<do_if value="$kAAIT_result_bigEnemy != @$kAAIT_test_target_isAvoid">
+						<do_if value="$kAAIT_result_bigEnemy != @$kAAIT_test_target_isAvoid" comment="at this point, $kAAIT_test_target_isAvoid is already evaluated to not avoid, so don't re-evaluate.">
 							<set_value name="$kAAIT_test_target_isInTheWay" exact="$kAAIT_result_bigEnemy" />
 							<include_interrupt_actions ref="kAAIT_GetIsInTheWay" />
 							<do_if value="$kAAIT_result_isTargetInTheWay">
@@ -1227,19 +1225,19 @@
 				</do_if>
 				<do_if value="
 					(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies.count) or
-					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies.{1}.bboxdistanceto.{this.assignedcontrolled} gt this.assignedcontrolled.maxradarrange"
+					@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies.{1}.bboxdistanceto.{this.assignedcontrolled} gt this.assignedcontrolled.maxradarrange * 0.5"
 					comment="get new list if previous big enemy is now far">
 					<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
 						<include_interrupt_actions ref="kAAIT_Init" />
 					</do_if>
-					<do_if value="
+					<!-- <do_if value="
 						this.assignedcontrolled.commander.isoperational and
 						this.assignedcontrolled.distanceto.{this.assignedcontrolled.commander} le this.assignedcontrolled.maxradarrange * 0.5 and
 						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$attackData.$bigEnemies.count">
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$attackData.$bigEnemies" />
 						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_SaveBigEnemiesToData $bigEnemies.count (from commander): ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies.count" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					</do_if>
-					<do_else>
+					<do_else> -->
 						<create_group groupname="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies" />
 						<find_gravidar_contact groupname="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies" object="this.assignedcontrolled" class="[class.ship_l, class.ship_xl, class.station]" docked="false" functional="true" maybeattackedby="this.assignedcontrolled" multiple="true" sortbydistanceto="this.assignedcontrolled" sortdescending="false" chance="if @this.sector.macro then 100 else 0">
 							<match_context macro="[@this.sector.macro]"/>
@@ -1256,7 +1254,7 @@
 							(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$attackData.$bigEnemies.count)">
 							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.commander.idcode}.$attackData.$bigEnemies" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies" />
 						</do_if>
-					</do_else>
+					<!-- </do_else> -->
 					<sort_group group="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies" sortbydistanceto="this.assignedcontrolled" sortdescending="false" />
 				</do_if>
 				<do_for_each name="$kAAIT_bigEnemy_inList" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies" reverse="true">
@@ -1276,14 +1274,29 @@
 				</do_if>
 				<set_value name="$kAAIT_result_isShipNearBigEnemy" exact="false" />
 				<set_value name="$kAAIT_result_bigEnemy" exact="null" />
+				<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies.count">
+					<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
+				</do_if>
 				<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies.count">
 					<do_for_each name="$kAAIT_bigEnemy_inList" in="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bigEnemies">
-						<set_value name="$kAAIT_result_isShipNearBigEnemy" exact="this.assignedcontrolled.distanceto.{$kAAIT_bigEnemy_inList} le this.assignedcontrolled.maxradarrange" />
-						<do_if value="$kAAIT_result_isShipNearBigEnemy">
-							<set_value name="$kAAIT_result_bigEnemy" exact="$kAAIT_bigEnemy_inList" />
-							<break />
+						<do_if value="
+							(not @$kAAIT_ignore_objects_getIsNearBigEnemies.count) or
+							(not $kAAIT_ignore_objects_getIsNearBigEnemies.indexof.{$kAAIT_bigEnemy_inList})
+						">
+							<do_if value="@$kAAIT_test_position_getIsNearBigEnemy">
+								<set_value name="$kAAIT_result_isShipNearBigEnemy" exact="$kAAIT_bigEnemy_inList.bboxdistanceto.[this.assignedcontrolled, $kAAIT_test_position_getIsNearBigEnemy] le this.assignedcontrolled.maxradarrange" />
+							</do_if>
+							<do_else>
+								<set_value name="$kAAIT_result_isShipNearBigEnemy" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_bigEnemy_inList} le this.assignedcontrolled.maxradarrange" />
+							</do_else>
+							<do_if value="$kAAIT_result_isShipNearBigEnemy">
+								<set_value name="$kAAIT_result_bigEnemy" exact="$kAAIT_bigEnemy_inList" />
+								<break />
+							</do_if>
 						</do_if>
 					</do_for_each>
+					<remove_value name="$kAAIT_ignore_objects_getIsNearBigEnemies" />
+					<remove_value name="$kAAIT_test_position_getIsNearBigEnemy" />
 				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsNearBigEnemies $kAAIT_result_isShipNearBigEnemy: ' + $kAAIT_result_isShipNearBigEnemy" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsNearBigEnemies $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
