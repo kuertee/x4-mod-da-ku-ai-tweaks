@@ -9,18 +9,14 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.5.01, 21 Feb 2025:
-- Bug-fixes: 7.5 compatibility updates.
-- Tweak: re-enable step forward every 60 seconds.
-- Tweak: Increase threshold of determining nearby high-risk enemies. Useful when two enemy stations are near each other.
-- Bug-fix: Do not acquire stations as new big targets. Only allow capital ships as new big targets. Note: Attack All Enemies settings need to be enabled in the ship's attack orders for them to acquire new big targets.
-- Bug-fix: Ships in Coordinated Attack wait orders were not acquiring new big targets.
-- Bug-fix: Better Move To Engage vectors when targeting modules.
-- Tweak: Prevent new module targets if the old module target is still operational.
-- Bug-fix: Coordinated Attack wait orders were released too far from the target.
-- Bug-fix: Move To Engage position behaviour now avoids high-risk enemies blocking their targets.
-- Tweak: L and XL ships of a fleet will repair/resupply one at a time only instead of all together.
-- Tweak: removed fixes to pursue targets because they are now in 7.5. beta 9 of the base game
+v7.5.02, 3 Mar 2025:
+- ALL the points below only apply to ships that are allowed to avoid and/or step forward and withdraw:
+- Bug-fix: The Move To Engage Position is now only applied on capital ships vs stations. Previously, capital ships vs ships were acquiring the behaviour.
+- Tweak: If a Move To Engage Position will put the ship near another high-risk enemy, a pitch component will be added to the vector to the target that ensures the capital ship will not get near the other high-risk enemy.
+- Tweak: New high-risk enemies while in high-risk operations (vs. stations, for example) are now always reported to the fleet. Previously, only when a high-risk enemy has hit a ship in the fleet will that high-risk enemy be reported. In this version, a radar identification of that high-risk enemy would alert the ships in the fleet.
+- Tweak: ALL base-game attack moves by capital ships are now disabled. There were two other movements that were getting triggered in the 7.5.01. To clarify, ships will now only use these custom behaviours during attacks: Move To Engage, Step Forward, Withdraw, Avoid.
+- Tweak: Better obsolete data clean-up on every game-load.
+- Tweak: Better detection of when the ship is destroyed for data clean-up.
 
 Attack AI Tweaks:
 =================
@@ -190,6 +186,19 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v7.5.01, 21 Feb 2025:
+- Bug-fixes: 7.5 compatibility updates.
+- Tweak: re-enable step forward every 60 seconds.
+- Tweak: Increase threshold of determining nearby high-risk enemies. Useful when two enemy stations are near each other.
+- Bug-fix: Do not acquire stations as new big targets. Only allow capital ships as new big targets. Note: Attack All Enemies settings need to be enabled in the ship's attack orders for them to acquire new big targets.
+- Bug-fix: Ships in Coordinated Attack wait orders were not acquiring new big targets.
+- Bug-fix: Better Move To Engage vectors when targeting modules.
+- Tweak: Prevent new module targets if the old module target is still operational.
+- Bug-fix: Coordinated Attack wait orders were released too far from the target.
+- Bug-fix: Move To Engage position behaviour now avoids high-risk enemies blocking their targets.
+- Tweak: L and XL ships of a fleet will repair/resupply one at a time only instead of all together.
+- Tweak: removed fixes to pursue targets because they are now in 7.5. beta 9 of the base game
+
 v7.1.17, 10 Dec 2024:
 - Bug-fix: Deteminating a ship's behaviour towards an enemy in the way towards the ship's attack target or flight destination could result in the ship avoiding a non-high risk enemy. Bug introduced in last version when I added the option "Attack all enemies" to this determination. In this version, the ship would ignore low-risk enemies that are in the way and decide to either attack or avoid high-risk enemies in the way. Previously, the ship would either only attack or avoid and not acquire the ignore behaviour.
 
