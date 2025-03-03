@@ -44,8 +44,6 @@
 						</do_if>
 					</do_for_each>
 					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-					<!-- <remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward" />
-					<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" /> -->
 					<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
 					<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 					<abort_called_scripts resume="finish" />
@@ -66,9 +64,16 @@
 		<actions>
 			<label name="start"/>
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<include_interrupt_actions ref="kAAIT_Init" />
 			<do_if value="not $kAAIT_original_name?">
 				<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.knownname" />
 			</do_if>
+
+			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount gt 0">
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount" operation="subtract" exact="1" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$withdrawCount: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			</do_if>
+
 			<do_if value="$target.defensible">
 				<set_value name="$defensibleTarget" exact="$target.defensible" />
 			</do_if>
@@ -85,7 +90,7 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kAAIT'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT step forward'" />
 			</do_if>
-			<include_interrupt_actions ref="kAAIT_Init" />
+
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward" exact="player.age" />
 			<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" exact="1" />
@@ -93,6 +98,7 @@
 			<do_else>
 				<set_value operation="add" name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" exact="1" />
 			</do_else>
+
 			<set_value name="$moveTo_space" exact="this.sector" />
 			<create_position name="$posShip" space="$moveTo_space" object="this.assignedcontrolled" />
 			<create_position name="$posTarget" space="$moveTo_space" object="$target" />
@@ -101,12 +107,12 @@
 			</create_orientation>
 			<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
 			<set_value name="$pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
-			<do_if value="$pitch_deg lt -15">
-				<set_value name="$pitch_deg" exact="-15" />
+			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward % 2 == 0" comment="alternate to keep the ship at a pretty much the same pitch">
+				<set_value name="$pitch_deg" operation="add" exact="7.5" />
 			</do_if>
-			<do_elseif value="$pitch_deg gt 15">
-				<set_value name="$pitch_deg" exact="15" />
-			</do_elseif>
+			<do_else>
+				<set_value name="$pitch_deg" operation="add" exact="-7.5" />
+			</do_else>
 			<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="[$distToTarget, global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max - global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_stepForward_mult].min" />
 			<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom lt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min">
@@ -175,8 +181,6 @@
 			<stop_moving object="this.assignedcontrolled" />
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
 			<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData?">
-				<!-- <remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward" />
-				<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$count_stepForward" /> -->
 				<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
 				<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 			</do_if>
@@ -196,8 +200,6 @@
 			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
 		</do_if>
 		<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData?">
-		<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward" />
-		<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$count_stepForward" />
 		<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
 		<remove_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
 		</do_if>

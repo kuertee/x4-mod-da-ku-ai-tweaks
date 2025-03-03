@@ -1,5 +1,59 @@
 <?xml version='1.0' encoding='utf-8'?>
 <diff>
+  <!--
+    =============================
+    start:
+    detect event_object_destroyed
+    =============================
+  -->
+  <add pos="after" sel="//handler[@comment=&quot;Engineer hacked&quot;]">
+    <handler consume="false" comment="detect destruction.
+      NOTE: the actions node is never actioned on destruction EVER - according to my tests.
+      hence, data is removed in the coditions node with remove_value.
+      ALSO: from my tests, check_anys of event listeners in the conditions node will disable these hotkeys: shift-f1 (TD), shift-f2 (scan mode), shift-f3 (long range scanner).
+      other hotkeys may also be disabled.">
+      <conditions>
+        <event_object_destroyed object="this.assignedcontrolled" check="false" />
+        <check_value value="$kAAIT_IdCode?" />
+        <debug_text text="@$kAAIT_IdCode + ' ' + event.name + ' (pre remove) ' + @global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}" debugchance="if @$debugchance then $debugchance else (if @$kAAIT_IdCode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}?) then @global.$kAAIT_Data.$debugChance else 0)" />
+        <remove_value name="global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}" />
+        <debug_text text="@$kAAIT_IdCode + ' ' + event.name + ' (post remove) ' + @global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}" debugchance="if @$debugchance then $debugchance else (if @$kAAIT_IdCode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}?) then @global.$kAAIT_Data.$debugChance else 0)" />
+      </conditions>
+      <actions>
+        <debug_text text="@$kAAIT_IdCode + ' ' + event.name" chance="if @$debugchance then $debugchance else (if @$kAAIT_IdCode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}?) then @global.$kAAIT_Data.$debugChance else 0)" />
+      </actions>
+    </handler>
+    <handler consume="false" comment="detect change of ownership.
+      NOTE: from my tests, check_anys of event listeners in the conditions node will disable these hotkeys: shift-f1 (TD), shift-f2 (scan mode), shift-f3 (long range scanner).
+      other hotkeys may also be disabled.">
+      <conditions>
+        <event_object_changed_owner object="this.assignedcontrolled" check="false" />
+        <check_value value="$kAAIT_IdCode?" />
+        <debug_text text="@$kAAIT_IdCode + ' ' + event.name + ' (pre remove) ' + @global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}" debugchance="if @$debugchance then $debugchance else (if @$kAAIT_IdCode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}?) then @global.$kAAIT_Data.$debugChance else 0)" />
+        <remove_value name="global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}" />
+        <debug_text text="@$kAAIT_IdCode + ' ' + event.name + ' (post remove) ' + @global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}" debugchance="if @$debugchance then $debugchance else (if @$kAAIT_IdCode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}?) then @global.$kAAIT_Data.$debugChance else 0)" />
+      </conditions>
+      <actions>
+        <debug_text text="@$kAAIT_IdCode + ' ' + event.name" chance="if @$debugchance then $debugchance else (if @$kAAIT_IdCode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}?) then @global.$kAAIT_Data.$debugChance else 0)" />
+      </actions>
+    </handler>
+  </add>
+  <add pos="after" sel="//label[@name=&quot;checkforrepair&quot;]">
+    <!-- <debug_text text="@$this.assignedcontrolled.idcode + ' LABEL checkforrepair. $kAAITByShipId: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode} + ' $kAAIT_IdCode: ' + @$kAAIT_IdCode" chance="if @$debugchance then $debugchance else (if @$this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}?) then @global.$kAAIT_Data.$debugChance else 0)" /> -->
+    <do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}?">
+      <do_if value="not $kAAIT_IdCode?">
+        <set_value name="$kAAIT_IdCode" exact="this.assignedcontrolled.idcode" />
+        <debug_text text="@$kAAIT_IdCode + ' kAAIT init.'" chance="if @$debugchance then $debugchance else (if @$kAAIT_IdCode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and global.$kAAITByShipId.{'$' + @$kAAIT_IdCode}?) then @global.$kAAIT_Data.$debugChance else 0)" />
+      </do_if>
+    </do_if>
+  </add>
+  <!--
+    =============================
+    end:
+    detect event_object_destroyed
+    =============================
+  -->
+  <!-- DEADAIR DIFFS APPLIED AFTER KUERTEE CHANGES -->
   <add sel="/aiscript/attention[@min='unknown']/actions/do_if[@value='player.age le @this.$hacked']" pos="before">
     <do_if value="true">
       <do_if value="global.$DATweaks.$EngineerAI.$HullDamageLimitTweak? and global.$DATweaks.$EngineerAI.$HullDamageLimitTweak">
