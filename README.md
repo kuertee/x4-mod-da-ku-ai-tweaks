@@ -9,14 +9,9 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.5.02, 3 Mar 2025:
-- ALL the points below only apply to ships that are allowed to avoid and/or step forward and withdraw:
-- Bug-fix: The Move To Engage Position is now only applied on capital ships vs stations. Previously, capital ships vs ships were acquiring the behaviour.
-- Tweak: If a Move To Engage Position will put the ship near another high-risk enemy, a pitch component will be added to the vector to the target that ensures the capital ship will not get near the other high-risk enemy.
-- Tweak: New high-risk enemies while in high-risk operations (vs. stations, for example) are now always reported to the fleet. Previously, only when a high-risk enemy has hit a ship in the fleet will that high-risk enemy be reported. In this version, a radar identification of that high-risk enemy would alert the ships in the fleet.
-- Tweak: ALL base-game attack moves by capital ships are now disabled. There were two other movements that were getting triggered in the 7.5.01. To clarify, ships will now only use these custom behaviours during attacks: Move To Engage, Step Forward, Withdraw, Avoid.
-- Tweak: Better obsolete data clean-up on every game-load.
-- Tweak: Better detection of when the ship is destroyed for data clean-up.
+v7.5.03, 05 Mar 2025:
+- Bug-fix: Coordinated Attacks were not adding the attack orders on ships.
+- Bug-fix: Carriers were ignoring the "Carriers attack like Destroyers" option at the first instance of the attack.
 
 Attack AI Tweaks:
 =================
@@ -186,6 +181,15 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v7.5.02, 03 Mar 2025:
+- ALL the points below only apply to ships that are allowed to avoid and/or step forward and withdraw:
+- Bug-fix: The Move To Engage Position is now only applied on capital ships vs stations. Previously, capital ships vs ships were acquiring the behaviour.
+- Tweak: If a Move To Engage Position will put the ship near another high-risk enemy, a pitch component will be added to the vector to the target that ensures the capital ship will not get near the other high-risk enemy.
+- Tweak: New high-risk enemies while in high-risk operations (vs. stations, for example) are now always reported to the fleet. Previously, only when a high-risk enemy has hit a ship in the fleet will that high-risk enemy be reported. In this version, a radar identification of that high-risk enemy would alert the ships in the fleet.
+- Tweak: ALL base-game attack moves by capital ships are now disabled. There were two other movements that were getting triggered in the 7.5.01. To clarify, ships will now only use these custom behaviours during attacks: Move To Engage, Step Forward, Withdraw, Avoid.
+- Tweak: Better obsolete data clean-up on every game-load.
+- Tweak: Better detection of when the ship is destroyed for data clean-up.
+
 v7.5.01, 21 Feb 2025:
 - Bug-fixes: 7.5 compatibility updates.
 - Tweak: re-enable step forward every 60 seconds.
