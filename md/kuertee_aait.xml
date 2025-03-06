@@ -1486,6 +1486,8 @@
 				<set_value name="$ship" exact="@event.param.$object" />
 				<debug_text text="'$ship: ' + $ship.knownname + ' (' + $ship.idcode + ')'" />
 				<debug_text text="'$ship.type: ' + @$ship.type" />
+				<debug_text text="'$ship.ismodular: ' + @$ship.ismodular" />
+				<debug_text text="'$ship.canhaveattackablemodules: ' + @$ship.canhaveattackablemodules" />
 				<debug_text text="'$escortgroup: ' + @$ship.assignedaipilot.$escortgroup" />
 				<debug_text text="'assignedaipilot: ' + @$ship.assignedaipilot.knownname" />
 				<debug_text text="'defencenpc: ' + @$ship.defencenpc.knownname" />
@@ -1536,17 +1538,22 @@
 				<debug_text text="'maxspeed: ' + @$ship.maxspeed" />
 				<debug_text text="'travel.maxspeed: ' + @$ship.travel.maxspeed" />
 				<debug_text text="'dps.all: ' + @$ship.dps.all" />
-				<do_if value="@$ship.isclass.ship">
-					<set_value name="$weapons" exact="@$ship.weapons.operational.count" />
-				</do_if>
-				<do_else>
-					<set_value name="$weapons" exact="
-						@$ship.weapons.operational.count + 
-						[@$ship.weapons.operational.count, @$ship.turrets.operational.count].max
-					" />
-				</do_else>
+				<find_object_component name="$weapons" object="$ship" class="class.weapon" multiple="true" />
+				<debug_text text="'$weapons: ' + $weapons.count + ': ' + $weapons" />
+				<do_for_each name="$weapon" in="$weapons">
+					<debug_text text="'    $weapon: ' + $weapon + ' ' + @$weapon.knownname + ' ' + @$weapon.idcode + ' ' + @$weapon.hullpercentage" />
+				</do_for_each>
+				<!-- <find_object_component name="$turrets" object="$ship" class="class.turret" multiple="true" />
+				<debug_text text="'$turrets: ' + $turrets.count + ': ' + $turrets" />
+				<do_for_each name="$turret" in="$turrets">
+					<debug_text text="'    $turret: ' + $turret + ' ' + @$turret.knownname + ' ' + @$turret.idcode + ' ' + @$turret.hullpercentage" />
+				</do_for_each> -->
+				<find_object_component name="$components" object="$ship" class="[class.shieldgenerator, class.weapon, class.engine]" surfaceelement="true" integrated="false" multiple="true" />
+				<debug_text text="'$components: ' + $components.count + ': ' + $components" />
+				<do_for_each name="$component" in="$components">
+					<debug_text text="'    $component (' + @$component.class + '): ' + $component + ' ' + @$component.knownname + ' ' + @$component.idcode + ' ' + @$component.hullpercentage" />
+				</do_for_each>
 				<debug_text text="'maxradarrange: ' + $ship.maxradarrange" />
-				<debug_text text="'$weapons: ' + $weapons" />
 				<debug_text text="'maxcombatrange.primary: ' + $ship.maxcombatrange.primary" />
 				<debug_text text="'maxcombatrange.secondary: ' + $ship.maxcombatrange.secondary" />
 				<debug_text text="'maxcombatrange.lasers.all: ' + $ship.maxcombatrange.lasers.all" />
