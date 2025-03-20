@@ -22,10 +22,11 @@
 						<reset_cue cue="this" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="24">
+				<cue name="kAAIT2_Config" namespace="this" version="25">
 					<actions>
 						<set_value name="global.$kAAIT_Data" exact="this" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
+						<set_value name="global.$kAAIT_Data.$debugChance_nameTags" exact="0" />
 						<!-- configs: -->
 						<!-- kAAIT_ApplyCustomBehaviourOrNot, kAAIT_MoveAroundOrNot -->
 						<set_value name="global.$kAAIT_Data.$xssm_isAvoidHighRisk" exact="true" />
@@ -206,6 +207,11 @@
 						<set_value name="global.$kAAIT_Data.$optimisation_hit_event" exact="1" />
 						<set_value name="global.$kAAIT_Data.$optimisation_radar_event" exact="1" />
 					</patch>
+					<patch sinceversion="25">
+						<debug_text text="'patch sinceversion 25, state: ' + this.state" />
+						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
+						<set_value name="global.$kAAIT_Data.$debugChance_nameTags" exact="0" />
+					</patch>
 				</cue>
 			</cues>
 		</cue>
@@ -296,10 +302,8 @@
 					</actions>
 					<delay exact="1s" />
 					<actions comment="allow scripts to run for 1 second with debug chance enabled on game loaded">
-						<do_if value="event.name == 'event_game_loaded'">
-							<set_value name="global.$kAAIT_Data.$debugChance" exact="$debugChance_old" />
-							<set_value name="global.$kAAIT.$debugChance_idCode" exact="$debugChance_idCode_old" />
-						</do_if>
+						<set_value name="global.$kAAIT_Data.$debugChance" exact="$debugChance_old" />
+						<set_value name="global.$kAAIT.$debugChance_idCode" exact="$debugChance_idCode_old" />
 						<reset_cue cue="this" />
 					</actions>
 				</cue>
@@ -1138,6 +1142,18 @@
 						$bgColor = 'Helper.color.red',
 						$onClick = kAAIT_ExtOpts_OnCheckboxChange
 					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 2}, $color='Helper.color.red']"/>
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'debugChance_nameTags',
+						$checked = if global.$kAAIT_Data.$debugChance_nameTags == 100 then true else false,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$bgColor = 'Helper.color.red',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
 
 				<do_if value="global.$kAAIT_Data.$debugChance">
 					<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
@@ -1198,6 +1214,9 @@
 				<do_if value="event.param.$id == 'debugChance'">
 					<set_value name="global.$kAAIT_Data.{'$' + event.param.$id}" exact="if event.param.$checked then 100 else 0" />
 				</do_if>
+				<do_elseif value="event.param.$id == 'debugChance_nameTags'">
+					<set_value name="global.$kAAIT_Data.{'$' + event.param.$id}" exact="if event.param.$checked then 100 else 0" />
+				</do_elseif>
 				<do_else>
 					<set_value name="global.$kAAIT_Data.{'$' + event.param.$id}" exact="event.param.$checked" />
 				</do_else>

@@ -9,9 +9,8 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.5.03, 05 Mar 2025:
-- Bug-fix: Coordinated Attacks were not adding the attack orders on ships.
-- Bug-fix: Carriers were ignoring the "Carriers attack like Destroyers" option at the first instance of the attack.
+v7.5.06, 20 Mar 2025:
+- Bug-fix: The mod-specific Debug Log (found in the Extension Options menu) functionality was sticking to "on" in new games.
 
 Attack AI Tweaks:
 =================
@@ -151,23 +150,23 @@ What this mod doesn't do
 
 Install
 =======
--Unzip to 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/'.
--Make sure the sub-folders, and files are in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/', and not in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/kuertee_attack_ai_tweaks/'.
+- Unzip to 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/'.
+- Make sure the sub-folders, and files are in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/', and not in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/kuertee_attack_ai_tweaks/'.
 
 Uninstall
 =========
--Delete the mod folder.
+- Delete the mod folder.
 
 Debugging
 =========
-(1) Allow the game to log events to a text file by adding "-debug all -logfile debug.log" to its launch parameters.
-(2) Enable the mod-specific Debug Log in the mod's the Extension Options.
-(3) Play for long enough for the mod to log its events.
-(4) Send me (at kuertee@gmail.com) the log found in My Documents\Egosoft\X4\(your player-specific number)\debug.log.
+1. Allow the game to log events to a text file by adding "-debug all -logfile debug.log" to its launch parameters.
+2. If an Extension Options entry exists for the mod, enable the mod-specific Debug Log.
+3. Play for long enough for the mod to log its events. Or force the error that you are experiencing.
+4. Send me (at kuertee@gmail.com) the log found in My Documents\Egosoft\X4\(your player-specific number)\debug.log.
 
 Uninstall
 =========
--Delete the mod folder.
+- Delete the mod folder.
 
 Credits
 =======
@@ -181,6 +180,10 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v7.5.03, 05 Mar 2025:
+- Bug-fix: Coordinated Attacks were not adding the attack orders on ships.
+- Bug-fix: Carriers were ignoring the "Carriers attack like Destroyers" option at the first instance of the attack.
+
 v7.5.02, 03 Mar 2025:
 - ALL the points below only apply to ships that are allowed to avoid and/or step forward and withdraw:
 - Bug-fix: The Move To Engage Position is now only applied on capital ships vs stations. Previously, capital ships vs ships were acquiring the behaviour.
