@@ -180,6 +180,8 @@
 	<add pos="before" sel="//label[@name=&quot;start&quot;]">
 		<label name="kAAIT_label_start" />
 		<set_value name="$kAAIT_version" exact="global.$kAAIT.version" />
+		<set_value name="$kAAIT_isScriptHasAvoidLabel" exact="true" />
+		<set_value name="$kAAIT_isScriptHasWithdrawLabel" exact="true" />
 		<do_if value="(not this.assignedcontrolled.knownname) or this.assignedcontrolled.knownname == ''" comment="fix bug that removed names">
 			<set_object_name object="this.assignedcontrolled" name="this.assignedcontrolled.macro.name" />
 		</do_if>
@@ -203,36 +205,6 @@
 		<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
 		<wait min="1s" max="3s" comment="stop this order from continuing as the new order is created" />
 		<resume label="start" comment="in case the new order fails, do this" />
-	</add>
-<!-- add after.
-	purpose: init, check avoidance.
-	but do not actually avoid until just before the actual attack (<run_script name="$DefensibleScript">)
-	so that other operations (e.g. order subordinates) can occur.
-	<label name="start" />
--->
-	<add pos="after" sel="//label[@name=&quot;start&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk or $kAAITParam_isStepForwardWithdraw">
-			<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
-				<include_interrupt_actions ref="kAAIT_Init" />
-			</do_if>
-			<do_if value="not @this.assignedcontrolled.iscapitalship">
-				<set_value name="$kAAIT_test_target_isAvoid" exact="$primarytarget" />
-			</do_if>
-			<do_else>
-				<set_value name="$kAAIT_test_target_isAvoid" exact="null" comment="defaults to find big enemies nearby" />
-			</do_else>
-			<include_interrupt_actions ref="kAAIT_GetAvoidOrNot" />
-			<do_if value="@$kAAIT_result_avoidEnemy.isoperational or @$kAAIT_result_withdrawFromEnemy.isoperational">
-				<do_if value="@$kAAIT_result_avoidEnemy.isoperational and @$kAAITParam_isAvoidHighRisk">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
-					<resume label="kAAIT_label_avoid" />
-				</do_if>
-				<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational and @$kAAITParam_isStepForwardWithdraw">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_withdrawFromEnemy" />
-					<resume label="kAAIT_label_withdraw" />
-				</do_elseif>
-			</do_if>
-		</do_if>
 	</add>
 <!-- add. purpose: debug
 	<set_value name="$skiptargetselection"/> x 3
@@ -272,10 +244,33 @@
 		</do_if>
 	</add> -->
 <!-- add after.
+	purpose: init, check avoidance.
+	but do not actually avoid until just before the actual attack (<run_script name="$DefensibleScript">)
+	so that other operations (e.g. order subordinates) can occur.
 	<label name="fight"/>
 -->
 	<add pos="after" sel="//label[@name=&quot;fight&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<do_if value="@$kAAITParam_isAvoidHighRisk or $kAAITParam_isStepForwardWithdraw">
+			<include_interrupt_actions ref="kAAIT_InitAttackScript" />
+			<do_if value="not @this.assignedcontrolled.iscapitalship">
+				<set_value name="$kAAIT_test_target_isAvoid" exact="$target" />
+			</do_if>
+			<do_else>
+				<set_value name="$kAAIT_test_target_isAvoid" exact="null" comment="defaults to find big enemies nearby" />
+			</do_else>
+			<include_interrupt_actions ref="kAAIT_GetAvoidOrNot" />
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational or @$kAAIT_result_withdrawFromEnemy.isoperational">
+				<do_if value="@$kAAIT_result_avoidEnemy.isoperational and @$kAAITParam_isAvoidHighRisk">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
+					<resume label="kAAIT_label_avoid" />
+				</do_if>
+				<do_elseif value="@$kAAIT_result_withdrawFromEnemy.isoperational and @$kAAITParam_isStepForwardWithdraw">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_withdrawFromEnemy" />
+					<resume label="kAAIT_label_withdraw" />
+				</do_elseif>
+			</do_if>
+		</do_if>
 		<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space?">
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_space" />
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$orderLocation_pos" />
@@ -434,23 +429,27 @@
 -->
 	<add pos="before" sel="(//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[1]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<debug_text text="@this.assignedcontrolled.idcode + ' (1) target out of range. move to engage if station. otherwise use move generic.'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<set_value name="$kAAIT_test_target_getIsMoveToEngage" exact="$target" />
-			<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
-			<do_if value="$kAAIT_result_isMovetoEngage">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
-				<resume label="kAAIT_label_move_to_engage_position" />
+			<do_if value="this.assignedcontrolled.iscapitalship">
+				<debug_text text="@this.assignedcontrolled.idcode + ' (1) target out of range. move to engage if station. otherwise use move generic.'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<set_value name="$kAAIT_test_target_getIsMoveToEngage" exact="$target" />
+				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
+				<do_if value="$kAAIT_result_isMovetoEngage">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
+					<resume label="kAAIT_label_move_to_engage_position" />
+				</do_if>
 			</do_if>
 		</do_if>
 	</add>
 	<add pos="before" sel="(//run_script[@name=&quot;'move.generic'&quot;][@result=&quot;$movesuccess&quot;])[2]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<debug_text text="@this.assignedcontrolled.idcode + ' (2) target out of range. move to engage if station. otherwise use move generic.'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<set_value name="$kAAIT_test_target_getIsMoveToEngage" exact="$target" />
-			<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
-			<do_if value="$kAAIT_result_isMovetoEngage">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
-				<resume label="kAAIT_label_move_to_engage_position" />
+			<do_if value="this.assignedcontrolled.iscapitalship">
+				<debug_text text="@this.assignedcontrolled.idcode + ' (2) target out of range. move to engage if station. otherwise use move generic.'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<set_value name="$kAAIT_test_target_getIsMoveToEngage" exact="$target" />
+				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
+				<do_if value="$kAAIT_result_isMovetoEngage">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$target" />
+					<resume label="kAAIT_label_move_to_engage_position" />
+				</do_if>
 			</do_if>
 		</do_if>
 	</add>

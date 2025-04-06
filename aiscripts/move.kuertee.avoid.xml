@@ -66,8 +66,8 @@
 	</init>
 	<attention min="unknown">
 		<actions>
-			<resume label="start" />
 			<set_value name="$isAttackingSmallTarget" exact="false" />
+			<resume label="start" />
 
 			<label name="attack_small_target" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL attack_small_target'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
@@ -79,7 +79,9 @@
 
 			<label name="start"/>
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<include_interrupt_actions ref="kAAIT_Init" />
+			<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
+				<include_interrupt_actions ref="kAAIT_Init" />
+			</do_if>
 			<do_if value="not $kAAIT_original_name?">
 				<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.knownname" />
 			</do_if>
@@ -135,7 +137,9 @@
 				@$kAAIT_result_attackTarget == $defensibleTarget and
 				(not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$forced_avoidDestination)" />
 			<do_if value="$isEncircleTarget">
-				<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
+				<do_if value="$dist_shipToTarget gt this.assignedcontrolled.maxradarrange * 0.5">
+					<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
+				</do_if>
 				<do_if value="$kAAIT_result_target_found.isoperational">
 					<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
 					<resume label="attack_small_target" />
@@ -359,9 +363,13 @@
 				</interrupt>
 			</wait>
 			<debug_text text="@this.assignedcontrolled.idcode + ' wait end'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$moveTo_space, $moveTo_pos]"/>
-			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+
+			<set_value name="$kAAIT_isHighRisk" exact="true" />
+			<set_value name="$kAAIT_test_target_isTakeRisk" exact="$target" />
+			<include_interrupt_actions ref="kAAIT_GetIsTakeRisk" />
+			<do_if value="$kAAIT_result_isTakeRisk">
+				<resume label="finish" />
+			</do_if>
 
 			<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="false" />
 			<set_value name="$kAAIT_result_isTargetInTheWayIgnored" exact="false" />
@@ -369,6 +377,13 @@
 				<set_value name="$kAAIT_test_attackTargetInTheWayOrNot" exact="$kAAIT_attacker_interruptedMove" />
 				<include_interrupt_actions ref="kAAIT_GetAttackOrIgnoreTargetInTheWay" />
 			</do_if>
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_isTargetInTheWayAttacked: ' + $kAAIT_result_isTargetInTheWayAttacked" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_isTargetInTheWayIgnored: ' + $kAAIT_result_isTargetInTheWayIgnored" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+
+			<debug_text text="@this.assignedcontrolled.idcode + ' $isTargetMoved: ' + $isTargetMoved" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<set_value name="$dist" exact="this.assignedcontrolled.distanceto.[$moveTo_space, $moveTo_pos]"/>
+			<debug_text text="@this.assignedcontrolled.idcode + ' $dist: ' + $dist" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+
 			<do_if value="$kAAIT_result_isTargetInTheWayAttacked">
 				<resume label="start" />
 			</do_if>
@@ -380,7 +395,9 @@
 			</do_elseif>
 			<do_elseif value="$dist gt 3km">
 				<do_if value="$isEncircleTarget">
-					<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
+					<do_if value="this.assignedcontrolled.bboxdistanceto.{$defensibleTarget} gt this.assignedcontrolled.maxradarrange * 0.5">
+						<include_interrupt_actions ref="kAAIT_FindSmallerTarget" />
+					</do_if>
 					<do_if value="$kAAIT_result_target_found.isoperational">
 						<set_value name="$kAAIT_target_attack" exact="$kAAIT_result_target_found" />
 						<resume label="attack_small_target" />
