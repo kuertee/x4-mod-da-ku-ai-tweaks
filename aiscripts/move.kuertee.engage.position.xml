@@ -390,8 +390,6 @@
 
 			<label name="finish" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL finish'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<stop_moving object="this.assignedcontrolled" />
-			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
 			<do_if value="@this.assignedcontrolled.isoperational">
 				<do_if value="$kAAIT_original_name? and @$kAAIT_original_name and (this.assignedcontrolled.knownname != @$kAAIT_original_name) and (not @this.assignedcontrolled.coverowner)">
 					<!-- Check exists, check not null, check if knownname != original. Removed chance from debug message so any ships that unintentionally got a name change can be tracked -->
@@ -399,6 +397,27 @@
 					<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name" />
 				</do_if>
 			</do_if>
+
+			<!-- ensure facing target -->
+			<create_position name="$moveTo_pos" space="$moveTo_space" object="this.assignedcontrolled" />
+			<create_orientation name="$moveTo_rot" orientation="look_at" refposition="$posTarget">
+				<position value="$moveTo_pos" />
+			</create_orientation>
+			<move_to object="this.assignedcontrolled"
+				destination="$moveTo_space"
+				uselocalhighways="false"
+				useknownpath="this.isplayerowned"
+				forcesteering="(not @this.assignedcontrolled.iscapitalship)"
+				commandaction="false"
+				travel="true"
+				abortpath="false"
+				flightbehaviour="flightbehaviour.gaindistance">
+				<position value="$moveTo_pos"/>
+				<rotation value="$moveTo_rot" />
+			</move_to>
+
+			<stop_moving object="this.assignedcontrolled" />
+			<!-- <reset_flight_behaviour object="this.assignedcontrolled" /> -->
 			<do_if value="@$beacon_obstacle.exists">
 				<destroy_object object="$beacon_obstacle" />
 			</do_if>
