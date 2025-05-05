@@ -1516,20 +1516,20 @@
 					<set_value name="$entity" exact="$ship.defencenpc" />
 				</do_if>
 				<debug_text text="'entity: ' + @$entity.knownname + ' exists: ' + @$entity.exists + ' isoperational: ' + @$entity.isoperational" />
-				<!-- <do_if value="@$entity.$kAAIT_attackers_timeAdded"> -->
-					<run_actions ref="DebugData">
-						<param name="Data" value="(player.age - @$entity.$kAAIT_attackers_timeAdded) + ' seconds ago'" />
-						<param name="Prefix" value="'$kAAIT_attackers_timeAdded'" />
-					</run_actions>
-					<run_actions ref="DebugData">
-						<param name="Data" value="@$entity.$kAAIT_attackers" />
-						<param name="Prefix" value="'$kAAIT_attackers'" />
-					</run_actions>
-					<run_actions ref="DebugData">
-						<param name="Data" value="@$entity.$kAAIT_attackers_lxl" />
-						<param name="Prefix" value="'$kAAIT_attackers_lxl'" />
-					</run_actions>
-				<!-- </do_if> -->
+				<debug_text text="'kAAIT_attackers_timeAdded: ' + (player.age - @$entity.$kAAIT_attackers_timeAdded) + ' seconds ago'" />
+				<run_actions ref="DebugData">
+					<param name="Data" value="@$entity.$kAAIT_attackers" />
+					<param name="Prefix" value="'$kAAIT_attackers'" />
+				</run_actions>
+				<run_actions ref="DebugData">
+					<param name="Data" value="@$entity.$kAAIT_attackers_lxl" />
+					<param name="Prefix" value="'$kAAIT_attackers_lxl'" />
+				</run_actions>
+				<find_module name="$modules" object="$ship" multiple="true" />
+				<debug_text text="'$modules: ' + $modules" />
+				<do_for_each name="$module" in="$modules">
+					<debug_text text="'    $module: ' + @$module.knownname + ' ' + @$module.idcode" />
+				</do_for_each>
 				<debug_text text="'size: ' + $ship.size" />
 				<debug_text text="'primarypurpose: ' + $ship.primarypurpose" />
 				<debug_text text="'order: ' + $ship.order + ' ' + @$ship.order.script" />
@@ -1540,7 +1540,9 @@
 				<debug_text text="'    $ship.order.$radiusanchorspace: ' + @$ship.order.$radiusanchorspace" />
 				<debug_text text="'    $ship.order.$radiusanchorpos: ' + @$ship.order.$radiusanchorpos" />
 				<debug_text text="'    $ship.order.$radius: ' + @$ship.order.$radius" />
-				<debug_text text="'    $ship.distanceto.[$ship.order.$radiusanchorspace, $ship.order.$radiusanchorpos]: ' + @$ship.distanceto.[$ship.order.$radiusanchorspace, $ship.order.$radiusanchorpos]" />
+				<do_if value="@$ship.order.$radiusanchorspace and @$ship.order.$radiusanchorpos">
+					<debug_text text="'    $ship.distanceto.[$ship.order.$radiusanchorspace, $ship.order.$radiusanchorpos]: ' + @$ship.distanceto.[$ship.order.$radiusanchorspace, $ship.order.$radiusanchorpos]" />
+				</do_if>
 				<debug_text text="'    $ship.defaultorder: ' + @$ship.defaultorder" />
 				<debug_text text="'orders.{2}: ' + @$ship.orders.{2} + ' ' + @$ship.orders.{2}.script" />
 				<debug_text text="'    $ship.orders.{2}.istemporary: ' + @$ship.orders.{2}.istemporary" />
@@ -1597,8 +1599,8 @@
 					<set_value name="$target" exact="@$ship.nextorder.$primarytarget" />
 				</do_if>
 				<debug_text text="'$target: ' + $target + ' (' + @$target.knownname + ', ' + @$target.idcode + ', ' + @$target.hullpercentage + ', ' + @$target.class + ')'" />
-				<set_value name="$dist" exact="$ship.distanceto.{$target}" />
-				<set_value name="$dist2" exact="$ship.bboxdistanceto.{$target}" />
+				<set_value name="$dist" exact="@$ship.distanceto.{$target}" />
+				<set_value name="$dist2" exact="@$ship.bboxdistanceto.{$target}" />
 				<debug_text text="'$dist: ' + $dist + ' $dist2 (bboxdistanceto): ' + $dist2" />
 				<do_if value="$target">
 					<debug_text text="'attack vectors:'" />
@@ -1747,6 +1749,65 @@
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
+		<cue name="DebugShowRandomModule" namespace="this">
+			<conditions>
+				<event_cue_signalled />
+			</conditions>
+			<actions>
+				<set_value name="$interact_target" exact="@event.param.$object" />
+				<debug_text text="'$interact_target: ' + $interact_target + ', ' + @$interact_target.knownname + ', ' + @$interact_target.idcode" />
+				<do_if value="$interact_target.isclass.module">
+					<set_value name="$module" exact="$interact_target" />
+				</do_if>
+				<do_else>
+					<find_module name="$modules" object="$interact_target" multiple="true" />
+					<set_value name="$module" exact="$modules.random" />
+				</do_else>
+				<debug_text text="'$module: ' + $module + ', ' + @$module.knownname + ', ' + @$module.idcode" />
+				<do_if value="$module.defensible">
+					<set_value name="$corners" exact="[0, 0, 0, 0]" />
+					<set_value name="$rot" exact="$module.rotation" />
+					<debug_text text="'$rot: ' + $rot" />
+					<set_value name="$cornerWHDFactors" exact="[
+						table[$x = -1, $y = 0, $z = -1],
+						table[$x = +1, $y = 0, $z = -1],
+						table[$x = +1, $y = 0, $z = +1],
+						table[$x = -1, $y = 0, $z = +1],
+					]" />
+					<set_value name="$w" exact="$module.width" />
+					<set_value name="$h" exact="$module.height" />
+					<set_value name="$d" exact="$module.length" />
+					<do_for_each name="$cornerWHDFactor" in="$cornerWHDFactors" counter="$i">
+						<create_position name="$pos_module" space="$module.defensible.zone" object="$module" />
+						<!-- <create_position name="$corner"
+							x="$pos_module.x + $w * $cornerWHDFactor.$x * sin ($rot.yaw) * cos ($rot.pitch)"
+							y="$pos_module.y + $h * $cornerWHDFactor.$y * sin ($rot.pitch)"
+							z="$pos_module.z + $d * $cornerWHDFactor.$z * cos ($rot.yaw) * cos ($rot.pitch)"/> -->
+						<!-- <create_position name="$corner"
+							x="$pos_module.x + $w * $cornerWHDFactor.$x"
+							y="$pos_module.y + $h * $cornerWHDFactor.$y"
+							z="$pos_module.z + $d * $cornerWHDFactor.$z"/> -->
+						<create_position name="$corner"
+							x="$w * $cornerWHDFactor.$x"
+							y="$h * $cornerWHDFactor.$y"
+							z="$d * $cornerWHDFactor.$z"/>
+						<transform_position name="$corner" refposition="$pos_module" refrotation="$rot">
+							<position value="$corner" />
+						</transform_position>
+						<do_if value="@md.{'$corner' + $i}">
+							<destroy_object object="md.{'$corner' + $i}" />
+						</do_if>
+						<create_object name="md.{'$corner' + $i}"
+							zone="$module.defensible.zone"
+							macro="macro.env_deco_nav_beacon_t1_macro"
+							owner="faction.player">
+							<position x="$corner.x" y="$corner.y" z="$corner.z" />
+						</create_object>
+					</do_for_each>
+				</do_if>
+				<reset_cue cue="DebugShowRandomModule" />
+			</actions>
+		</cue>
 		<cue name="kAAIT_Debug_InteractMenu" namespace="this">
 			<conditions>
 				<event_cue_signalled cue="md.Interact_Menu_API.Get_Actions" />
@@ -1850,6 +1911,14 @@
 							$text = 'DebugIsPrimaryTargetInFront',
 							$icon = null,
 							$callback = DebugIsPrimaryTargetInFront
+						]" />
+						<reset_cue cue="DebugShowRandomModule" />
+						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
+							$id = 'DebugShowRandomModule',
+							$section = $section,
+							$text = 'DebugShowRandomModule',
+							$icon = null,
+							$callback = DebugShowRandomModule
 						]" />
 					</do_if>
 				</do_if>
