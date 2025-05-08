@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mdscript name="kuertee_aait" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
 	<cues>
-		<cue name="kAAIT2" namespace="this" version="10">
+		<cue name="kAAIT2" namespace="this" version="11">
 			<actions>
 				<set_value name="global.$kAAIT" exact="this" />
 			</actions>
@@ -315,19 +315,25 @@
 					<actions>
 						<set_value name="$ShipData" exact="@global.$kAAIT_Data.$byShipId.{$IdCode}" />
 						<debug_text text="$IdCode + ': ' + $Ship + ' $ShipData: ' + $ShipData" chance="@global.$kAAIT_Data.$debugChance" />
-						<do_if value="(not $Ship.exists) or (not $ShipData) or (@$ShipData.$version != global.$kAAIT.version)">
+						<do_if value="(not $Ship.exists) or (not $ShipData)">
 							<debug_text text="$IdCode + ' has no data. removing.'" chance="@global.$kAAIT_Data.$debugChance" />
 							<remove_value name="global.$kAAIT_Data.$byShipId.{$IdCode}" />
 						</do_if>
 						<do_else>
 							<set_value name="$isCleanThisShip" exact="true" />
 							<do_if value="@$ShipData.$ship.isclass.ship">
-								<do_for_each name="$order" in="$ShipData.$ship.orders">
-									<do_if value="$order.id == 'Attack' or $order.id == 'TacticalOrder' or @$order.$kAAITParam_iskAAITOrder">
-										<set_value name="$isCleanThisShip" exact="false" />
-										<break />
-									</do_if>
-								</do_for_each>
+								<do_if value="@global.$kAAIT_Data.$byShipId.{$IdCode}.$attackData.$bigEnemies.count">
+									<set_value name="$isCleanThisShip" exact="false" />
+									<break />
+								</do_if>
+								<do_else>
+									<do_for_each name="$order" in="$ShipData.$ship.orders">
+										<do_if value="$order.id == 'Attack' or $order.id == 'TacticalOrder' or @$order.$kAAITParam_iskAAITOrder">
+											<set_value name="$isCleanThisShip" exact="false" />
+											<break />
+										</do_if>
+									</do_for_each>
+								</do_else>
 							</do_if>
 							<debug_text text="$IdCode + ' $isCleanThisShip: ' + $isCleanThisShip + ' $ShipData.keys.list: ' + $ShipData.keys.list" chance="@global.$kAAIT_Data.$debugChance" />
 							<do_if value="$isCleanThisShip">

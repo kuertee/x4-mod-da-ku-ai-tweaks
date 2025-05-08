@@ -9,8 +9,39 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.5.06, 20 Mar 2025:
-- Bug-fix: The mod-specific Debug Log (found in the Extension Options menu) functionality was sticking to "on" in new games.
+v7.5.12, 5 May 2025:
+- Bug-fix: L and XL ships: were having problems moving towards their module target that is positioned at the stations 0,0,0 origin. Examples of these types of stations are the Xenon asteroid base stations - and maybe the Khaak hives also. But I've not tested this against Khaak hives. In this version, the module target's orientation and size is taken into account in determing the attack vector for them.
+- Bug-fix: L and XL ships: The Move To Engage position were adding the number of times the ship Withdrew causing the position to be very far from the station. In this version, the number of times the ship Withdrew is reset when they use the Step Forward behaviour.
+
+v7.5.11, 26 Apr 2025:
+- Bug-fix: Compatibility with Scouts feature of the NPC Reactions mod. Kuda was making scouts ignore their Do Not Engage order settings.
+- Tweak: XS (except drones), S and M ships: The ship's "Attack when more than this turret count" settings are now used to determine whether they should take a risk or not. Previously, the settings were used to determine high-risk enemies. (The difference between the two is subtle, but they are different in-code.) Note that ships with missiles and torpedoes are still exempt from this restriction.
+- Bug-fix: L and XL ships: in some circumstances, were still using the Move To Engage behaviour against ship targets. They shouldn't.
+
+v7.5.101, 18 Apr 2025:
+- Bug-fix: L and XL ships: Ships not moving towards their targets: Module targets that have been disabled but not destroyed were preventing ships from performing the Move To Engage and Step Forward behaviours because those modules became wrecks and were no longer classed as station modules.
+- Bug-fix: L and XL ships: The Move To Engage behaviour was not moving the ships away from stations when moving between targets when they had to.
+- Bug-fix: L and XL ships: The Step Forward behaviour was moving the ships up (or down) the vertical plane at every "step". The vertical adjustment to their position is suppose to only determine their vertical position at the start of the their attack.
+- Bug-fix: All ships: The Avoid behaviour was interrupted when avoiding a high-risk enemy on the way to the ship's actual target causing the ship to alternate between the Avoid behaviour and an attack behaviour which immediately was cancelled for the Avoid behaviour to continue.
+
+v7.5.10, 16 Apr 2025:
+- Bug-fix: L and XL ships: Turreted-only ships were staying away from their station targets. Kuda behaviours are suitable for capital ships with front mounted weapons. Turreted-only ships now perform base-game AI movements. (I'll find Kuda behaviours for them in the future. I don't like capital ships flying like corvettes and frigates.)
+- Bug-fix: L and XL ships: were still not facing their target after performing their Kuda behaviour. They will now.
+- Tweak:   L and XL ships: were still performing the Step Forward behaviour against ships. They now down.
+- Bug-fix: L and XL ships: their Move To Engage behaviours around station targets were sometimes getting interrupted. They will now continue moving around to their allocated attack vector.
+- Tweak:   L and XL ships: better Move To Engage attack vectors.
+- Tweak:   L and XL ships: when their Move To Engage path will put them near a dangerous area of the station (e.g. convex-shaped stations), they will firstly move away from the station before moving to their attack vector.
+
+v7.5.09, 07 Apr 2025:
+- Bug-fix: Kills by the player were getting processed twice in regards to faction relationships and reactions when DA's Notifications - SubordinateBounties is enabled.
+- Bug-fix: XS (except drones), S and M ships: Will now acquire the Avoid behaviour against ships ONLY when their shield levels are low or have no missiles or turrets. Previously, they were acquiring the Avoid behaviour even when their shield levels are high.
+- Bug-fix: XS (except drones), S and M ships: When the Avoid behaviour is active, will re-evaluate their target's risk levels for cancellation of the Avoid behaviour. Previously, they were indefinitely circling their target.
+- Bug-fix: XS (except drones), S and M ships: When assessing risk, they now count all their target's attackers. Previously, they were counting only their target's capital ship attackers.
+- Bug-fix: XS (except drones), S and M ships: Will not acquire the Move To Engage behaviour anymore. Previously, they were using it when they should just attack their target. The Move To Engage behaviour is only for capital ships.
+- Bug-fix: XS (except drones), S and M ships: Will not acquire the Withdraw behaviour anymore. Previously, they were using it when they should use the Avoid behaviour. The Withdraw behaviour is only for capital ships.
+- Bug-fix: L and XL ships: Will not acquire the Move To Engage behaviour against ship targets anymore. Its use is too inefficient against ships. Will be used only against station targets.
+- Bug-fix: L and XL ships: Will not acquire the Step Forward behaviour against ship targets anymore. Its use is too inefficient against ships. Will be used only against station targets.
+- Bug-fix: L and XL ships: Will face the target at the end of the Move To Engage behaviour and the Step Forward behaviour.
 
 Attack AI Tweaks:
 =================
@@ -21,7 +52,8 @@ All ships acquire the "Avoid High-risk Enemies" and "Move To Engage Target" beha
 
 Requirements
 ============
-- SirNukes Mod Support APIs mod (https://www.nexusmods.com/x4foundations/mods/503)
+SirNukes Mod Support APIs mod (https://www.nexusmods.com/x4foundations/mods/503)
+Kuertee's UI Extensions mod (https://www.nexusmods.com/x4foundations/mods/552)
 
 Notes about this mod and my ideas behind it:
 ============================================
@@ -151,7 +183,6 @@ What this mod doesn't do
 Install
 =======
 - Unzip to 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/'.
-- Make sure the sub-folders, and files are in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/', and not in 'X4 Foundations/extensions/kuertee_attack_ai_tweaks/kuertee_attack_ai_tweaks/'.
 
 Uninstall
 =========
@@ -162,7 +193,7 @@ Debugging
 1. Allow the game to log events to a text file by adding "-debug all -logfile debug.log" to its launch parameters.
 2. If an Extension Options entry exists for the mod, enable the mod-specific Debug Log.
 3. Play for long enough for the mod to log its events. Or force the error that you are experiencing.
-4. Send me (at kuertee@gmail.com) the log found in My Documents\Egosoft\X4\(your player-specific number)\debug.log.
+4. Send the log found in My Documents\Egosoft\X4\(your player-specific number)\debug.log to my e-mail (kuertee@gmail.com) with the mod name in the subject line.
 
 Uninstall
 =========
@@ -180,6 +211,12 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v7.5.07, 29 Mar 2025:
+- Bug-fix: The mod-specific debug logging was likely left on after the last update. This will disable it, if it wasn't already disabled manually in the mod's Extension Options.
+
+v7.5.06, 20 Mar 2025:
+- Bug-fix: The mod-specific Debug Log (found in the Extension Options menu) functionality was sticking to "on" in new games.
+
 v7.5.03, 05 Mar 2025:
 - Bug-fix: Coordinated Attacks were not adding the attack orders on ships.
 - Bug-fix: Carriers were ignoring the "Carriers attack like Destroyers" option at the first instance of the attack.
