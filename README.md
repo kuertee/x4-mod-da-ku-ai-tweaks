@@ -9,6 +9,9 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
+v7.5.14.1, 24 May 2025:
+- Bug-fix: Ships were sometimes getting stuck trying to avoid stations near gates.
+
 v7.5.14, 24 May 2025:
 - Bug-fix: L and XL ships: were not withdrawing against capital ship enemies when their shields are low.
 - Bug-fix: DA's Increased Bounty Range were rewarding the player for kills performed by player-owned npcs. It's suppose to increase the range of finding factions to reward the player for kills of the faction enemies to the player's whole sector instead of just to the player's max radar range.
