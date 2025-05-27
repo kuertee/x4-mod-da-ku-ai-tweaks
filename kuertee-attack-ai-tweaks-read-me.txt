@@ -9,12 +9,8 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.5.14.1, 24 May 2025:
-- Bug-fix: Ships were sometimes getting stuck trying to avoid stations near gates.
-
-v7.5.14, 24 May 2025:
-- Bug-fix: L and XL ships: were not withdrawing against capital ship enemies when their shields are low.
-- Bug-fix: DA's Increased Bounty Range were rewarding the player for kills performed by player-owned npcs. It's suppose to increase the range of finding factions to reward the player for kills of the faction enemies to the player's whole sector instead of just to the player's max radar range.
+v7.6, 28 May 2025:
+- Tweak: 7.6 compatibility.
 
 Attack AI Tweaks:
 =================
@@ -184,6 +180,13 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v7.5.14.1, 24 May 2025:
+- Bug-fix: Ships were sometimes getting stuck trying to avoid stations near gates.
+
+v7.5.14, 24 May 2025:
+- Bug-fix: L and XL ships: were not withdrawing against capital ship enemies when their shields are low.
+- Bug-fix: DA's Increased Bounty Range were rewarding the player for kills performed by player-owned npcs. It's suppose to increase the range of finding factions to reward the player for kills of the faction enemies to the player's whole sector instead of just to the player's max radar range.
+
 v7.5.12, 5 May 2025:
 - Bug-fix: L and XL ships: were having problems moving towards their module target that is positioned at their stations' 0,0,0 origin. Examples of these types of stations are the Xenon asteroid base stations - and maybe the Khaak hives also. But I've not tested this against Khaak hives. In this version, the module target's orientation and size is taken into account in determing the attack vector for them.
 - Bug-fix: L and XL ships: The Move To Engage position were adding the number of times the ship Withdrew to its distance that causes the Move To Engage position to be very far from the station. In this version, the number of times the ship Withdrew is reset when they use the Step Forward behaviour.
