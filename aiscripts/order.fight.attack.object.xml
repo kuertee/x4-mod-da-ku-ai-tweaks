@@ -301,44 +301,13 @@
 	</add>
 	<add sel="//do_if[@value=&quot;this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance&quot;]" type="@chance">if $kAAIT_isOrderThenMove then 0 else 100</add>
 	<add pos="after" sel="//do_if[@value=&quot;this.assignedcontrolled.subordinates.count and this.$escortgroup?&quot;]">
+		<!--
+			NOTE: copy the whole <do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance"> block from base order.fight.attack.object.xml
+			and then add chance="if $kAAIT_isOrderThenMove then 100 else 0"> to it as it is done below.
+		-->
 		<do_if value="this.assignedcontrolled.bboxdistanceto.{$target} gt $pursuedistance" chance="if $kAAIT_isOrderThenMove then 100 else 0">
 			<!-- ... and i am allowed to pursue, -->
-			<!--
-				bug to fix: $pursuetargets is ignored.
-				search for 'bug to fix: $pursuetargets' to find related code for the fix.
-			-->
-			<set_value name="$kAAIT_isPursue"
-				exact="$pursuetargets or
-				($refobject.bboxdistanceto.{$target} le $pursuedistance) or
-				(
-					@this.assignedcontrolled.defaultorder.script == 'order.fight.patrol' and
-					(
-						this.assignedcontrolled.defaultorder.$pursuetargets or
-						$target.sector == this.sector
-					)
-				) or
-				(
-					@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.position' and
-					(
-						this.assignedcontrolled.defaultorder.$pursuetargets or
-						this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$destination} le this.assignedcontrolled.defaultorder.$radius
-					)
-				) or
-				(
-					@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.ship' and
-					(
-						this.assignedcontrolled.defaultorder.$pursuetargets or
-						this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$target} le this.assignedcontrolled.defaultorder.$radius
-					)
-				) or
-				(
-					@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.station' and
-					(
-						this.assignedcontrolled.defaultorder.$pursuetargets or
-						this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$station} le this.assignedcontrolled.defaultorder.$radius
-					)
-				)" />
-			<do_if value="$kAAIT_isPursue">
+			<do_if value="$pursuetargets or (($escort or not $radius) and $refobject.bboxdistanceto.{$target} le $pursuedistance) or ($radius and $target.distanceto.[$radiusanchorspace, $radiusanchorpos] le $radius)">
 				<debug_text text="'target out of range and we are allowed to pursue. distance to target: %skm pursuing.'.[$refobject.bboxdistanceto.{$target} / 1000]" chance="$debugchance"/>
 				<!-- pursue. -->
 				<!-- switched move.generic condition to seeing the target rather than being in the same zone. if target is in sight, rely on combat movement. -->
@@ -383,47 +352,6 @@
 			</do_else>
 		</do_if>
 	</add>
-<!--
-	purpose: bug to fix: $pursuetargets is ignored.
-	search for 'bug to fix: $pursuetargets' to find related code for the fix.
-	how ... $pursuetargets will be false, so allow pursuit if default order is order.fight.patrol and target is in same sector.
-	<do_if value="$pursuetargets or ($refobject.bboxdistanceto.{$target} le $pursuedistance)">
-	DISABLED because fix is now in the base 7.5. beta 9.
--->
-	<!-- <add pos="before" sel="//do_if[@value=&quot;$pursuetargets or ($refobject.bboxdistanceto.{$target} le $pursuedistance)&quot;]">
-		<set_value name="$kAAIT_isPursue"
-			exact="$pursuetargets or
-			($refobject.bboxdistanceto.{$target} le $pursuedistance) or
-			(
-				@this.assignedcontrolled.defaultorder.script == 'order.fight.patrol' and
-				(
-					this.assignedcontrolled.defaultorder.$pursuetargets or
-					$target.sector == this.sector
-				)
-			) or
-			(
-				@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.position' and
-				(
-					this.assignedcontrolled.defaultorder.$pursuetargets or
-					this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$destination} le this.assignedcontrolled.defaultorder.$radius
-				)
-			) or
-			(
-				@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.ship' and
-				(
-					this.assignedcontrolled.defaultorder.$pursuetargets or
-					this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$target} le this.assignedcontrolled.defaultorder.$radius
-				)
-			) or
-			(
-				@this.assignedcontrolled.defaultorder.script == 'order.fight.protect.station' and
-				(
-					this.assignedcontrolled.defaultorder.$pursuetargets or
-					this.assignedcontrolled.distanceto.{this.assignedcontrolled.defaultorder.$station} le this.assignedcontrolled.defaultorder.$radius
-				)
-			)" />
-	</add>
-	<replace sel="//do_if[@value=&quot;$pursuetargets or ($refobject.bboxdistanceto.{$target} le $pursuedistance)&quot;]/@value">$kAAIT_isPursue</replace> -->
 <!-- add before. purpose: move to engage pos if required.
 	note: because we're adding another "move to target", 2 of this diff is required.
 	<run_script name="'move.generic'" result="$movesuccess">

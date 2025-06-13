@@ -27,6 +27,7 @@
 						<set_value name="global.$kAAIT_Data" exact="this" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
 						<set_value name="global.$kAAIT_Data.$debugChance_nameTags" exact="0" />
+						<set_value name="global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight" exact="0" />
 						<!-- configs: -->
 						<!-- kAAIT_ApplyCustomBehaviourOrNot, kAAIT_MoveAroundOrNot -->
 						<set_value name="global.$kAAIT_Data.$xssm_isAvoidHighRisk" exact="true" />
@@ -211,6 +212,10 @@
 						<debug_text text="'patch sinceversion 25, state: ' + this.state" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
 						<set_value name="global.$kAAIT_Data.$debugChance_nameTags" exact="0" />
+					</patch>
+					<patch sinceversion="26">
+						<debug_text text="'patch sinceversion 26, state: ' + this.state" />
+						<set_value name="global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight" exact="0" />
 					</patch>
 				</cue>
 			</cues>
@@ -1149,7 +1154,19 @@
 						$onClick = kAAIT_ExtOpts_OnCheckboxChange
 					]"/>
 				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
-				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 2}, $color='Helper.color.red']"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 2} + ' (avoid, withdraw or take risk)', $color='Helper.color.red']"/>
+				<signal_cue_instantly
+					cue = "md.Simple_Menu_API.Make_CheckBox"
+					param = "table[
+						$id = 'debugChance_avoidWithdrawOrJustFight',
+						$checked = if global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight == 100 then true else false,
+						$col = 2,
+						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
+						$bgColor = 'Helper.color.red',
+						$onClick = kAAIT_ExtOpts_OnCheckboxChange
+					]"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 2} + ' (name tags)', $color='Helper.color.red']"/>
 				<signal_cue_instantly
 					cue = "md.Simple_Menu_API.Make_CheckBox"
 					param = "table[
@@ -1221,6 +1238,9 @@
 					<set_value name="global.$kAAIT_Data.{'$' + event.param.$id}" exact="if event.param.$checked then 100 else 0" />
 				</do_if>
 				<do_elseif value="event.param.$id == 'debugChance_nameTags'">
+					<set_value name="global.$kAAIT_Data.{'$' + event.param.$id}" exact="if event.param.$checked then 100 else 0" />
+				</do_elseif>
+				<do_elseif value="event.param.$id == 'debugChance_avoidWithdrawOrJustFight'">
 					<set_value name="global.$kAAIT_Data.{'$' + event.param.$id}" exact="if event.param.$checked then 100 else 0" />
 				</do_elseif>
 				<do_else>
@@ -1936,90 +1956,46 @@
 				<check_all>
 					<event_ui_triggered screen="'Chat_Window_API'" control="'text_entered'" />
 					<check_any>
-						<check_value value="event.param3.$text == 'debug aait data'" />
-						<check_value value="event.param3.$text == 'debug aait bombers'" />
-						<check_value value="event.param3.$text == 'debug aait gun count'" />
-						<check_value value="event.param3.$text == 'debug aait engage pos'" />
-						<check_value value="event.param3.$text == 'debug aait engage pos2'" />
-						<check_value value="event.param3.$text == 'debug aait orders'" />
-						<check_value value="event.param3.$text == 'debug aait ships'" />
-						<check_value value="event.param3.$text == 'debug aait eta'" />
+						<check_value value="event.param3.$text == 'debug aait yaw'" />
 					</check_any>
 				</check_all>
 			</conditions>
 			<actions>
 				<debug_text text="@event.param3" />
-				<do_if value="event.param3.$text == 'debug aait data'">
-					<debug_text text="player.target + ': ' + player.target.knownname + ', ' + player.target.idcode" />
-					<do_for_each name="$prop" valuename="$value" in="global.$kAAIT_Data.$byShipId.{'$' + player.target.idcode}.$attackData">
-						<debug_text text="$prop + ': ' + $value" />
-					</do_for_each>
+				<do_if value="event.param3.$text == 'debug aait yaw'">
+					<create_position name="$pos1" space="player.sector" object="player.ship" />
+					<set_value name="$dist" exact="100km" />
+
+					<set_value name="$yaw" min="0" max="359" />
+					<set_value name="$pitch" exact="0" />
+					<debug_text text="'$yaw: ' + $yaw + ' $pitch: ' + $pitch" />
+					<create_position name="$posLookAt"
+						x="$pos1.x + $dist * sin ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+						y="$pos1.y + $dist * sin ($pitch * pi / 180) + [-5m, -2.5m, 0, 2.5m, 5m].random"
+						z="$pos1.z + $dist * cos ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+					/>
+					<create_orientation name="$rot" orientation="look_at" refposition="$posLookAt">
+						<position value="$pos1" />
+					</create_orientation>
+					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
+					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
+					<debug_text text="'$yaw (double-check): ' + $yaw + ' $pitch: ' + $pitch" />
+
+					<set_value name="$yaw" min="0" max="359" />
+					<set_value name="$pitch" exact="60" />
+					<debug_text text="'$yaw: ' + $yaw + ' $pitch: ' + $pitch" />
+					<create_position name="$posLookAt"
+						x="$pos1.x + $dist * sin ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+						y="$pos1.y + $dist * sin ($pitch * pi / 180) + [-5m, -2.5m, 0, 2.5m, 5m].random"
+						z="$pos1.z + $dist * cos ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+					/>
+					<create_orientation name="$rot" orientation="look_at" refposition="$posLookAt">
+						<position value="$pos1" />
+					</create_orientation>
+					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
+					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
+					<debug_text text="'$yaw (double-check): ' + $yaw + ' $pitch: ' + $pitch" />
 				</do_if>
-				<do_elseif value="event.param3.$text == 'debug aait bombers'">
-					<debug_text text="player.target + ': ' + player.target.knownname + ', ' + player.target.idcode" />
-					<debug_text text="player.target + ' missile.count: ' + player.target.ammostorage.missile.count" />
-				</do_elseif>
-				<do_elseif value="event.param3.$text == 'debug aait gun count'">
-					<debug_text text="player.target + ': ' + @player.target.knownname + ', ' + @player.target.idcode" />
-					<debug_text text="player.target + ' weapons.operational.count: ' + @player.target.weapons.operational.count" />
-					<debug_text text="player.target + ' turrets.operational.count: ' + @player.target.turrets.operational.count" />
-					<debug_text text="player.target + ' maxradarrange: ' + @player.target.maxradarrange" />
-				</do_elseif>
-				<do_elseif value="event.param3.$text == 'debug aait engage pos'">
-					<set_value name="md.$target2" exact="@md.$target1" />
-					<set_value name="md.$target1" exact="player.target" />
-					<debug_text text="'$target1: ' + @md.$target1.idcode" />
-					<debug_text text="'$target2: ' + @md.$target2.idcode" />
-				</do_elseif>
-				<do_elseif value="event.param3.$text == 'debug aait engage pos2'">
-					<do_if value="@md.$target1 and @md.$target2">
-						<set_value name="$attacker" exact="md.$target1" />
-						<set_value name="$victim" exact="md.$target2" />
-						<set_value name="$orderLocation_space" exact="$attacker.zone" />
-						<create_position name="$posShip" space="$orderLocation_space" object="md.$target1" />
-						<create_position name="$posTarget" space="$orderLocation_space" object="$victim" />
-						<create_orientation name="$rotFromTarget" orientation="look_at" refposition="$posShip">
-							<position value="$posTarget" />
-						</create_orientation>
-						<debug_text text="'$rotFromTarget: ' + $rotFromTarget" />
-						<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
-						<debug_text text="'$yaw_deg: ' + $yaw_deg" />
-						<!-- <do_if value="$victim.isclass.ship or @$victim.defensible.isclass.ship">
-							<set_value name="$yaw_deg" exact="$yaw_deg + [-30, -22, -15, -7, 0, 7, 15, 22, 30].random" />
-						</do_if>
-						<do_else>
-							<set_value name="$yaw_deg" exact="$yaw_deg + [-45, -37, -30, -22, -15, -7, 0, 7, 15, 22, 30, 37, 45].random" />
-						</do_else> -->
-						<!-- <set_value name="$yaw_deg" exact="$yaw_deg - 45" /> -->
-						<debug_text text="'$yaw_deg (adj): ' + $yaw_deg" />
-						<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
-						<set_value name="$kAAIT_maxCombatRange" exact="8km" />
-						<create_position name="$orderLocation_pos"
-							x="$posTarget.x + $kAAIT_maxCombatRange * sin ($yaw) * cos ($rotFromTarget.pitch)"
-							y="$posTarget.y + $kAAIT_maxCombatRange * sin ($rotFromTarget.pitch) + [-5m, -2.5m, 0, 2.5m, 5m].random"
-							z="$posTarget.z + $kAAIT_maxCombatRange * cos ($yaw) * cos ($rotFromTarget.pitch)"
-						/>
-						<do_if value="@md.$beacon_debug">
-							<destroy_object object="md.$beacon_debug" />
-						</do_if>
-						<create_object name="md.$beacon_debug"
-							zone="$orderLocation_space"
-							macro="macro.env_deco_nav_beacon_t1_macro"
-							owner="faction.player">
-							<position x="$orderLocation_pos.x" y="$orderLocation_pos.y" z="$orderLocation_pos.z" />
-						</create_object>
-					</do_if>
-				</do_elseif>
-				<do_elseif value="event.param3.$text == 'debug aait ships'">
-					<debug_text text="'global.$kAAIT_Data.$ships.count: ' + global.$kAAIT_Data.$ships.count" />
-					<do_for_each name="$ship" in="global.$kAAIT_Data.$ships">
-						<debug_text text="'isplayerowned: ' + $ship.isplayerowned + ' $ship: ' + $ship.knownname + ' ' + $ship.idcode" />
-					</do_for_each>
-				</do_elseif>
-				<do_elseif value="event.param3.$text == 'debug aait eta'">
-					<estimate_travel_time result="$kuertee_eta" start="player.ship" target="player.target" ship="player.ship" />
-					<debug_text text="'$kuertee_eta: ' + $kuertee_eta" />
-				</do_elseif>
 				<reset_cue cue="this" />
 			</actions>
 		</cue>

@@ -72,6 +72,14 @@
 				<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.knownname" />
 			</do_if>
 
+			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target" exact="$target" />
+			<do_if value="$target.isrealclass.module">
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget" exact="$target" />
+			</do_if>
+			<do_else>
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget" exact="null" />
+			</do_else>
+
 			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount gt 0">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount" exact="0" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$withdrawCount: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
@@ -141,6 +149,12 @@
 			<create_orientation name="$moveTo_rot" orientation="look_at" refposition="$posTarget">
 				<position value="$moveTo_pos" />
 			</create_orientation>
+			<debug_text text="@this.assignedcontrolled.idcode + ' $isFrontWeapon: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$isFrontWeapon" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<do_if value="not @global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$isFrontWeapon">
+				<set_value name="$kAAIT_currentAttackRotation" exact="$moveTo_rot" />
+				<include_interrupt_actions ref="kAAIT_GetBestAttackRotation" />
+				<set_value name="$moveTo_rot" exact="$kAAIT_result_bestAttackRotation" />
+			</do_if>
 			<!-- <get_safe_pos result="$moveTo_pos" sector="$moveTo_space" value="$moveTo_pos" radius="this.ship.size * 2" ignored="$defensibleTarget" /> -->
 			<do_if value="$distToTarget gt this.assignedcontrolled.maxradarrange">
 				<resume label="finish" />
