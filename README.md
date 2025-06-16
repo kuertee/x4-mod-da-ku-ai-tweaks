@@ -9,6 +9,9 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
+v7.6.1.2, 16 Jun 2025:
+- Bug-fix: Calculation in vector angles used in the avoidance behaviour. E.g. determining which vector to take to avoid an obstacle.
+
 v7.6.1.1, 15 Jun 2025:
 - Tweak: Chinese localisation by Mantxi.
 
