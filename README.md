@@ -9,18 +9,8 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v7.6.1.2, 16 Jun 2025:
-- Bug-fix: Calculation in vector angles used in the avoidance behaviour. E.g. determining which vector to take to avoid an obstacle.
-
-v7.6.1.1, 15 Jun 2025:
-- Tweak: Chinese localisation by Mantxi.
-
-v7.6.1, 14 Jun 2025:
-- New feature: Turreted-focus capital ships now rotate to attack their module targets with their broadsides. Note that the base-game determines which capital ships do this. E.g. The Barbarossa is set to attack front-facing even when they have no guns by the base game, not by Kuda. Note that with this feature, no capital ships should be performing the base-game strafing runs across against stations. In previous versions, only front-focused capital ships were Kuda-controlled. In this version all capital ships are. (These strafing runs were the primary cause of losses against stations.)
-- New feature: Capital ships now consider other stations very near their station target as a structure of their station target. What this means is that capitals now do not "avoid" those other stations. E.g. Khaak defense stations around Khaak bases.
-- Bug-fixes: Several bugs to the Move To Engage (MTE) behaviour of capital ships to their module targets were fixed. E.g. Determining when the capital ship has arrived at their intended vector. E.g. Getting stuck in the MTE at the same position. etc.
-- Tweak: Capital ships now re-engage their module targets vertically when they have trouble firing at their module targets on the horizontal plane. E.g. They don't have line-of-sight to the module target. Note that in previous versions, this vertical re-engagement was only used if their engage position is too near a nearby high-risk enemy. In this version, this vertical re-engagement is used at the two cases described above.
-- Removed feature: Bug-fix to ships pursuing targets outside their protect range. Official Egosoft fix was added to the base game in 7.5 beta 9.
+8.0.0.4, 31 Jul 2025:
+- Tweak: 8.0 beta hotfix 4 compatibility.
 
 Attack AI Tweaks:
 =================
@@ -190,6 +180,19 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v7.6.1.2, 16 Jun 2025:
+- Bug-fix: Calculation in vector angles used in the avoidance behaviour. E.g. determining which vector to take to avoid an obstacle.
+
+v7.6.1.1, 15 Jun 2025:
+- Tweak: Chinese localisation by Mantxi.
+
+v7.6.1, 14 Jun 2025:
+- New feature: Turreted-focus capital ships now rotate to attack their module targets with their broadsides. Note that the base-game determines which capital ships do this. E.g. The Barbarossa is set to attack front-facing even when they have no guns by the base game, not by Kuda. Note that with this feature, no capital ships should be performing the base-game strafing runs across against stations. In previous versions, only front-focused capital ships were Kuda-controlled. In this version all capital ships are. (These strafing runs were the primary cause of losses against stations.)
+- New feature: Capital ships now consider other stations very near their station target as a structure of their station target. What this means is that capitals now do not "avoid" those other stations. E.g. Khaak defense stations around Khaak bases.
+- Bug-fixes: Several bugs to the Move To Engage (MTE) behaviour of capital ships to their module targets were fixed. E.g. Determining when the capital ship has arrived at their intended vector. E.g. Getting stuck in the MTE at the same position. etc.
+- Tweak: Capital ships now re-engage their module targets vertically when they have trouble firing at their module targets on the horizontal plane. E.g. They don't have line-of-sight to the module target. Note that in previous versions, this vertical re-engagement was only used if their engage position is too near a nearby high-risk enemy. In this version, this vertical re-engagement is used at the two cases described above.
+- Removed feature: Bug-fix to ships pursuing targets outside their protect range. Official Egosoft fix was added to the base game in 7.5 beta 9.
+
 v7.6, 28 May 2025:
 - Tweak: 7.6 compatibility.
 
