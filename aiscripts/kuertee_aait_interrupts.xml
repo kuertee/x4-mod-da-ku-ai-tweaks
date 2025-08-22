@@ -1622,23 +1622,29 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_test_target_isInTheWayOf: ' + @$kAAIT_test_target_isInTheWayOf.knownname + ' (' + @$kAAIT_test_target_isInTheWayOf.idcode + ')'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<do_if value="@$kAAIT_test_target_isInTheWayOf">
 					<set_value name="$kAAIT_result_destination" exact="$kAAIT_test_target_isInTheWayOf" />
+					<do_if value="$kAAIT_test_target_isInTheWayOf_position?">
+						<set_value name="$kAAIT_result_destinationPosition" exact="$kAAIT_test_target_isInTheWayOf_position" />
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_result_destinationPosition" exact="position.[0,0,0]" />
+					</do_else>
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_test_target_isInTheWayOf_position: ' + @$kAAIT_test_target_isInTheWayOf_position" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<do_if value="$kAAIT_result_destination.isclass.sector">
 						<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination" />
-						<do_if value="@$kAAIT_test_target_isInTheWayOf_position">
-							<set_value name="kAAIT_result_destinationPosition" exact="$kAAIT_test_target_isInTheWayOf_position" />
+						<do_if value="@$kAAIT_result_destinationPosition">
+							<set_value name="kAAIT_result_destinationSectorPosition" exact="$kAAIT_result_destinationPosition" />
 						</do_if>
 						<do_else comment="get maxradarrange front from ship. not the ideal destination point as ship can be facing away from its destination, but there's no other better value.">
-							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destinationSector" object="this.assignedcontrolled" z="this.maxradarrange" />
+							<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="this.assignedcontrolled" z="this.maxradarrange" />
 						</do_else>
 					</do_if>
 					<do_else>
 						<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination.sector" />
-						<do_if value="@$kAAIT_test_target_isInTheWayOf_position">
-							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" value="$kAAIT_test_target_isInTheWayOf_position" />
+						<do_if value="@$kAAIT_result_destinationPosition">
+							<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" value="$kAAIT_result_destinationPosition" />
 						</do_if>
 						<do_else>
-							<create_position name="$kAAIT_result_destinationPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" />
+							<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" />
 						</do_else>
 					</do_else>
 					<remove_value name="$kAAIT_test_target_isInTheWayOf" />
@@ -1651,7 +1657,7 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (final): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destinationPosition (final): ' + @$kAAIT_result_destinationPosition" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<set_value name="$kAAIT_result_isTargetInTheWay" exact="false" />
-				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and @$kAAIT_result_destination and @$kAAIT_result_destinationPosition and $kAAIT_test_target_isInTheWay.hascontext.{$kAAIT_result_destinationSector}" comment="at this point this is in same sector as ship">
+				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and $kAAIT_result_destination and @$kAAIT_result_destinationPosition and $kAAIT_test_target_isInTheWay.hascontext.{$kAAIT_result_destinationSector}" comment="at this point this is in same sector as ship">
 					<set_value name="$kAAIT_dist_obstacle" exact="this.assignedcontrolled.distanceto.{$kAAIT_test_target_isInTheWay}" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_dist_obstacle: ' + $kAAIT_dist_obstacle" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<set_value name="$kAAIT_dist_dest" exact="this.assignedcontrolled.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]" />
@@ -2215,6 +2221,7 @@
 					<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
 					<set_value name="$kAAIT_engagePosDist" exact="$kAAIT_result_engagePosDist" />
 					<set_value name="$kAAIT_dps" exact="@$kAAIT_test_moveToEngageTarget.dps.all" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsMoveToEngage .script %s $DefensibleScript %s'.[this.assignedcontrolled.order.script, @$DefensibleScript]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<do_if value="$kAAIT_test_moveToEngageTargetDefensible">
 						<set_value name="$kAAIT_dps" exact="@$kAAIT_test_moveToEngageTargetDefensible.dps.all" />
 						<set_value name="$kAAIT_distToDefensible" exact="this.assignedcontrolled.distanceto.{$kAAIT_test_moveToEngageTargetDefensible}" />
@@ -2228,8 +2235,17 @@
 						<set_value name="$kAAIT_result_isMovetoEngage_reason" exact="'too far'" />
 						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
 					</do_elseif>
-					<do_elseif value="$kAAIT_distToTarget le [@$movethreshold_min, 1km].max">
+					<do_elseif value="($kAAIT_distToTarget le [@$movethreshold_min, 1km].max)">
 						<set_value name="$kAAIT_result_isMovetoEngage_reason" exact="'too near'" />
+						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
+					</do_elseif>
+					<do_elseif value="
+						@this.assignedcontrolled.order.script == 'order.fight.attack.object' and
+						$distance? and $distance gt 0 and
+						$target? and $target.sector and $targetposition? and
+						$movethreshold_min? and $movethreshold_min gt 0 and
+						$distance le [$movethreshold_min, 1km].max">
+						<set_value name="$kAAIT_result_isMovetoEngage_reason" exact="'too near based on $distance var from attack script'" />
 						<set_value name="$kAAIT_result_isMovetoEngage" exact="true" />
 					</do_elseif>
 					<do_elseif value="$kAAIT_dps gt this.assignedcontrolled.dps.all * 0.5">
@@ -2492,7 +2508,7 @@
 					<do_else>
 						<set_value name="$kAAIT_dist_edgeFromOrigin" exact="$kAAIT_dist_fromDefensible" />
 					</do_else>
-					<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $kAAIT_dist_edgeFromOrigin (module target): ' + $kAAIT_dist_edgeFromOrigin" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $kAAIT_dist_edgeFromOrigin (likely module target): ' + $kAAIT_dist_edgeFromOrigin" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				</do_if>
 				<do_else>
 					<set_value name="$kAAIT_dist_fromDefensible" exact="this.assignedcontrolled.distanceto.{$kAAIT_test_moveToEngageTarget}" />
@@ -2523,6 +2539,10 @@
 						)
 					)
 				">
+					<!--
+					=========================================
+					prevent carriers from getting into danger
+					========================================= -->
 					<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance this.assignedcontrolled.maxradarrange * 0.75: ' + (this.assignedcontrolled.maxradarrange * 0.75)" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<set_value name="$kAAIT_result_engagePosDist" exact="$kAAIT_dist_edgeFromOrigin + this.assignedcontrolled.maxradarrange * 0.75 * $kAAIT_skillAndWithdrawCountMult" />
 					<do_if value="$kAAIT_result_engagePosDist gt this.assignedcontrolled.maxradarrange * 0.5">

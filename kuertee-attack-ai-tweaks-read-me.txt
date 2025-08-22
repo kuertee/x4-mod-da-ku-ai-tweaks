@@ -9,8 +9,9 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-8.0.0.4, 31 Jul 2025:
-- Tweak: 8.0 beta hotfix 4 compatibility.
+8.0.0.6.1, 22 Aug 2025:
+- Bug-fix: Carriers were ignoring the "Carriers attack like destroyers" settings. Bug was introduced back in March. I didn't notice because I hardly send my carrier to attack, manually sending its subordinates instead. Sorryyyy to those affected.
+- Bug-fix: Order icons in the map menu for the custom behaviours weren't showing.
 
 Attack AI Tweaks:
 =================
@@ -180,6 +181,9 @@ Russian localisation by leonkillerua.
 
 History
 =======
+8.0.0.4, 31 Jul 2025:
+- Tweak: 8.0 beta hotfix 4 compatibility.
+
 v7.6.1.2, 16 Jun 2025:
 - Bug-fix: Calculation in vector angles used in the avoidance behaviour. E.g. determining which vector to take to avoid an obstacle.
 
