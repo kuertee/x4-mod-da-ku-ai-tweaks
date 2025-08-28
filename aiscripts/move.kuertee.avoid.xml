@@ -166,6 +166,10 @@
 				</create_object>
 				<set_object_name object="$beacon_finalDestination" name="'kAAIT: avoid: final destination'" />
 			</do_if>
+			<set_value name="$isHasDestination" exact="@$kAAIT_result_destination and
+				@$kAAIT_result_destinationPosition and
+				$defensibleTarget.hascontext.{$kAAIT_result_destinationSector}" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_result_isTargetInTheWay %s'.[$kAAIT_result_isTargetInTheWay]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<do_if value="
 				this.assignedcontrolled.primarypurpose != purpose.fight and
 				@this.assignedcontrolled.commander.isoperational and
@@ -208,46 +212,44 @@
 				<set_value name="$yaw_adj" min="30" max="45" />
 				<set_value name="$yaw_avoid" exact="$yaw_toShip + $yaw_adj * $encircleDirection" />
 			</do_elseif>
-			<!-- <do_elseif value="
-				@$kAAIT_result_destination and
-				@$kAAIT_result_destinationPosition and
-				$defensibleTarget.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]"> -->
-			<do_elseif value="
-				@$kAAIT_result_destination and
-				@$kAAIT_result_destinationPosition and
-				$defensibleTarget.hascontext.{$kAAIT_result_destinationSector}">
-				<debug_text text="@this.assignedcontrolled.idcode + ' AVOIDING WHILE MOVING TOWARDS DESTINATION %s %s %s distanceto %s'.[$kAAIT_result_destination, @$kAAIT_result_destination.idcode, $kAAIT_result_destinationPosition, this.assignedcontrolled.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<create_position name="$posShip" space="$moveTo_space" object="this.assignedcontrolled" />
-				<create_orientation name="$rot" orientation="look_at" object="$kAAIT_result_destinationSector" refposition="$kAAIT_result_destinationSectorPosition">
-					<position value="$posShip" />
-				</create_orientation>
-				<set_value name="$kAAIT_yaw_from" exact="$yaw_avoid" />
-				<set_value name="$kAAIT_yaw_to" exact="$rot.yaw * 180 / pi" />
-				<include_interrupt_actions ref="kAAIT_GetAvoidYawTowardsDestination" />
-				<set_value name="$yaw_avoid" exact="$kAAIT_result_avoidYawTowardsDestination" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' $yaw_avoid (adjusted to move to dest): ' + $yaw_avoid" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			</do_elseif>
 			<do_else>
-				<debug_text text="@this.assignedcontrolled.idcode + ' MOVING AROUND ATTACK TARGET $encircleDirection: ' + $encircleDirection" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<create_position name="$posShip" space="$moveTo_space" object="this.assignedcontrolled" />
 				<create_position name="$posTarget" space="$moveTo_space" object="$defensibleTarget" />
-				<create_orientation name="$rot" orientation="look_at" refposition="$posShip">
+				<create_orientation name="$rot_targetToShip" orientation="look_at" refposition="$posShip">
 					<position value="$posTarget" />
 				</create_orientation>
-				<set_value name="$yaw_toShip" exact="$rot.yaw * 180 / pi" />
-				<do_if value="not $encircleDirection?">
-					<set_value name="$encircleDirection" exact="[-1, 1].random" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' $encircleDirection (random): ' + $encircleDirection" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<do_if value="$isHasDestination">
+					<debug_text text="@this.assignedcontrolled.idcode + ' MOVING AROUND ATTACK TARGET BUT TOWARDS DESTINATION'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<set_value name="$kAAIT_yaw_from" exact="$rot_targetToShip.yaw * 180 / pi" />
+					<create_orientation name="$rot_shipToDestination" orientation="look_at" object="$kAAIT_result_destinationSector" refposition="$kAAIT_result_destinationSectorPosition">
+						<position value="$posShip" />
+					</create_orientation>
+					<set_value name="$kAAIT_yaw_to" exact="$rot_shipToDestination.yaw * 180 / pi" />
+					<include_interrupt_actions ref="kAAIT_GetAvoidYawTowardsDestination" />
+					<set_value name="$yaw_avoid" exact="$kAAIT_result_avoidYawTowardsDestination" />
 				</do_if>
-				<set_value name="$yaw_adj" min="30" max="45" />
-				<set_value name="$yaw_avoid" exact="$yaw_toShip + $yaw_adj * $encircleDirection" />
+				<do_else>
+					<do_if value="not $encircleDirection?">
+						<set_value name="$encircleDirection" exact="[-1, 1].random" />
+					</do_if>
+					<debug_text text="@this.assignedcontrolled.idcode + ' MOVING AROUND ATTACK TARGET $encircleDirection: ' + $encircleDirection" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<set_value name="$yaw_avoid" exact="$rot_targetToShip.yaw * 180 / pi" />
+					<set_value name="$yaw_adj" min="30" max="45" />
+					<set_value name="$yaw_avoid" operation="add" exact="$yaw_adj * $encircleDirection" />
+				</do_else>
+				<!-- because yaw already avoids the target, pitch should head towards the target rather than away from the target -->
+				<create_orientation name="$rot_shipToTarget" orientation="look_at" refposition="$posTarget">
+					<position value="$posShip" />
+				</create_orientation>
+				<set_value name="$pitch_avoid" exact="$rot_shipToTarget.pitch * 180 / pi" />
+				<set_value name="$pitch_adj" min="-7.5" max="7.5" />
+				<set_value name="$pitch_avoid" operation="add" exact="$pitch_adj" />
 			</do_else>
 			<set_value name="$yaw" exact="$yaw_avoid * pi / 180" />
 			<!-- end: add other yaws -->
 			<!-- start: finalise vector -->
 			<set_value name="$yaw_avoid" exact="$yaw_avoid * pi / 180" />
-			<set_value name="$pitch_adj" min="-15" max="15" />
-			<set_value name="$pitch_avoid" exact="($pitch_avoid + $pitch_adj) * pi / 180" />
+			<set_value name="$pitch_avoid" exact="$pitch_avoid * pi / 180" />
 			<!-- end: finalise vector -->
 			<!-- start: get distance -->
 			<do_if value="$isShortAvoidance">

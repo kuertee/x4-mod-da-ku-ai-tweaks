@@ -323,13 +323,14 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kAAIT'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_nameTags else 0)" />
 				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT attack'" />
 			</do_if>
-			<do_if value="$kAAIT_isCarrierAndAttacksLikeDestroyers">
+			<do_if value="@$kAAIT_isCarrierAndAttacksLikeDestroyers">
 				<!--
 				=========================================
 				prevent carriers from getting into danger
 				========================================= -->
-				<set_value name="$movethreshold_min" exact="$aimdist - 2.5km"/>
-				<set_value name="$movethreshold_max" exact="$aimdist + 2.5km"/>
+				<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
+				<set_value name="$movethreshold_min" exact="$kAAIT_result_engagePosDist - 2.5km"/>
+				<set_value name="$movethreshold_max" exact="$kAAIT_result_engagePosDist + 2.5km"/>
 			</do_if>
 			<do_elseif value="$kAAIT_isKudaAttack">
 				<set_value name="$movethreshold_min" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min"/>
@@ -420,7 +421,7 @@
 	<do_if value="$issmall or $distance ge $movethreshold_min">
 		<move_to destination="this.zone" object="this.ship" forcerotation="true" forceposition="false">
 -->
-	<add pos="before" sel="//do_if[@value=&quot;$frontweapon?&quot;]/do_if[@value=&quot;$issmall or $distance ge $movethreshold_min&quot;]/move_to[@destination=&quot;this.zone&quot;][@object=&quot;this.ship&quot;][@forcerotation=&quot;true&quot;][@forceposition=&quot;false&quot;]">
+	<add pos="before" sel="//do_if[@value=&quot;$frontweapon?&quot;]/do_if[@value=&quot;$issmall or $distance ge $movethreshold_min&quot;]/move_to[@destination=&quot;this.zone&quot;][@object=&quot;this.assignedcontrolled&quot;][@forcerotation=&quot;true&quot;][@forceposition=&quot;false&quot;]">
 		<set_value name="$kAAIT_vanillaAttackMoveChance" exact="100" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<do_if value="$kAAIT_isKudaAttack">
@@ -429,7 +430,7 @@
 		</do_if>
 		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_vanillaAttackMoveChance: ' + $kAAIT_vanillaAttackMoveChance" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 	</add>
-	<add sel="//do_if[@value=&quot;$frontweapon?&quot;]/do_if[@value=&quot;$issmall or $distance ge $movethreshold_min&quot;]/move_to[@destination=&quot;this.zone&quot;][@object=&quot;this.ship&quot;][@forcerotation=&quot;true&quot;][@forceposition=&quot;false&quot;]" type="@chance">$kAAIT_vanillaAttackMoveChance</add>
+	<add sel="//do_if[@value=&quot;$frontweapon?&quot;]/do_if[@value=&quot;$issmall or $distance ge $movethreshold_min&quot;]/move_to[@destination=&quot;this.zone&quot;][@object=&quot;this.assignedcontrolled&quot;][@forcerotation=&quot;true&quot;][@forceposition=&quot;false&quot;]" type="@chance">$kAAIT_vanillaAttackMoveChance</add>
 <!--
 	===============================================================
 	get better distance var based on .distanceto and .bboxdistance.
