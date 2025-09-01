@@ -9,7 +9,12 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
+8.0.0.7.1, 31 Aug 2025:
+- Bug-fix: Incorrect calculation of the distance for Move To Engage Position that made the capital ship continually use the behaviour preventing the actual attack behaviour to start.
+- Bug-fix: Ships weren't withdrawing from other ships when their shields are low.
+
 8.0.0.7, 28 Aug 2025:
+- Tweak: 8.0 RC 1 compatibility tweaks.
 - Bug-fix: The avoid behaviour was ignoring its avoid target on the ship's way to its destination.
 - Bug-fix: The avoid behaviour would continually fly the ship above or below their avoid target, causing the ship to forever avoid continuously up or down.
 
