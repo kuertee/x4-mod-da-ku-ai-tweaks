@@ -258,10 +258,12 @@
 					===============================================================
 					$targetposition is not at center for stations and maybe other objects as well.
 					so this code in the next line may put $targetposition inside stations' bounds:
-					this.assignedcontrolled.bboxdistanceto.[$target.sector, $targetposition] - ($target.size/2m) -->
-				<set_value name="$distance_orig" exact="$distance" />
-				<set_value name="$kAAIT_distance" exact="this.assignedcontrolled.distanceto.{$target}" />
-				<set_value name="$distance" exact="$kAAIT_distance - ($kAAIT_distance - this.assignedcontrolled.bboxdistanceto.{$target})" />
+					this.assignedcontrolled.bboxdistanceto.[$target.sector, $targetposition] - ($target.size/2m)
+					NOTE: $target should never be a station in this script anyway. -->
+				<do_if value="$distance != @$distance_orig">
+					<set_value name="$distance_orig" exact="$distance" />
+					<set_value name="$distance" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' $distance_orig %s $distance (overridden by kuda) %s'.[$distance_orig, $distance]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			</do_if>
 		</do_if>
@@ -379,13 +381,14 @@
 	</add>
 	<add sel="//do_if[@value=&quot;$frontweapon?&quot;]//do_elseif[@value=&quot;@$firing or ($distance le $movethreshold_max and ($issmall or $distance ge $movethreshold_min))&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isKudaAttack: ' + @$kAAIT_isKudaAttack" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<do_if value="$kAAIT_isKudaAttack">
-				<debug_text text="@this.assignedcontrolled.idcode + ' $holdposition: ' + @$holdposition" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<do_if value="(not @$holdposition) and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)" comment="in kuda, carriers hold position when within move thre">
+				<debug_text text="@this.assignedcontrolled.idcode + ' $holdposition %s $kAAIT_isCarrierAndAttacksLikeDestroyers %s'.[@$holdposition, @$kAAIT_isCarrierAndAttacksLikeDestroyers]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<do_if value="(not @$holdposition) and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)" comment="in kuda, carriers hold position when within move threshhold">
 					<do_if value="not global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS?">
 						<create_group groupname="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS" />
 					</do_if>
-					<do_if value="not global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS.indexof.{$target}">
+					<do_if value="not @global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS_timeStart">
 						<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS_timeStart" exact="player.age" />
 					</do_if>
 					<add_to_group groupname="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS" object="$target" />
@@ -437,6 +440,7 @@
 	$targetposition is not at center for stations and maybe other objects as well.
 	so this code in the next line may put $targetposition inside stations' bounds:
 	this.assignedcontrolled.bboxdistanceto.[$target.sector, $targetposition] - ($target.size/2m)
+	NOTE: $target should never be a station in this script anyway.
 	<do_if value="$frontweapon?" >
 		...
 		<set_value name="$distance" exact="this.assignedcontrolled.bboxdistanceto.[$target.sector, $targetposition] - ($target.size/2m)"/>
@@ -453,9 +457,10 @@
 	<add pos="after" sel="//do_if[@value=&quot;$frontweapon?&quot;]/set_value[@name=&quot;$distance&quot;][@exact=&quot;this.assignedcontrolled.bboxdistanceto.[$target.sector, $targetposition] - ($target.size/2m)&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<do_if value="$kAAIT_isKudaAttack">
-				<set_value name="$distance_orig" exact="$distance" />
-				<set_value name="$kAAIT_distance" exact="this.assignedcontrolled.distanceto.{$target}" />
-				<set_value name="$distance" exact="$kAAIT_distance - ($kAAIT_distance - this.assignedcontrolled.bboxdistanceto.{$target})" />
+				<do_if value="$distance != @$distance_orig">
+					<set_value name="$distance_orig" exact="$distance" />
+					<set_value name="$distance" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+				</do_if>
 				<debug_text text="@this.assignedcontrolled.idcode + ' $distance_orig %s $distance (overridden by kuda) %s'.[$distance_orig, $distance]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			</do_if>
 		</do_if>
@@ -548,8 +553,8 @@
 	<remove_value name="$tempoffset"/>
 -->
 	<add pos="before" sel="//remove_value[@name=&quot;$tempoffset&quot;]">
-		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.bboxdistanceto.[$target, $tempoffset]: ' + this.assignedcontrolled.bboxdistanceto.[$target, $tempoffset]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.bboxdistanceto.[$target.sector, $pos]: ' + this.assignedcontrolled.bboxdistanceto.[$target.sector, $pos]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.distanceto.[$target, $tempoffset]: ' + this.assignedcontrolled.distanceto.[$target, $tempoffset]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.distanceto.[$target.sector, $pos]: ' + this.assignedcontrolled.distanceto.[$target.sector, $pos]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 	</add>
 <!-- add before. purpose: if primarypurpose != fight, stay away from target
 	<do_if value="this.assignedcontrolled.sector == $target.sector">
@@ -558,7 +563,7 @@
 -->
 	<add pos="before" sel="//do_if[@value=&quot;this.assignedcontrolled.sector == $target.sector&quot;]/do_if[@value=&quot;$strafe?&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' $case: ' + $case" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.bboxdistanceto.[$target, $pos]: ' + this.assignedcontrolled.bboxdistanceto.[$target, $pos]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.distanceto.[$target, $pos]: ' + this.assignedcontrolled.distanceto.[$target, $pos]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 	</add>
 <!-- disable move_strafe and move_to.
 	kuda controls these movements with move to engage, step forward, and withdraw

@@ -4,6 +4,7 @@
 		<params>
 			<param name="target" required="true" type="object" text="{1041, 10126}" comment="target" />
 			<param name="kAAITParam_iskAAITOrder" required="false" default="true" type="internal" />
+			<param name="kAAITParam_isBigMoveAround" required="false" default="false" type="internal" />
 			<param name="debugchance" type="bool" default="0" advanced="true" text="{1041, 10086}" comment="Print debug output">
 				<input_param name="truevalue" value="100"/>
 			</param>
@@ -45,14 +46,11 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_deg ($isFinalMove): ' + $pitch_deg" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				</do_if>
 				<set_value name="$pitch" exact="$pitch_deg * pi / 180" />
-				<set_value name="$distance_attackFrom_adj" exact="1" />
-				<!-- <do_if value="not $isFinalMove">
-					<set_value name="$distance_attackFrom_adj" exact="1.5" />
-				</do_if> -->
+				<set_value name="$distance_000ToEdgeOfTarget" exact="this.assignedcontrolled.distanceto.{$defensibleTarget} - this.assignedcontrolled.bboxdistanceto.{$defensibleTarget}" />
 				<create_position name="$kAAIT_result_moveToEngagePosition"
-					x="$posDefensibleTarget.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * $distance_attackFrom_adj * sin ($yaw) * cos ($pitch)"
-					y="$posDefensibleTarget.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * $distance_attackFrom_adj * sin ($pitch) + [-5m, -2.5m, 0, 2.5m, 5m].random"
-					z="$posDefensibleTarget.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * $distance_attackFrom_adj * cos ($yaw) * cos ($pitch)"
+					x="$posDefensibleTarget.x + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($yaw) * cos ($pitch)"
+					y="$posDefensibleTarget.y + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($pitch) + [-5m, -2.5m, 0, 2.5m, 5m].random"
+					z="$posDefensibleTarget.z + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * cos ($yaw) * cos ($pitch)"
 				/>
 
 				<!-- <create_orientation name="$rotToMoveToPos" orientation="look_at" refposition="$kAAIT_result_moveToEngagePosition">
@@ -109,9 +107,9 @@
 					</do_if>
 
 					<create_position name="$kAAIT_result_moveToEngagePosition"
-						x="$posDefensibleTarget.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * $distance_attackFrom_adj * sin ($yaw) * cos ($pitch)"
-						y="$posDefensibleTarget.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * $distance_attackFrom_adj * sin ($pitch)"
-						z="$posDefensibleTarget.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * $distance_attackFrom_adj * cos ($yaw) * cos ($pitch)"
+						x="$posDefensibleTarget.x + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($yaw) * cos ($pitch)"
+						y="$posDefensibleTarget.y + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($pitch)"
+						z="$posDefensibleTarget.z + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * cos ($yaw) * cos ($pitch)"
 					/>
 
 					<!-- <create_orientation name="$rotToMoveToPos" orientation="look_at" refposition="$kAAIT_result_moveToEngagePosition">
@@ -287,6 +285,7 @@
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToTarget: ' + $dist_shipToTarget" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToTarget_bbox: ' + $dist_shipToTarget_bbox" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
+			<set_value name="$kAAIT_test_moveToEngageTarget_isBigMoveAround" value="$kAAITParam_isBigMoveAround" />
 			<include_interrupt_actions ref="kAAIT_SetMoveToEngageYawFromTarget" />
 			<do_if value="abs($kAAIT_result_moveToEngageYawDiff) gt 45"
 				comment="check if move to engage needs to move away first to avoid any modules that are in the way.
