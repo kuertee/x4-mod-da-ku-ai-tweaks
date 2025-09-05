@@ -33,24 +33,23 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $yaw_deg: ' + $yaw_deg" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 
 				<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
-				<set_value name="$pitch_deg" exact="0" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_deg: ' + $pitch_deg" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<do_if value="$isFinalMove">
-					<!-- <set_value name="$pitch_deg" min="-15" max="15" /> -->
+				<set_value name="$pitch_adjFactor" exact="0" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_adjFactor: ' + $pitch_adjFactor" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<!-- <do_if value="$isFinalMove"> -->
+					<!-- pitch_adjFactor staggers the vertical positioning of the ships from the ideal pitch angle -->
 					<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward % 2 == 0" comment="alternate to keep the ship at a pretty much the same pitch">
-						<set_value name="$pitch_deg" exact="15" />
+						<set_value name="$pitch_adjFactor" exact="1" />
 					</do_if>
 					<do_else>
-						<set_value name="$pitch_deg" exact="-15" />
+						<set_value name="$pitch_adjFactor" exact="-1" />
 					</do_else>
-					<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_deg ($isFinalMove): ' + $pitch_deg" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				</do_if>
-				<set_value name="$pitch" exact="$pitch_deg * pi / 180" />
-				<set_value name="$distance_000ToEdgeOfTarget" exact="this.assignedcontrolled.distanceto.{$defensibleTarget} - this.assignedcontrolled.bboxdistanceto.{$defensibleTarget}" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_adjFactor ($isFinalMove): ' + $pitch_adjFactor" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<!-- </do_if> -->
+				<set_value name="$pitch" exact="(10 + 5 * $pitch_adjFactor) * pi / 180" />
 				<create_position name="$kAAIT_result_moveToEngagePosition"
-					x="$posDefensibleTarget.x + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($yaw) * cos ($pitch)"
-					y="$posDefensibleTarget.y + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($pitch) + [-5m, -2.5m, 0, 2.5m, 5m].random"
-					z="$posDefensibleTarget.z + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * cos ($yaw) * cos ($pitch)"
+					x="$posDefensibleTarget.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($yaw) * cos ($pitch)"
+					y="$posDefensibleTarget.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($pitch)"
+					z="$posDefensibleTarget.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * cos ($yaw) * cos ($pitch)"
 				/>
 
 				<!-- <create_orientation name="$rotToMoveToPos" orientation="look_at" refposition="$kAAIT_result_moveToEngagePosition">
@@ -68,7 +67,9 @@
 				<set_value name="$isDifficultLOS" exact="@global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS.indexof.{$target}" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $isDifficultLOS: ' + $isDifficultLOS" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 
-				<do_if value="$isMoveToEngagePosDangerous or $isDifficultLOS" comment="yaw movement will result in ship being near a big enemy, add a pitch component">
+				<do_if value="$isMoveToEngagePosDangerous or $isDifficultLOS" comment="yaw movement will result in ship being near a big enemy or target has been determined to be difficult to hit, add a pitch component">
+					<set_value name="$pitch_current" exact="$rotTargetToShip.pitch * 180 / pi" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_current: ' + ($pitch_current * 180 / pi)" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<do_if value="$isMoveToEngagePosDangerous">
 						<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition movement will result in near (' + $kAAIT_result_distanceToBigEnemy + ') big enemy (' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode + '), trying with pitch'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 						<create_position name="$posBigEnemy" space="this.sector" object="$kAAIT_result_bigEnemy" />
@@ -78,38 +79,35 @@
 						<set_value name="$pitch_toBigEnemy" exact="$rotShipToBigEnemy.pitch * 180 / pi" />
 						<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_toBigEnemy: ' + $pitch_toBigEnemy" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 						<do_if value="$pitch_toBigEnemy le 0" comment="big enemy is below ship, so move up">
-							<set_value name="$pitch" exact="45deg" />
+							<set_value name="$pitch" exact="45 + 5 * $pitch_adjFactor" />
 						</do_if>
 						<do_else comment="pitch down">
-							<set_value name="$pitch" exact="-45deg" />
+							<set_value name="$pitch" exact="-45 + 5 * $pitch_adjFactor" />
 						</do_else>
 						<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch (kAAIT_result_bigEnemy): ' + ($pitch * 180 / pi)" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					</do_if>
 					<do_else>
 						<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition current position has no los to target, trying with pitch'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-						<set_value name="$pitch_current" exact="$rotTargetToShip.pitch * 180 / pi" />
 						<do_if value="$pitch_current le 0" comment="ship is already below target, keep ship below target">
-							<set_value name="$pitch" exact="-45deg" />
+							<set_value name="$pitch" exact="-45 + 5 * $pitch_adjFactor" />
 						</do_if>
 						<do_else>
-							<set_value name="$pitch" exact="45deg" />
+							<set_value name="$pitch" exact="45 + 5 * $pitch_adjFactor" />
 						</do_else>
 					</do_else>
 
-					<set_value name="$pitch_current" exact="$rotTargetToShip.pitch * 180 / pi" />
-					<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $pitch_current: ' + ($pitch_current * 180 / pi)" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<do_if value="($pitch gt 0 and $pitch_current lt 0) or ($pitch lt 0 and $pitch_current gt 0)" comment="move away from big enemy first by moving to target's y-level - i.e. pitch = 0.
 						use the ship's current yaw to target so that MTE doesn't think that the ship is already at its target yaw to target.
 						$distance_attackFrom moves the ship away from both the big enemy and the target.">
 						<set_value name="$yaw" exact="$rotTargetToShip.yaw" />
-						<set_value name="$pitch" exact="0" />
+						<set_value name="$pitch" exact="$pitch_adjFactor * pi / 180.0" />
 						<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition moving away first'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					</do_if>
 
 					<create_position name="$kAAIT_result_moveToEngagePosition"
-						x="$posDefensibleTarget.x + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($yaw) * cos ($pitch)"
-						y="$posDefensibleTarget.y + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * sin ($pitch)"
-						z="$posDefensibleTarget.z + (global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom + $distance_000ToEdgeOfTarget) * cos ($yaw) * cos ($pitch)"
+						x="$posDefensibleTarget.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($yaw) * cos ($pitch)"
+						y="$posDefensibleTarget.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($pitch)"
+						z="$posDefensibleTarget.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * cos ($yaw) * cos ($pitch)"
 					/>
 
 					<!-- <create_orientation name="$rotToMoveToPos" orientation="look_at" refposition="$kAAIT_result_moveToEngagePosition">
@@ -280,10 +278,6 @@
 
 			<set_value name="$yaw_engage" exact="null" />
 			<set_value name="$isFinalMove" exact="true" />
-			<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.distanceto.{$target}" />
-			<set_value name="$dist_shipToTarget_bbox" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToTarget: ' + $dist_shipToTarget" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToTarget_bbox: ' + $dist_shipToTarget_bbox" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
 			<set_value name="$kAAIT_test_moveToEngageTarget_isBigMoveAround" value="$kAAITParam_isBigMoveAround" />
 			<include_interrupt_actions ref="kAAIT_SetMoveToEngageYawFromTarget" />
@@ -294,20 +288,21 @@
 				<set_value name="$kAAIT_angle_from" exact="$kAAIT_result_moveToEngageYawFrom" />
 				<set_value name="$kAAIT_angle_to" exact="$kAAIT_result_moveToEngageYawMid" />
 				<set_value name="$kAAIT_midAngleFactorMult" exact="1" />
-				<set_value name="$dist_shipToDefensible" exact="this.assignedcontrolled.distanceto.{$target.defensible}" />
-				<set_value name="$dist_shipToDefensible_bbox" exact="this.assignedcontrolled.bboxdistanceto.{$target.defensible}" />
-				<set_value name="$dist_targetToDefensible" exact="$target.distanceto.{$target.defensible}" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToDefensible: ' + $dist_shipToDefensible" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToDefensible_bbox: ' + $dist_shipToDefensible_bbox" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' $dist_targetToDefensible: ' + $dist_targetToDefensible" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<!-- <set_value name="$kAAIT_isMoveAwayFirst" exact="$dist_shipToDefensible_bbox le 0 or $dist_shipToDefensible le $dist_targetToDefensible or $dist_shipToDefensible le $dist_shipToTarget" /> -->
+				<do_if value="$target.isrealclass.station">
+					<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
+				</do_if>
+				<do_else>
+					<set_value name="$dist_shipToTarget" exact="this.assignedcontrolled.distanceto.{$target} - $target.size * 0.5" />
+				</do_else>
+				<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToTarget: ' + $dist_shipToTarget" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<do_if value="$target.defensible and $target != $target.defensible">
+					<set_value name="$dist_shipToDefensible" exact="this.assignedcontrolled.distanceto.{$target.defensible}" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $dist_shipToDefensible: ' + $dist_shipToDefensible" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				</do_if>
 				<set_value name="$kAAIT_isMoveAwayFirst" exact="
-					$dist_shipToDefensible le global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_mid and
-					(
-						$dist_shipToDefensible_bbox le 0 or
-						$dist_shipToDefensible le $dist_targetToDefensible or
-						$dist_shipToDefensible le $dist_shipToTarget
-					)" />
+					$dist_shipToTarget le global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_mid and
+					@$dist_shipToDefensible and
+					$dist_shipToDefensible le $dist_shipToTarget" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_isMoveAwayFirst: ' + $kAAIT_isMoveAwayFirst" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<set_value name="$kAAIT_midAngleDiffMax" exact="45" />
 				<do_if value="$kAAIT_isMoveAwayFirst">
