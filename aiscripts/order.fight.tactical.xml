@@ -169,135 +169,89 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' on_abort'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 	</add>
 <!--
-	==============================================
-	positions are an arc or a circle around target
-	==============================================
+	========================
+	ignore subordinates away
+	========================
 	<actions name="create_orders">
-		...
-		<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
+		<do_if value="$assignments.indexof.{$subordinate.assignment} and not $subordinate.subordinategroupdockoverride">
 -->
-	<add pos="after" sel="(//actions[@name=&quot;create_orders&quot;]//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[1]">
-		<set_value name="$kAAIT_attackPosOwner" exact="$subordinate" />
-		<include_interrupt_actions ref="kAAIT_GetAttackPosition" />
+	<add pos="before" sel="//actions[@name=&quot;create_orders&quot;]/do_if[@value=&quot;$assignments.indexof.{$subordinate.assignment} and not $subordinate.subordinategroupdockoverride&quot;]">
+		<set_value name="$kAAIT_isOkToJoinTacticalAttack" exact="$subordinate.gatedistance.{this.assignedcontrolled} le 0 and
+			(
+				$subordinate.orders.count le 0 or
+				$subordinate.orders.{1}.script == 'order.move.wait.object' or
+				$subordinate.orders.{1}.script == 'order.move.wait' or
+				$subordinate.orders.{1}.script == 'order.wait.signal' or
+				$subordinate.orders.{1}.script == 'order.wait'
+			)" />
 	</add>
+	<add sel="//actions[@name=&quot;create_orders&quot;]/do_if[@value=&quot;$assignments.indexof.{$subordinate.assignment} and not $subordinate.subordinategroupdockoverride&quot;]" type="@chance">if $kAAIT_isOkToJoinTacticalAttack then 100 else 0</add>
+<!--
+	==============
+	wait positions
+	==============
+	based on MTE positions
+-->
 	<add sel="//interrupts/library">
 		<actions name="kAAIT_GetAttackPosition" comment="overrides $initialpos">
-			<do_if value="
-				(not $kAAIT_count_attackers?) or
-				(not $kAAIT_count_defenders?)">
-				<include_interrupt_actions ref="kAAIT_GetArcAttackPositions" />
-			</do_if>
-			<do_if value="$kAAIT_attackPosOwner == this.assignedcontrolled or $kAAIT_attackPosOwner.assignment != assignment.defence">
-				<do_if value="$kAAIT_attackPos_attackers.count gt 1">
-					<sort_list list="$kAAIT_attackPos_attackers" sortbyvalue="$kAAIT_attackPosOwner.distanceto.[this.sector, loop.element]" sortdescending="false" />
-				</do_if>
-				<set_value name="$kAAIT_attackPos" exact="$kAAIT_attackPos_attackers.{1}" />
-				<remove_value name="$kAAIT_attackPos_attackers.{1}" />
-			</do_if>
-			<do_else>
-				<do_if value="$kAAIT_attackPos_defenders.count gt 1">
-					<sort_list list="$kAAIT_attackPos_defenders" sortbyvalue="$kAAIT_attackPosOwner.distanceto.[this.sector, loop.element]" sortdescending="false" />
-				</do_if>
-				<set_value name="$kAAIT_attackPos" exact="$kAAIT_attackPos_defenders.{1}" />
-				<remove_value name="$kAAIT_attackPos_defenders.{1}" />
-			</do_else>
-			<create_position name="$initialpos" x="$kAAIT_attackPos.x" y="$kAAIT_attackPos.y" z="$kAAIT_attackPos.z" />
-		</actions>
-		<actions name="kAAIT_GetArcAttackPositions" comment="positions form an arc around the target. attackers in front. defenders behind.">
-			<set_value name="$kAAIT_attackPos_attackers" exact="[]" />
-			<set_value name="$kAAIT_attackPos_defenders" exact="[]" />
-			<set_value name="$kAAIT_count_attackers" exact="1" comment="add 1 for this.assignedcontrolled - the fleet commander" />
-			<set_value name="$kAAIT_count_defenders" exact="0" />
-			<do_for_each name="$subordinate_inList" in="this.assignedcontrolled.allsubordinates">
-				<do_if value="$subordinate_inList.assignment" list="$assignments">
-					<do_if value="$subordinate_inList.assignment != assignment.defence">
-						<set_value name="$kAAIT_count_attackers" operation="add" exact="1" />
-					</do_if>
-				</do_if>
-			</do_for_each>
-			<set_value name="$kAAIT_count_defenders" exact="1 + this.assignedcontrolled.allsubordinates.count - $kAAIT_count_attackers" comment="add 1 for this.assignedcontrolled - the fleet commander" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' this.assignedcontrolled.allsubordinates.count: ' + this.assignedcontrolled.allsubordinates.count" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_count_attackers: ' + $kAAIT_count_attackers" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_count_defenders: ' + $kAAIT_count_defenders" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<create_position name="$kAAIT_pos" space="this.sector" object="this.assignedcontrolled" />
-			<create_position name="$enemypos" space="$primarytarget.sector" object="$primarytarget" />
-			<create_orientation name="$kAAIT_rot_enemyToShip" orientation="look_at" refposition="$kAAIT_pos">
-				<position value="$enemypos" />
+			<create_position name="$kAAIT_posShip" space="$primarytarget.sector" object="this.assignedcontrolled" />
+			<create_position name="$kAAIT_posTarget" space="$primarytarget.sector" object="$primarytarget" />
+			<create_orientation name="$kAAIT_rotDefensibleTargetToShip" orientation="look_at" refposition="$kAAIT_posShip">
+				<position value="$kAAIT_posTarget" />
 			</create_orientation>
-			<set_value name="$kAAIT_yaw_enemyToShip" exact="$kAAIT_rot_enemyToShip.yaw * 180 / pi" />
-			<do_if value="$primarytarget.isclass.ship">
-				<set_value name="$kAAIT_yaw_separation" exact="10" />
-				<set_value name="$kAAIT_tacticalDistance" exact="this.assignedcontrolled.maxradarrange * 1.25" />
+			<set_value name="$kAAIT_test_moveToEngageTarget" exact="$primarytarget" />
+			<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
+			<set_value name="$kAAIT_shipIndex" exact="this.assignedcontrolled.allsubordinates.indexof.{$kAAIT_attackingShip}" />
+			<do_if value="$forcedassignment == assignment.defence">
+				<do_if value="$kAAIT_shipIndex % 2 == 0">
+					<set_value name="$kAAIT_yaw" exact="$kAAIT_rotDefensibleTargetToShip.yaw + ($kAAIT_shipIndex * - 2)deg" />
+				</do_if>
+				<do_else>
+					<set_value name="$kAAIT_yaw" exact="$kAAIT_rotDefensibleTargetToShip.yaw + ($kAAIT_shipIndex * 2)deg" />
+				</do_else>
+				<create_position name="$initialpos"
+					x="$kAAIT_posTarget.x + ($kAAIT_result_engagePosDist + 5km) * sin($kAAIT_yaw) * cos($kAAIT_rotDefensibleTargetToShip.pitch)"
+					y="$kAAIT_posTarget.y + ($kAAIT_result_engagePosDist + 5km) * sin($kAAIT_rotDefensibleTargetToShip.pitch)"
+					z="$kAAIT_posTarget.z + ($kAAIT_result_engagePosDist + 5km) * cos($kAAIT_yaw) * cos($kAAIT_rotDefensibleTargetToShip.pitch)"/>
 			</do_if>
 			<do_else>
-				<set_value name="$kAAIT_yaw_separation" exact="5" />
-				<set_value name="$kAAIT_tacticalDistance" exact="this.assignedcontrolled.maxradarrange * 0.75" />
+				<do_if value="$kAAITParam_isSurroundTheTarget">
+					<set_value name="$kAAIT_yaw_separation" exact="360 / (this.assignedcontrolled.allsubordinates.count + 1)f" />
+					<set_value name="$kAAIT_yaw" exact="($kAAIT_yaw_separation * $kAAIT_shipIndex)deg" />
+				</do_if>
+				<do_else>
+					<do_if value="$kAAIT_shipIndex % 2 == 0">
+						<set_value name="$kAAIT_yaw" exact="$kAAIT_rotDefensibleTargetToShip.yaw + ($kAAIT_shipIndex * - 2)deg" />
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_yaw" exact="$kAAIT_rotDefensibleTargetToShip.yaw + ($kAAIT_shipIndex * 2)deg" />
+					</do_else>
+				</do_else>
+				<create_position name="$initialpos"
+					x="$kAAIT_posTarget.x + $kAAIT_result_engagePosDist * sin($kAAIT_yaw) * cos($kAAIT_rotDefensibleTargetToShip.pitch)"
+					y="$kAAIT_posTarget.y + $kAAIT_result_engagePosDist * sin($kAAIT_rotDefensibleTargetToShip.pitch)"
+					z="$kAAIT_posTarget.z + $kAAIT_result_engagePosDist * cos($kAAIT_yaw) * cos($kAAIT_rotDefensibleTargetToShip.pitch)"/>
 			</do_else>
-			<!-- attackers -->
-			<do_if value="$kAAITParam_isSurroundTheTarget and $kAAIT_count_attackers gt 1">
-				<set_value name="$kAAIT_yaw_separation" exact="360 / ($kAAIT_count_attackers)f" />
-			</do_if>
-			<set_value name="$kAAIT_yaw_deg" exact="$kAAIT_yaw_enemyToShip - $kAAIT_yaw_separation * $kAAIT_count_attackers / 2.0" />
-			<do_all counter="$kAAIT_count" exact="$kAAIT_count_attackers">
-				<set_value name="$kAAIT_yaw_deg" operation="add" exact="$kAAIT_yaw_separation " />
-				<set_value name="$kAAIT_yaw" exact="$kAAIT_yaw_deg * pi / 180" />
-				<create_position name="$kAAIT_attackPos"
-					x="$enemypos.x + $kAAIT_tacticalDistance * sin ($kAAIT_yaw) * cos ($kAAIT_rot_enemyToShip.pitch)"
-					y="$enemypos.y + $kAAIT_tacticalDistance * sin ($kAAIT_rot_enemyToShip.pitch)"
-					z="$enemypos.z + $kAAIT_tacticalDistance * cos ($kAAIT_yaw) * cos ($kAAIT_rot_enemyToShip.pitch)"
-				/>
-				<append_to_list name="$kAAIT_attackPos_attackers" exact="$kAAIT_attackPos" />
-			</do_all>
-			<!-- defenders -->
-			<do_if value="$kAAITParam_isSurroundTheTarget and $kAAIT_count_defenders gt 1">
-				<set_value name="$kAAIT_yaw_separation" exact="360 / ($kAAIT_count_defenders)f" />
-			</do_if>
-			<set_value name="$kAAIT_yaw_deg" exact="$kAAIT_yaw_enemyToShip - $kAAIT_yaw_separation * $kAAIT_count_defenders / 2.0" />
-			<do_all counter="$kAAIT_count" exact="$kAAIT_count_defenders">
-				<set_value name="$kAAIT_yaw_deg" operation="add" exact="$kAAIT_yaw_separation" />
-				<set_value name="$kAAIT_yaw" exact="$kAAIT_yaw_deg * pi / 180" />
-				<create_position name="$kAAIT_attackPos"
-					x="$enemypos.x + ($kAAIT_tacticalDistance + 10km) * sin ($kAAIT_yaw) * cos ($kAAIT_rot_enemyToShip.pitch)"
-					y="$enemypos.y + ($kAAIT_tacticalDistance + 10km) * sin ($kAAIT_rot_enemyToShip.pitch)"
-					z="$enemypos.z + ($kAAIT_tacticalDistance + 10km) * cos ($kAAIT_yaw) * cos ($kAAIT_rot_enemyToShip.pitch)"
-				/>
-				<append_to_list name="$kAAIT_attackPos_defenders" exact="$kAAIT_attackPos" />
-			</do_all>
-			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_attackPos_attackers (' + $kAAIT_attackPos_attackers.count + '): ' + $kAAIT_attackPos_attackers" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_attackPos_defenders (' + $kAAIT_attackPos_defenders.count + '): ' + $kAAIT_attackPos_defenders" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 		</actions>
-	</add>
-	<!-- get arc attack positions.
-		<label name="giveorders" />
-	-->
-	<add pos="after" sel="//label[@name=&quot;giveorders&quot;]">
-		<include_interrupt_actions ref="kAAIT_GetArcAttackPositions" />
-	</add>
-	<!-- get pos. kAAIT_GetAttackPosition will do it.
-		<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
-	-->
-	<add sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[2]" type="@chance">0</add>
-	<!-- get arc attack positions.
-		<transform_position refposition="$enemypos" refrotation="$orientation" name="$initialpos">
-	-->
-	<add pos="after" sel="(//transform_position[@refposition=&quot;$enemypos&quot;][@refrotation=&quot;$orientation&quot;][@name=&quot;$initialpos&quot;])[2]">
-		<set_value name="$kAAIT_attackPosOwner" exact="this.assignedcontrolled" />
-		<include_interrupt_actions ref="kAAIT_GetAttackPosition" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' $ORDERS.keys.list: ' + @$ORDERS.keys.list" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-		<do_for_each name="$ordergroup" valuename="$orderTypesInOrderGroup" in="$ORDERS" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)">
-			<debug_text text="@this.assignedcontrolled.idcode + ' $ordergroup: ' + $ordergroup" />
-			<do_for_each name="$orderType" valuename="$ordersOfOrderType" in="$orderTypesInOrderGroup">
-				<debug_text text="@this.assignedcontrolled.idcode + '     $orderType: ' + $orderType" />
-				<do_for_each name="$order" in="$ordersOfOrderType">
-					<debug_text text="@this.assignedcontrolled.idcode + '         $order: ' + $order + ' .script: ' + $order.script" />
-				</do_for_each>
-			</do_for_each>
-		</do_for_each>
 	</add>
 <!--
-	=================
-	attack or restart
-	=================
+	<create_order object="$subordinate" id="'MoveWait'"  immediate="true" name="$moveorder">
+-->
+	<add pos="before" sel="//create_order[@object=&quot;$subordinate&quot;][@id=&quot;'MoveWait'&quot;][@immediate=&quot;true&quot;][@name=&quot;$moveorder&quot;]">
+		<set_value name="$kAAIT_attackingShip" exact="$subordinate" />
+		<include_interrupt_actions ref="kAAIT_GetAttackPosition" />
+	</add>
+	<!--
+	<move_to destination="$primarytarget.sector" object="this.ship" forcerotation="true" forceposition="false" travel="true">
+	-->
+	<add pos="before" sel="//move_to[@destination=&quot;$primarytarget.sector&quot;][@object=&quot;this.ship&quot;][@forcerotation=&quot;true&quot;][@forceposition=&quot;false&quot;][@travel=&quot;true&quot;]">
+		<set_value name="$kAAIT_attackingShip" exact="this.assignedcontrolled" />
+		<include_interrupt_actions ref="kAAIT_GetAttackPosition" />
+	</add>
+<!--
+	=============
+	cancel orders
+	=============
 	<interrupts>
 -->
 	<add sel="//interrupts//library">
@@ -317,95 +271,6 @@
 				</do_if>
 			</do_for_each>
 		</actions>
-	</add>
-	<add sel="//interrupts">
-		<!-- <handler comment="target is attacked">
-			<conditions>
-				<check_any>
-					<check_all comment="target attacked fleet">
-						<check_any>
-							<event_object_attacked group="$kAAIT_fleetShips" check="false" />
-							<event_object_attacked_object group="$kAAIT_fleetShips" check="false" />
-						</check_any>
-						<check_any>
-							<check_all>
-								<check_value value="[$selectedtarget.owner, @$selectedtarget.toplevelcommander.owner].indexof.{event.param.owner}" />
-								<check_value value="@$kAAIT_tacticalDistance gt 0km" />
-								<check_value value="event.object.distanceto.{$selectedtarget} le $kAAIT_tacticalDistance" />
-							</check_all>
-							<check_all>
-								<check_value value="event.param.isclass.ship" />
-								<check_value value="event.param.iscapitalship" />
-								<check_value value="event.param.hasrelation.enemy.{this.assignedcontrolled}" />
-							</check_all>
-						</check_any>
-					</check_all>
-					<check_all comment="other fleet attacked target">
-						<event_object_attacked object="$selectedtarget" />
-						<check_value value="event.param.owner == this.assignedcontrolled.owner" />
-						<check_value value="@$kAAIT_tacticalDistance gt 0km" />
-						<check_value value="event.object.distanceto.{$selectedtarget} le $kAAIT_tacticalDistance" />
-					</check_all>
-				</check_any>
-				<check_value value="this.assignedcontrolled.sector" />
-				<check_value value="$selectedtarget.sector" />
-				<check_value value="this.assignedcontrolled.sector == $selectedtarget.sector" />
-			</conditions>
-			<actions>
-				<debug_text text="@this.assignedcontrolled.idcode + ' handler attacked. event.name (final): ' + @event.name" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' handler attacked. event.object (final): ' + @event.object + ' ' + @event.object.knownname + ' ' + @event.object.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<debug_text text="@this.assignedcontrolled.idcode + ' handler attacked. event.param (final): ' + @event.param + ' ' + @event.param.knownname + ' ' + @event.param.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<set_value name="$kAAIT_isAttackOtherTargets" exact="true" />
-				<include_interrupt_actions ref="kAAIT_CancelWaitOrders" />
-				<abort_called_scripts resume="attack" />
-			</actions>
-		</handler> -->
-		<!-- <handler comment="target moved">
-			<conditions>
-				<event_object_changed_zone object="$selectedtarget" />
-			</conditions>
-			<actions>
-				<debug_text text="@this.assignedcontrolled.idcode + ' handler target moved. event.name: ' + @event.name" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<include_interrupt_actions ref="kAAIT_CancelWaitOrders" />
-				<abort_called_scripts resume="start" />
-			</actions>
-		</handler> -->
-		<!-- remove ship from fleet ships group -->
-		<handler comment="subordinate removed">
-			<conditions>
-				<event_object_subordinate_removed  object="this.assignedcontrolled"/>
-				<check_value value="event.param.isoperational" />
-			</conditions>
-			<actions>
-				<debug_text text="@this.assignedcontrolled.idcode + ' handler subordinate removed. event.name: ' + @event.name" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<remove_from_group group="$kAAIT_fleetShips" object="event.param" />
-			</actions>
-		</handler>
-	</add>
-	<!--
-		=======================
-		keep fleet list updated
-		=======================
-
-		add new ship to fleet ships group 
-		<handler comment="Subordinate added (either a new one or a promoted one)">
-			<actions>
-	-->
-	<add sel="//handler[@comment=&quot;Subordinate added (either a new one or a promoted one)&quot;]//actions">
-		<debug_text text="@this.assignedcontrolled.idcode + ' handler subordinate added. event.name: ' + @event.name" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-		<add_to_group groupname="$kAAIT_fleetShips" object="event.param" />
-	</add>
-	<add sel="//init">
-		<create_group groupname="$kAAIT_fleetShips" />
-	</add>
-	<add pos="after" sel="//label[@name=&quot;start&quot;]">
-		<clear_group group="$kAAIT_fleetShips" />
-		<add_to_group groupname="$kAAIT_fleetShips" object="this.assignedcontrolled" />
-		<do_for_each name="$subordinategroupid" in="this.assignedcontrolled.activesubordinategroupids">
-			<do_for_each name="$subordinate_inList" in="this.assignedcontrolled.subordinatesingroup.{$subordinategroupid}">
-				<add_to_group groupname="$kAAIT_fleetShips" object="$subordinate_inList" />
-			</do_for_each>
-		</do_for_each>
 	</add>
 <!--
 	===============
@@ -472,70 +337,17 @@
 		</do_if>
 	</add>
 <!--
-	=================================================
-	reset rally points at every start or on game load
-	=================================================
-	cleaner for when target is another sector
-	required for moving targets
--->
-	<add sel="//interrupts">
-		<!-- <handler name="on game reloads, syncpoint is lost, recreate">
-			<conditions>
-				<event_universe_generated />
-			</conditions>
-			<actions>
-				<debug_text text="@this.assignedcontrolled.idcode + ' ' + event.name" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<abort_called_scripts resume="kAAIT_recreate_syncpoint" />
-			</actions>
-		</handler> -->
-		<handler comment="start over on movement">
-			<conditions>
-				<check_any>
-					<event_object_changed_zone object="this.assignedcontrolled" />
-					<event_object_changed_zone object="$selectedtarget" />
-				</check_any>
-				<check_value value="this.assignedcontrolled.bboxdistanceto.{$selectedtarget} gt this.assignedcontrolled.maxradarrange * 1.5" />
-			</conditions>
-			<actions>
-				<debug_text text="@this.assignedcontrolled.idcode + ' ' + event.name" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<abort_called_scripts resume="start" />
-			</actions>
-		</handler>
-	</add>
-	<add pos="before" sel="//create_order_syncpoint">
-		<label name="kAAIT_recreate_syncpoint" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_recreate_syncpoint'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-	</add>
-	<add pos="after" sel="//label[@name=&quot;start&quot;]">
-		<include_interrupt_actions ref="clear_all_orders" />
-		<do_if value="not $ORDERS?">
-			<set_value name="$ORDERS" exact="table[]" />
-		</do_if>
-	</add>
-<!--
 	============================================
 	create_order instead of run_script attack ai
 	============================================
 	<run_script name="'order.fight.attack.object'">
 -->
-	<replace sel="//run_script[@name=&quot;'order.fight.attack.object'&quot;]">
+	<add pos="before" sel="//run_script[@name=&quot;'order.fight.attack.object'&quot;]">
 		<label name="kAAIT_label_just_fight" />
-		<set_value name="$kAAIT_isFighting" exact="true" />
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL kAAIT_label_just_fight'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 		<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}">
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}" exact="table[]" />
 		</do_if>
-		<!-- <set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel" exact="[]" />
-		<do_for_each name="$ordergroup" in="$ORDERS" reverse="true">
-			<do_for_each valuename="$kAAIT_orders" in="$ORDERS.{$ordergroup}" reverse="true">
-				<do_for_each name="$kAAIT_order" in="$kAAIT_orders" reverse="true">
-					<do_if value="$kAAIT_order.exists">
-						<debug_text text="@this.assignedcontrolled.idcode + ' cancel this when done ' + $kAAIT_order.script + ' on ' + @$kAAIT_order.object.knownname + ' ' + @$kAAIT_order.object.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-						<append_to_list name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_tacticalOrdersToCancel" exact="$kAAIT_order" />
-					</do_if>
-				</do_for_each>
-			</do_for_each>
-		</do_for_each> -->
 		<create_order object="this.assignedcontrolled" id="'Attack'" immediate="true">
 	        <param name="primarytarget" value="$primarytarget"/>
 			<param name="pursuedistance" value="this.assignedcontrolled.maxradarrange" />
@@ -560,28 +372,6 @@
 				<cancel_order order="$kAAIT_order" />
 			</do_if>
 		</do_for_each>
-	</replace>
-	<!--
-		on manual, trigger, set kAAIT_isFighting
-		<wait exact="$timeout">
-			<interrupt>
-				<actions>
-	-->
-	<add pos="prepend" sel="//wait[@exact=&quot;$timeout&quot;]/interrupt/actions">
-		<set_value name="$kAAIT_isFighting" exact="true" />
+		<resume label="finish" />
 	</add>
-	<!--
-		do not cancel attack orders if kAAIT_isFighting
-		<actions name="clear_all_orders">
-			...
-			<do_all counter="$i" exact="$ORDERS.{$ordergroup}.{$ordertype}.count" reverse="true">
-	-->
-	<!-- <add pos="before" sel="//actions[@name=&quot;clear_all_orders&quot;]//do_all[@counter=&quot;$i&quot;][@exact=&quot;$ORDERS.{$ordergroup}.{$ordertype}.count&quot;][@reverse=&quot;true&quot;]">
-		<set_value name="$kAAIT_cancelOrderChance" exact="100" />
-		<do_if value="$ordertype == '$Attack' and @$kAAIT_isFighting">
-			<set_value name="$kAAIT_cancelOrderChance" exact="0" />
-		</do_if>
-		<debug_text text="@this.assignedcontrolled.idcode + ' clear_all_orders $ordertype: ' + $ordertype + ' $kAAIT_isFighting: ' + @$kAAIT_isFighting + ' $kAAIT_cancelOrderChance: ' + $kAAIT_cancelOrderChance" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-	</add>
-	<add sel="//actions[@name=&quot;clear_all_orders&quot;]//do_all[@counter=&quot;$i&quot;][@exact=&quot;$ORDERS.{$ordergroup}.{$ordertype}.count&quot;][@reverse=&quot;true&quot;]" type="@chance">$kAAIT_cancelOrderChance</add> -->
 </diff>

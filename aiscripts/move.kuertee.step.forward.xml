@@ -4,7 +4,8 @@
 		<params>
 			<param name="target" required="true" type="object" text="{1041, 10126}" comment="target" />
 			<param name="kAAITParam_iskAAITOrder" required="false" default="true" type="internal" />
-			<param name="isFaceTargetOnly" required="false" default="false" type="internal" />
+			<param name="kAAITParam_isFaceTargetOnly" required="false" default="false" type="internal" />
+			<param name="kAAITParam_cancelAtDestructionOf" required="false" default="null" type="internal" />
 			<param name="debugchance" type="bool" default="0" advanced="true" text="{1041, 10086}" comment="Print debug output">
 				<input_param name="truevalue" value="100"/>
 			</param>
@@ -23,6 +24,7 @@
 				<check_any>
 					<event_object_destroyed object="$target" check="false" />
 					<event_object_destroyed object="$defensibleTarget" check="false" />
+					<event_object_destroyed object="$kAAITParam_cancelAtDestructionOf" check="false" />
 				</check_any>
 			</conditions>
 			<actions>
@@ -54,6 +56,9 @@
 	</interrupts>
 	<init>
 		<debug_text text="@this.assignedcontrolled.idcode + ' init'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<do_if value="not $kAAITParam_cancelAtDestructionOf">
+			<set_value name="$kAAITParam_cancelAtDestructionOf" exact="$target" />
+		</do_if>
 		<!-- required for disengage handler -->
 		<set_value name="$pursuetargets" exact="false" />
 		<set_value name="$pursuedistance" exact="this.assignedcontrolled.maxradarrange" />
@@ -71,20 +76,10 @@
 			<do_if value="not $kAAIT_original_name?">
 				<set_value name="$kAAIT_original_name" exact="this.assignedcontrolled.knownname" />
 			</do_if>
-
-			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target" exact="$target" />
-			<do_if value="$target.isrealclass.module">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget" exact="$target" />
-			</do_if>
-			<do_else>
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$moduleTarget" exact="null" />
-			</do_else>
-
 			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount gt 0">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount" exact="0" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$withdrawCount: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$withdrawCount" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			</do_if>
-
 			<do_if value="@$target.defensible">
 				<set_value name="$defensibleTarget" exact="$target.defensible" />
 			</do_if>
@@ -103,13 +98,7 @@
 			</do_if>
 
 			<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$time_lastStepForward" exact="player.age" />
-			<do_if value="not @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward">
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" exact="1" />
-			</do_if>
-			<do_else>
-				<set_value operation="add" name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" exact="1" />
-			</do_else>
-
+			<set_value operation="add" name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" exact="1" />
 			<set_value name="$moveTo_space" exact="this.sector" />
 			<create_position name="$posShip" space="$moveTo_space" object="this.assignedcontrolled" />
 			<create_position name="$posTarget" space="$moveTo_space" object="$target" />
@@ -118,17 +107,9 @@
 			</create_orientation>
 			<set_value name="$yaw_deg" exact="$rotFromTarget.yaw * 180 / pi" />
 			<set_value name="$pitch_deg" exact="$rotFromTarget.pitch * 180 / pi" />
-			<!-- <include_interrupt_actions ref="kAAIT_SetMoveToEngageYawFromTarget" />
-			<set_value name="$yaw_deg" exact="$kAAIT_result_moveToEngageYaw" />
-			<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward % 2 == 0" comment="alternate to keep the ship at a pretty much the same pitch">
-				<set_value name="$pitch_deg" exact="7.5" />
-			</do_if>
-			<do_else>
-				<set_value name="$pitch_deg" exact="-7.5" />
-			</do_else> -->
 			<set_value name="$distToTarget" exact="this.assignedcontrolled.bboxdistanceto.{$target}" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $isFaceTargetOnly: ' + $isFaceTargetOnly" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<do_if value="$isFaceTargetOnly">
+			<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isFaceTargetOnly: ' + $kAAITParam_isFaceTargetOnly" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<do_if value="$kAAITParam_isFaceTargetOnly">
 				<set_value name="$moveTo_pos" exact="$posShip" />
 			</do_if>
 			<do_else>
