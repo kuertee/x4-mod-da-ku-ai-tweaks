@@ -138,6 +138,7 @@
 -->
 	<add pos="before" sel="//location[@condition=&quot;$primarytarget.canbeattacked&quot;][@object=&quot;$primarytarget&quot;][@additionalobjects=&quot;$secondarytargets&quot;]">
 		<location object="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target" condition="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target? and global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target.defensible == $primarytarget" />
+		<location condition="$target?" object="$target" />
 	</add>
 <!-- replace. purpose: do not cancel attack due to kAAIT_MoveEngagePosition order.
 	<check_all>
@@ -253,7 +254,12 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<include_interrupt_actions ref="kAAIT_InitAttackScript" />
-			<set_value name="$kAAIT_test_target_isAvoid" exact="null" comment="defaults to find big enemies nearby" />
+			<do_if value="not @this.assignedcontrolled.iscapitalship">
+				<set_value name="$kAAIT_test_target_isAvoid" exact="$target" />
+			</do_if>
+			<do_else>
+				<set_value name="$kAAIT_test_target_isAvoid" exact="null" comment="defaults to find big enemies nearby" />
+			</do_else>
 			<include_interrupt_actions ref="kAAIT_GetAvoidOrNot" />
 			<do_if value="@$kAAIT_result_avoidEnemy.isoperational or @$kAAIT_result_withdrawFromEnemy.isoperational">
 				<do_if value="@$kAAIT_result_avoidEnemy.isoperational and @$kAAITParam_isAvoidHighRisk">
