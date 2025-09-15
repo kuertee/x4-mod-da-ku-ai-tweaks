@@ -17,6 +17,22 @@
 		<location object="$target" condition="$target" />
 	</order>
 	<interrupts>
+		<library>
+			<actions name="kAAIT_GetStepForwardPos">
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="[$distToTarget, $distToTargetAfterStepForward].min" />
+				<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom lt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min">
+					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min" />
+					<set_value operation="subtract" name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" exact="1" />
+				</do_if>
+				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetStepForwardPos $attackData.$distance_attackFrom: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<set_value name="$pitch" exact="$pitch_deg * pi / 180" />
+				<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
+				<create_position name="$moveTo_pos"
+					x="$posTarget.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($yaw) * cos ($pitch)"
+					y="$posTarget.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($pitch)"
+					z="$posTarget.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * cos ($yaw) * cos ($pitch)" />
+			</actions>
+		</library>
 		<handler ref="DisengageHandler"/>
 		<handler ref="kAAIT_Handler_NewBigTarget" />
 		<handler comment="target destroyed">
@@ -69,7 +85,8 @@
 	<attention min="unknown">
 		<actions>
 			<label name="start"/>
-			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<set_value name="$distToTargetAfterStepForward" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max - global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_stepForward_mult" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start $distToTargetAfterStepForward %s'.[$distToTargetAfterStepForward]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<do_if value="not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
 				<include_interrupt_actions ref="kAAIT_Init" />
 			</do_if>
@@ -113,19 +130,22 @@
 				<set_value name="$moveTo_pos" exact="$posShip" />
 			</do_if>
 			<do_else>
-				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="[$distToTarget, global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max - global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward * global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$skill_distance_stepForward_mult].min" />
-				<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom lt global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min">
-					<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min" />
-					<set_value operation="subtract" name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" exact="1" />
+				<include_interrupt_actions ref="kAAIT_GetStepForwardPos" />
+				<set_value name="$distToDest" exact="this.assignedcontrolled.distanceto.[$moveTo_space, $moveTo_pos]" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $distToDest %s $distToDest %s'.[$distToDest, $distToTarget]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<do_if value="$distToTarget gt $distToTargetAfterStepForward">
+					<set_value name="$distAtDest" exact="this.assignedcontrolled.size * 2" />
+					<set_value name="$count" exact="1" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' $count %s $distToDest %s $distAtDest %s'.[$count, $distToDest, $distAtDest]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<do_while value="$distToDest le $distAtDest and $count lt 10">
+						<set_value name="$count" operation="add" exact="1" />
+						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$count_stepForward" operation="add" exact="1" />
+						<include_interrupt_actions ref="kAAIT_GetStepForwardPos" />
+						<set_value name="$distToDest" exact="this.assignedcontrolled.distanceto.[$moveTo_space, $moveTo_pos]" />
+						<set_value name="$distAtDest" exact="this.assignedcontrolled.size * 2" />
+						<debug_text text="@this.assignedcontrolled.idcode + ' $count %s $distToDest %s $distAtDest %s'.[$count, $distToDest, $distAtDest]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					</do_while>
 				</do_if>
-				<debug_text text="@this.assignedcontrolled.idcode + ' $attackData.$distance_attackFrom: ' + @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-				<set_value name="$pitch" exact="$pitch_deg * pi / 180" />
-				<set_value name="$yaw" exact="$yaw_deg * pi / 180" />
-				<create_position name="$moveTo_pos"
-					x="$posTarget.x + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($yaw) * cos ($pitch)"
-					y="$posTarget.y + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * sin ($pitch)"
-					z="$posTarget.z + global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$distance_attackFrom * cos ($yaw) * cos ($pitch)"
-				/>
 			</do_else>
 			<create_orientation name="$moveTo_rot" orientation="look_at" refposition="$posTarget">
 				<position value="$moveTo_pos" />
