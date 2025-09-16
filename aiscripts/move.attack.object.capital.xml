@@ -49,15 +49,17 @@
 	<attention min="unknown">
 -->
 	<add pos="prepend" sel="//attention[@min=&quot;unknown&quot;]/actions">
-		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk: ' + @$kAAITParam_isAvoidHighRisk" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isStepForwardWithdraw: ' + @$kAAITParam_isStepForwardWithdraw" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAITParam_isAvoidHighRisk %s $kAAITParam_isStepForwardWithdraw %s'.[@$kAAITParam_isAvoidHighRisk, @$kAAITParam_isStepForwardWithdraw]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' $target %s %s %s'.[$target, $target.knownname, @$target.idcode]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 		<label name="kAAIT_label_start" />
 		<set_value name="$kAAIT_isScriptHasAvoidLabel" exact="true" />
 		<set_value name="$kAAIT_isScriptHasWithdrawLabel" exact="true" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<set_value name="$kAAIT_isKudaAttack" exact="$target.isrealclass.station or ($target.defensible and $target.defensible.isrealclass.station)" />
-			<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
-			<include_interrupt_actions ref="kAAIT_SetMoveToEngageYawFromTarget" />
+			<do_if value="@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack">
+				<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
+				<include_interrupt_actions ref="kAAIT_SetMoveToEngageYawFromTarget" />
+			</do_if>
 		</do_if>
 	</add>
 <!--
@@ -77,7 +79,7 @@
 -->
 	<!-- <replace sel="//set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]/following-sibling::do_if[@value=&quot;this.assignedcontrolled.type == shiptype.carrier&quot;]/do_for_each[@name=&quot;$locsub&quot;][@in=&quot;this.assignedcontrolled.subordinates&quot;]"> -->
 	<add pos="after" sel="//set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]/following-sibling::do_if[@value=&quot;this.assignedcontrolled.type == shiptype.carrier&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+		<do_if value="@$kAAITParam_isStepForwardWithdraw">
 			<do_if value="not $iscarrier_orig?">
 				<set_value name="$iscarrier_orig" exact="$iscarrier" />
 			</do_if>
@@ -89,13 +91,13 @@
 					</do_if>
 				</do_for_each>
 			</do_if>
-			<set_value name="$kAAIT_isCarrierAndAttacksLikeDestroyers" exact="
+			<set_value name="@$kAAIT_isCarrierAndAttacksLikeDestroyers" exact="
 				$iscarrier and
 				(
 					(this.isplayerowned and (not @global.$kAAIT_Data.$isCarriersAttackLikeDestroyers)) or
 					((not this.isplayerowned) and (not @global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions))
 				)" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $iscarrier_orig %s $iscarrier (overridden by kuda) %s $kAAIT_isCarrierAndAttacksLikeDestroyers %s'.[$iscarrier_orig, $iscarrier, $kAAIT_isCarrierAndAttacksLikeDestroyers]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $iscarrier_orig %s $iscarrier (overridden by kuda) %s @$kAAIT_isCarrierAndAttacksLikeDestroyers %s'.[$iscarrier_orig, $iscarrier, @$kAAIT_isCarrierAndAttacksLikeDestroyers]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 		</do_if>
 	</add>
 <!--
@@ -114,7 +116,7 @@
 	<!-- <remove sel="//do_if[@value=&quot;$iscarrier&quot;]/set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]/following-sibling::do_for_each[@name=&quot;$locsub&quot;][@in=&quot;this.assignedcontrolled.subordinates&quot;]" /> -->
 	<!-- <replace sel="//do_if[@value=&quot;$iscarrier&quot;]/set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]"> -->
 	<add pos="after" sel="//do_if[@value=&quot;$iscarrier&quot;]/set_value[@name=&quot;$iscarrier&quot;][@exact=&quot;false&quot;]">
-		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+		<do_if value="@$kAAITParam_isStepForwardWithdraw">
 			<do_if value="not $iscarrier_orig?">
 				<set_value name="$iscarrier_orig" exact="$iscarrier" />
 			</do_if>
@@ -127,13 +129,13 @@
 					</do_if>
 				</do_for_each>
 			</do_if>
-			<set_value name="$kAAIT_isCarrierAndAttacksLikeDestroyers" exact="
+			<set_value name="@$kAAIT_isCarrierAndAttacksLikeDestroyers" exact="
 				$iscarrier and
 				(
 					(this.isplayerowned and (not @global.$kAAIT_Data.$isCarriersAttackLikeDestroyers)) or
 					((not this.isplayerowned) and (not @global.$kAAIT_Data.$isCarriersAttackLikeDestroyers_allFactions))
 				)" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $iscarrier_orig %s $iscarrier (overridden by kuda) %s $kAAIT_isCarrierAndAttacksLikeDestroyers %s'.[$iscarrier_orig, $iscarrier, $kAAIT_isCarrierAndAttacksLikeDestroyers]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $iscarrier_orig %s $iscarrier (overridden by kuda) %s @$kAAIT_isCarrierAndAttacksLikeDestroyers %s'.[$iscarrier_orig, $iscarrier, @$kAAIT_isCarrierAndAttacksLikeDestroyers]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 		</do_if>
 	</add>
 <!-- add before. purpose: custom behaviours.
@@ -193,7 +195,7 @@
 		<do_if value="@$kAAITParam_isAvoidHighRisk">
 			<set_value name="$kAAIT_test_target_isAvoid" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$defensibleTarget" />
 			<include_interrupt_actions ref="kAAIT_GetAvoidOrNot" />
-			<do_if value="@$kAAIT_result_avoidEnemy.isoperational and @$kAAITParam_isAvoidHighRisk">
+			<do_if value="@$kAAIT_result_avoidEnemy.isoperational">
 				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$target_avoid" exact="$kAAIT_result_avoidEnemy" />
 				<resume label="kAAIT_label_avoid" />
 			</do_if>
@@ -202,14 +204,14 @@
 				<resume label="kAAIT_label_withdraw" />
 			</do_elseif>
 		</do_if>
-		<do_if value="@$kAAITParam_isStepForwardWithdraw and ((not $iscarrier) or $kAAIT_isCarrierAndAttacksLikeDestroyers)">
+		<do_if value="@$kAAITParam_isStepForwardWithdraw and ((not $iscarrier) or @$kAAIT_isCarrierAndAttacksLikeDestroyers)">
 			<do_if value="$kAAIT_isKudaAttack">
 				<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
 					<resume label="kAAIT_label_move_to_engage_position" />
 				</do_if>
-				<do_elseif value="not $kAAIT_isCarrierAndAttacksLikeDestroyers">
+				<do_elseif value="not @$kAAIT_isCarrierAndAttacksLikeDestroyers">
 					<set_value name="$kAAIT_test_target_stepForward" exact="$target" />
 					<include_interrupt_actions ref="kAAIT_GetIsStepForward" />
 					<do_if value="$kAAIT_result_isStepForward">
@@ -262,7 +264,7 @@
 -->
 	<add pos="before" sel="//do_if[@value=&quot;$frontweapon?&quot;]//set_value[@name=&quot;$movethreshold_min&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="$iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)">
+			<do_if value="$iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)">
 				<!--
 				=========================================
 				prevent carriers from getting into danger
@@ -271,7 +273,7 @@
 				<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
 				<set_value name="$aimdist" exact="$kAAIT_result_engagePosDist" />
 			</do_if>
-			<do_elseif value="$kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw">
+			<do_elseif value="@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack">
 				<do_if value="not @$kAAIT_result_engagePosDist">
 					<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
 					<include_interrupt_actions ref="KAAIT_GetEngagePosDistance" />
@@ -297,7 +299,7 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' set_object_name kAAIT'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_nameTags else 0)" />
 				<set_object_name object="this.assignedcontrolled" name="$kAAIT_original_name + ' - kAAIT attack'" />
 			</do_if>
-			<do_if value="$iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)">
+			<do_if value="$iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)">
 				<!--
 				=========================================
 				prevent carriers from getting into danger
@@ -307,7 +309,7 @@
 				<set_value name="$movethreshold_min" exact="$kAAIT_result_engagePosDist - 2.5km"/>
 				<set_value name="$movethreshold_max" exact="$kAAIT_result_engagePosDist + 2.5km"/>
 			</do_if>
-			<do_elseif value="$kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw">
+			<do_elseif value="@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack">
 				<set_value name="$movethreshold_min" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_min"/>
 				<set_value name="$movethreshold_max" exact="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$combatRange_max"/>
 			</do_elseif>
@@ -332,14 +334,14 @@
 	</add>
 	<add sel="//do_if[@value=&quot;$frontweapon?&quot;]//do_if[@value=&quot;not @$firing and ($distance gt $movethreshold_max or (not $pursuit? and not $issmall and $distance lt $movethreshold_min))&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="$iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)">
+			<do_if value="$iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)">
 				<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
 					<resume label="kAAIT_label_move_to_engage_position" />
 				</do_if>
 			</do_if>
-			<do_elseif value="$kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw">
+			<do_elseif value="@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack">
 				<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
@@ -362,15 +364,15 @@
 	</add>
 	<add sel="//do_if[@value=&quot;$frontweapon?&quot;]//do_elseif[@value=&quot;@$firing or ($distance le $movethreshold_max and ($pursuit? or $issmall or $distance ge $movethreshold_min))&quot;]">
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="$iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)">
+			<do_if value="$iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)">
 				<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
 					<resume label="kAAIT_label_move_to_engage_position" />
 				</do_if>
 			</do_if>
-			<do_elseif value="$kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw">
-				<debug_text text="@this.assignedcontrolled.idcode + ' $holdposition %s $kAAIT_isCarrierAndAttacksLikeDestroyers %s'.[@$holdposition, @$kAAIT_isCarrierAndAttacksLikeDestroyers]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			<do_elseif value="@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack">
+				<debug_text text="@this.assignedcontrolled.idcode + ' $holdposition %s @$kAAIT_isCarrierAndAttacksLikeDestroyers %s'.[@$holdposition, @$kAAIT_isCarrierAndAttacksLikeDestroyers]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<do_if value="not @$holdposition" comment="$holdposition is set when there is $los">
 					<do_if value="not global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS?">
 						<create_group groupname="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$targetsWithDifficultLOS" />
@@ -396,7 +398,7 @@
 				<do_if value="$kAAIT_result_isMovetoEngage">
 					<resume label="kAAIT_label_move_to_engage_position" />
 				</do_if>
-				<do_elseif value="(not $iscarrier) or $kAAIT_isCarrierAndAttacksLikeDestroyers">
+				<do_elseif value="(not $iscarrier) or @$kAAIT_isCarrierAndAttacksLikeDestroyers">
 					<set_value name="$kAAIT_test_target_stepForward" exact="$target" />
 					<include_interrupt_actions ref="kAAIT_GetIsStepForward" />
 					<do_if value="$kAAIT_result_isStepForward">
@@ -414,7 +416,7 @@
 	<add pos="before" sel="//do_if[@value=&quot;$frontweapon?&quot;]/do_if[@value=&quot;$pursuit? or $issmall or $distance ge $movethreshold_min&quot;]/move_to[@destination=&quot;this.zone&quot;][@object=&quot;this.assignedcontrolled&quot;][@forcerotation=&quot;true&quot;][@forceposition=&quot;false&quot;]">
 		<set_value name="$kAAIT_vanillaAttackMoveChance" exact="100" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="($iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)) or ($kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw)">
+			<do_if value="($iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)) or (@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack)">
 				<set_value name="$kAAIT_vanillaAttackMoveChance" exact="0" />
 			</do_if>
 		</do_if>
@@ -433,10 +435,8 @@
 -->
 	<add pos="before" sel="//do_if[@value=&quot;$frontweapon?&quot;]//do_for_each[@name=&quot;$locmodule&quot;][@in=&quot;$locmodules&quot;][@counter=&quot;$i&quot;]">
 		<set_value name="$kAAIT_changeTargetChance" exact="100" />
-		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="$target.isoperational and @$kAAITParam_isStepForwardWithdraw">
-				<set_value name="$kAAIT_changeTargetChance" exact="0" />
-			</do_if>
+		<do_if value="@$kAAITParam_isStepForwardWithdraw and $target.isoperational">
+			<set_value name="$kAAIT_changeTargetChance" exact="0" />
 		</do_if>
 		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_changeTargetChance: ' + $kAAIT_changeTargetChance" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 	</add>
@@ -449,14 +449,14 @@
 		<debug_text text="@this.assignedcontrolled.idcode + ' WAIT COMPLETE'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="@this.assignedcontrolled.idcode + ' $locfired: ' + @$locfired" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-			<do_if value="$iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)">
+			<do_if value="$iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)">
 				<set_value name="$kAAIT_test_moveToEngageTarget" exact="$target" />
 				<include_interrupt_actions ref="kAAIT_GetIsMoveToEngage" />
 				<do_if value="$kAAIT_result_isMovetoEngage">
 					<resume label="kAAIT_label_move_to_engage_position" />
 				</do_if>
 			</do_if>
-			<do_elseif value="$kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw">
+			<do_elseif value="@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack">
 				<do_if value="not @$locfired">
 					<set_value name="$kAAIT_test_target_stepForward" exact="$target" />
 					<include_interrupt_actions ref="kAAIT_GetIsStepForward" />
@@ -475,7 +475,7 @@
 					<do_if value="$kAAIT_result_isMovetoEngage">
 						<resume label="kAAIT_label_move_to_engage_position" />
 					</do_if>
-					<do_elseif value="(not $kAAIT_isCarrierAndAttacksLikeDestroyers) and @$kAAITParam_isStepForwardWithdraw">
+					<do_elseif value="(not @$kAAIT_isCarrierAndAttacksLikeDestroyers) and @$kAAITParam_isStepForwardWithdraw">
 						<set_value name="$kAAIT_test_target_stepForward" exact="$target" />
 						<include_interrupt_actions ref="kAAIT_GetIsStepForward" />
 						<do_if value="$kAAIT_result_isStepForward">
@@ -493,10 +493,8 @@
 -->
 	<add pos="before" sel="//do_else/move_to[@destination=&quot;this.zone&quot;][@abortpath=&quot;true&quot;][@object=&quot;this.ship&quot;][@forcerotation=&quot;true&quot;][@forceposition=&quot;false&quot;]">
 		<set_value name="$kAAIT_vanillaAttackMoveChance" exact="100" />
-		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
-			<do_if value="($iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)) or ($kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw)">
-				<set_value name="$kAAIT_vanillaAttackMoveChance" exact="0" />
-			</do_if>
+		<do_if value="($iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)) or (@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack)">
+			<set_value name="$kAAIT_vanillaAttackMoveChance" exact="0" />
 		</do_if>
 		<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_vanillaAttackMoveChance: ' + $kAAIT_vanillaAttackMoveChance" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 	</add>
@@ -534,7 +532,7 @@
 		<set_value name="$kAAIT_vanillaAttackMoveChance" exact="100" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
-			<do_if value="($iscarrier and (not $kAAIT_isCarrierAndAttacksLikeDestroyers)) or ($kAAIT_isKudaAttack and @$kAAITParam_isStepForwardWithdraw)">
+			<do_if value="($iscarrier and (not @$kAAIT_isCarrierAndAttacksLikeDestroyers)) or (@$kAAITParam_isStepForwardWithdraw and $kAAIT_isKudaAttack)">
 				<!-- there's more than one big enemy nearby, do not do any vanilla moves -->
 				<set_value name="$kAAIT_vanillaAttackMoveChance" exact="0" />
 			</do_if>
