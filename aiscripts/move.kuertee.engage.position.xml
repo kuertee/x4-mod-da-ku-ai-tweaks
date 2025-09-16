@@ -56,7 +56,7 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $yawToMoveToPos (for debugging): ' + $yawToMoveToPos" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 
 				<create_position name="$kAAIT_test_position_getIsNearBigEnemy" space="this.assignedcontrolled" object="this.sector" value="$kAAIT_result_moveToEngagePosition" />
-				<set_value name="$kAAIT_ignore_objects_getIsNearBigEnemies" exact="[$target, @$target.defensible]" />
+				<set_value name="$kAAIT_ignore_objects_getIsNearBigEnemies" exact="[$target, @$defensibleTarget]" />
 				<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
 				<set_value name="$isMoveToEngagePosDangerous" exact="@$kAAIT_result_isShipNearBigEnemy and @$kAAIT_result_bigEnemy.isclass.station and @$kAAIT_result_distanceToBigEnemy le this.assignedcontrolled.maxradarrange * 0.5" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' GetMoveToEngagePosition $isMoveToEngagePosDangerous (near other big enemy): ' + $isMoveToEngagePosDangerous" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
@@ -219,7 +219,7 @@
 
 			<!-- start: see if there's a big enemy in the way first -->
 			<include_interrupt_actions ref="kAAIT_SaveBigEnemiesToData" />
-			<set_value name="$kAAIT_ignore_objects_getIsNearBigEnemies" exact="[$target, @$target.defensible]" />
+			<set_value name="$kAAIT_ignore_objects_getIsNearBigEnemies" exact="[$target, $defensibleTarget]" />
 			<include_interrupt_actions ref="kAAIT_GetIsNearBigEnemies" />
 			<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetAvoidOrNot $kAAIT_result_bigEnemy: ' + @$kAAIT_result_bigEnemy.knownname + ' ' + @$kAAIT_result_bigEnemy.idcode" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<do_if value="@$kAAIT_result_bigEnemy.isoperational">
@@ -326,6 +326,14 @@
 							<check_value value="@event.param.iscapitalship" />
 						</check_any>
 						<check_value value="event.param.hasrelation.enemy.{this.assignedcontrolled}" />
+						<check_any>
+							<check_value value="$isFinalMove" />
+							<check_value value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$count_moveToEngage == 1" />
+							<check_all>
+								<check_value value="event.param != $target" />
+								<check_value value="event.param != $defensibleTarget" />
+							</check_all>
+						</check_any>
 						<debug_text text="@this.assignedcontrolled.idcode + ' event.name: ' + event.name + ' event.param: ' + event.param + ' ' + event.param.knownname" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 						<check_value value="not $enemiesWithdrawnFrom.indexof.{event.param}" />
 						<check_value value="not $enemiesWithdrawnFrom.indexof.{event.param.defensible}" />
