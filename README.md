@@ -9,14 +9,30 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-8.0.0.7.1, 31 Aug 2025:
+8.0.0.10, 19 Sep 2025:
+- Tweak: Move to engage (MTE) and Step forward (SF) behaviours are now only performed when they need to: at the start of a station attack run and when the ships are either not firing at their target (i.e. out of range) or the ships' module targets are difficult to hit (i.e. no line-of-sight). In previous versions, ships performed MTEs at every new module target and SFs every minute even if they already have solution to their module targets.
+- Tweak: Optimised some function calls by saving their data and then using them instead of getting the game to recalculate them: destination query, MTE attack vector query, is target overwhelmed query.
+- Bug-fix: Carriers attack like destroyers setting was getting ignored again.
+- Bug-fix: Disabled Step forward setting was getting ignored unless the Avoid setting was also disabled.
+- Bug-fix: Ships' module targets were still getting changed by the base-game AI even if their previous targets were still operational. Targets getting changed is appropriate for base-game AI attacks, but not for Kuda AI attacks.
+
+8.0.0.9, 14 Sep 2025:
+- Bug-fix: Move To Engage behaviour was preventing capital ships from attacking.
+- Bug-fix: Strike crafts weren't encircling their station targets during their Avoid behaviour.
+- New feature: Ships will move above or below other high-risk enemies that the Avoid behaviour may put them near - similar to the Move To Engage behaviour. Previously, ships will rely on their detection of those other high-risk enemies and perform a new Avoid behaviour while staying at their vertical level. In this version, ships will detect in advance if the Avoid behaviour will put them near other high-risk enemies and move above or below them instead.
+
+8.0.0.8, 11 Sep 2025:
+- Tweak: Coordinated attacks compatibility with 7.6 and 8.0 base AI script.
+- Bug-fix: Carriers were using Step Forward behaviour even when the mod's Carriers Attack Like Destroyers setting was disabled.
+- Bug-fix: Many tweaks and fixes to Move To Engage behaviour from 7.6.
+- Change log from the beta version:
+- Bug-fix: Capital ships was sometimes getting stuck at their engage position against station modules that are set at the station's 0,0,0. Bug introduced at changes for 8.x beta compatibility.
 - Bug-fix: Incorrect calculation of the distance for Move To Engage Position that made the capital ship continually use the behaviour preventing the actual attack behaviour to start.
 - Bug-fix: Ships weren't withdrawing from other ships when their shields are low.
-
-8.0.0.7, 28 Aug 2025:
-- Tweak: 8.0 RC 1 compatibility tweaks.
 - Bug-fix: The avoid behaviour was ignoring its avoid target on the ship's way to its destination.
 - Bug-fix: The avoid behaviour would continually fly the ship above or below their avoid target, causing the ship to forever avoid continuously up or down.
+- Bug-fix: Carriers were ignoring the "Carriers attack like destroyers" settings. Bug was introduced back in March. I didn't notice because I hardly send my carrier to attack, manually sending its subordinates instead. Sorryyyy to those affected.
+- Bug-fix: Order icons in the map menu for the custom behaviours weren't showing.
 
 Attack AI Tweaks:
 =================
@@ -186,6 +202,18 @@ Russian localisation by leonkillerua.
 
 History
 =======
+8.0.0.7.2, 2 Sep 2025:
+- Bug-fix: Capital ships was sometimes getting stuck at their engage position against station modules that are set at the station's 0,0,0. Bug introduced at changes for 8.x beta compatibility.
+
+8.0.0.7.1, 31 Aug 2025:
+- Bug-fix: Incorrect calculation of the distance for Move To Engage Position that made the capital ship continually use the behaviour preventing the actual attack behaviour to start.
+- Bug-fix: Ships weren't withdrawing from other ships when their shields are low.
+
+8.0.0.7, 28 Aug 2025:
+- Tweak: 8.0 RC 1 compatibility tweaks.
+- Bug-fix: The avoid behaviour was ignoring its avoid target on the ship's way to its destination.
+- Bug-fix: The avoid behaviour would continually fly the ship above or below their avoid target, causing the ship to forever avoid continuously up or down.
+
 8.0.0.6.1, 22 Aug 2025:
 - Bug-fix: Carriers were ignoring the "Carriers attack like destroyers" settings. Bug was introduced back in March. I didn't notice because I hardly send my carrier to attack, manually sending its subordinates instead. Sorryyyy to those affected.
 - Bug-fix: Order icons in the map menu for the custom behaviours weren't showing.
