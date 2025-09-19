@@ -102,11 +102,25 @@
 			</actions>
 
 			<actions name="kAAIT_InitMoveToEngageData">
-				<do_if value="not global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget?">
-					<do_if value="not global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData?">
-						<set_value name="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData" exact="table[]" />
+				<do_if value="not global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget?">
+					<do_if value="this.assignedcontrolled.toplevelcommander == player.occupiedship">
+						<set_value name="$kAAIT_topLevelCommander" exact="this.assignedcontrolled" />
 					</do_if>
-					<set_value name="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget" exact="table[]" />
+					<do_elseif value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.toplevelcommander.idcode}.$attackData?">
+						<set_value name="$kAAIT_topLevelCommander" exact="this.assignedcontrolled.toplevelcommander" />
+					</do_elseif>
+					<do_else>
+						<set_value name="$kAAIT_topLevelCommander" exact="this.assignedcontrolled" />
+					</do_else>
+					<do_if value="not global.$kAAITByShipId.{'$' + $kAAIT_topLevelCommander.idcode}.$attackData.$moveToEngageDataByTarget?">
+						<do_if value="not global.$kAAITByShipId.{'$' + $kAAIT_topLevelCommander.idcode}.$attackData?">
+							<set_value name="global.$kAAITByShipId.{'$' + $kAAIT_topLevelCommander.idcode}.$attackData" exact="table[]" />
+						</do_if>
+						<set_value name="global.$kAAITByShipId.{'$' + $kAAIT_topLevelCommander.idcode}.$attackData.$moveToEngageDataByTarget" exact="table[]" />
+					</do_if>
+					<do_if value="this.assignedcontrolled != $kAAIT_topLevelCommander">
+						<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget" exact="global.$kAAITByShipId.{'$' + $kAAIT_topLevelCommander.idcode}.$attackData.$moveToEngageDataByTarget" />
+					</do_if>
 				</do_if>
 			</actions>
 
@@ -243,7 +257,9 @@
 						<set_value name="$kAAIT_version" exact="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$version" />
 						<debug_text text="@this.assignedcontrolled.idcode + ' (' + this.owner + ') $kAAIT_version %s global.$kAAIT.version %s'.[$kAAIT_version, @global.$kAAIT.version]" />
 						<do_if value="global.$kAAIT.version? and global.$kAAIT.version != $kAAIT_version">
-							<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData" />
+							<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData?">
+								<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData" />
+							</do_if>
 							<create_order name="$kAAIT_waitOrderToForceRestartAtUpdate" id="'Wait'" object="this.assignedcontrolled" immediate="true">
 								<param name="timeout" value="1s"/>
 								<param name="debugchance" value="100"/>
@@ -2406,8 +2422,8 @@
 						<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_SetMoveToEngageYawFromTarget $kAAIT_rotDefensibleTargetToShip.yaw (station damaged, just use current vector) %s'.[$kAAIT_rotDefensibleTargetToShip.yaw * 180 / pi]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					</do_if>
 					<do_else>
-						<do_if value="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$yaw?">
-							<set_value name="$kAAIT_angle_to_0" exact="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$yaw" />
+						<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$yaw?">
+							<set_value name="$kAAIT_angle_to_0" exact="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$yaw" />
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_SetMoveToEngageYawFromTarget $kAAIT_angle_to_0 (from saved) %s'.[$kAAIT_angle_to_0]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 						</do_if>
 						<do_else>
@@ -2451,10 +2467,10 @@
 							<set_value name="$kAAIT_angle_to_0" exact="$kAAIT_rotDefensibleTargetToTarget.yaw * 180 / pi + $kAAIT_yawAdj" />
 							<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_SetMoveToEngageYawFromTarget $kAAIT_angle_to_0 (new) %s'.[$kAAIT_angle_to_0]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 							<include_interrupt_actions ref="kAAIT_InitMoveToEngageData" />
-							<do_if value="not global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}?">
-								<set_value name="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}" exact="table[]" />
+							<do_if value="not global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}?">
+								<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}" exact="table[]" />
 							</do_if>
-							<set_value name="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$yaw" exact="$kAAIT_angle_to_0" />
+							<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$yaw" exact="$kAAIT_angle_to_0" />
 							<!-- end: adj attack vector based on distance of module target to 0,0,0 -->
 						</do_else>
 						<!--
@@ -2604,8 +2620,8 @@
 			</actions>
 
 			<actions name="KAAIT_GetEngagePosDistance" comment="engage pos = half target size + max combat range * (skill + withdraw count). used in move.attack.object.capital">
-				<do_if value="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$distance?">
-					<set_value name="$kAAIT_result_engagePosDist" exact="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$distance" />
+				<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$distance?">
+					<set_value name="$kAAIT_result_engagePosDist" exact="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$distance" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $kAAIT_result_engagePosDist (from saved) %s'.[$kAAIT_result_engagePosDist]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				</do_if>
 				<do_else>
@@ -2668,10 +2684,10 @@
 							otherwise the ship may not be facing the target after MTE until the first SF - which is a minute after MTE." />
 					</do_else>
 					<include_interrupt_actions ref="kAAIT_InitMoveToEngageData" />
-					<do_if value="not global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}?">
-						<set_value name="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}" exact="table[]" />
+					<do_if value="not global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}?">
+						<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}" exact="table[]" />
 					</do_if>
-					<set_value name="global.$kAAITByShipId.{'$' + (if this.assignedcontrolled.toplevelcommander != player.occupiedship then this.assignedcontrolled.toplevelcommander.idcode else this.assignedcontrolled.idcode)}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$distance" exact="$kAAIT_result_engagePosDist" />
+					<set_value name="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$attackData.$moveToEngageDataByTarget.{$kAAIT_test_moveToEngageTarget}.$distance" exact="$kAAIT_result_engagePosDist" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' KAAIT_GetEngagePosDistance $kAAIT_result_engagePosDist (new) %s'.[$kAAIT_result_engagePosDist]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				</do_else>
 			</actions>
