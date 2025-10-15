@@ -820,22 +820,29 @@
 						</do_elseif>
 					</do_if>
 					<do_elseif value="event.name == 'event_object_signalled' and event.param == 'kAAIT_new_big_target' and event.param2.$from != this.assignedcontrolled">
-						<set_value name="$kAAIT_target_attack" exact="$kAAIT_attacker" />
-						<set_value name="$kAAIT_is_attack_order_tactical" exact="
+						<do_if value="
+							[assignment.attack, assignment.bombardment].indexof.{this.assignedcontrolled.assignment} or
 							(
-								event.name == 'event_player_alert' or
+								this.assignedcontrolled.assignment == assignment.defence and
+								event.param2.$from == this.assignedcontrolled.commander
+							)">
+							<set_value name="$kAAIT_target_attack" exact="$kAAIT_attacker" />
+							<set_value name="$kAAIT_is_attack_order_tactical" exact="
 								(
-									event.name == 'event_object_signalled' and
+									event.name == 'event_player_alert' or
 									(
-										event.param == 'kAAIT_player_alert' or
-										event.param == 'kncpr_enemy_report'
+										event.name == 'event_object_signalled' and
+										(
+											event.param == 'kAAIT_player_alert' or
+											event.param == 'kncpr_enemy_report'
+										)
 									)
-								)
-							) and
-							@$kAAIT_target_attack.iscapitalship and
-							this.assignedcontrolled.bboxdistanceto.{$kAAIT_target_attack} gt this.assignedcontrolled.maxradarrange * 0.5
-						" />
-						<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+								) and
+								@$kAAIT_target_attack.iscapitalship and
+								this.assignedcontrolled.bboxdistanceto.{$kAAIT_target_attack} gt this.assignedcontrolled.maxradarrange * 0.5
+							" />
+							<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+						</do_if>
 					</do_elseif>
 				</actions>
 			</handler>
@@ -902,9 +909,23 @@
 				</do_if>
 				<set_value name="$kAAIT_result_orderProfileId" exact="$kAAIT_getOrderOf.idcode + $kAAIT_getOrderOf.defaultorder" />
 				<set_value name="$kAAIT_result_attackTarget" exact="null" />
-				<do_for_each name="$kAAIT_order" in="$kAAIT_getOrderOf.orders" counter="$i">
+				<do_for_each counter="$kIdx" name="$kAAIT_order" in="$kAAIT_getOrderOf.orders">
 					<do_if value="not @$kAAIT_order.$kAAITParam_iskAAITOrder">
 						<set_value name="$kAAIT_result_orderProfileId" exact="$kAAIT_result_orderProfileId + $kAAIT_order" />
+						<do_if value="$kAAIT_order.$primarytarget?">
+							<set_value name="$kAAIT_result_orderProfileId" exact="$kAAIT_result_orderProfileId + $kAAIT_order.$primarytarget" />
+						</do_if>
+						<do_elseif value="$kAAIT_order.$target?">
+							<set_value name="$kAAIT_result_orderProfileId" exact="$kAAIT_result_orderProfileId + $kAAIT_order.$target" />
+						</do_elseif>
+						<do_elseif value="$kAAIT_order.$destination.{2}?">
+							<do_if value="$kIdx % 2 == 0 and $kAAIT_order.$destination.{2}.x?">
+								<set_value name="$kAAIT_result_orderProfileId" exact="$kAAIT_result_orderProfileId + $kAAIT_order.$destination.{2}.x" />
+							</do_if>
+							<do_else>
+								<set_value name="$kAAIT_result_orderProfileId" exact="$kAAIT_result_orderProfileId + $kAAIT_order.$destination.{2}.z" />
+							</do_else>
+						</do_elseif>
 					</do_if>
 					<do_if value="not $kAAIT_result_attackTarget">
 						<do_if value="$kAAIT_order.script == 'order.fight.attack.object'">
@@ -991,6 +1012,7 @@
 						<do_if value="
 							(
 								$kAAIT_result_destination and
+								$kAAIT_result_destination.exists and
 								$kAAIT_test_target_isAvoid != $kAAIT_result_destination and
 								$kAAIT_test_target_isAvoid.hascontext.{$kAAIT_result_destinationSector} and
 								$kAAIT_test_target_isAvoid.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition] lt this.assignedcontrolled.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]
@@ -1523,7 +1545,7 @@
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetDestination order: ' + @this.assignedcontrolled.order.script" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' ===== NOT KAAIT SHIP ====='" />
 				</do_if>
-				<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination?">
+				<do_if value="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination? and global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$nextPathComponent and global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$nextPathComponent.exists">
 					<set_value name="$kAAIT_result_destination_sourceId" exact="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$from" />
 					<set_value name="$kAAIT_result_destination" exact="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$nextPathComponent" />
 					<set_value name="$kAAIT_result_destinationPosition" exact="global.$kAAITByShipId.{'$' + this.assignedcontrolled.idcode}.$destination.$nextPathComponentPosition" />
@@ -1715,7 +1737,7 @@
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (final): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destinationPosition (final): ' + @$kAAIT_result_destinationPosition" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<set_value name="$kAAIT_result_isTargetInTheWay" exact="false" />
-				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and $kAAIT_result_destination and @$kAAIT_result_destinationPosition and $kAAIT_test_target_isInTheWay.hascontext.{$kAAIT_result_destinationSector}" comment="at this point this is in same sector as ship">
+				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and $kAAIT_result_destination and $kAAIT_result_destination.exists and @$kAAIT_result_destinationPosition and $kAAIT_test_target_isInTheWay.hascontext.{$kAAIT_result_destinationSector}" comment="at this point this is in same sector as ship">
 					<set_value name="$kAAIT_dist_obstacle" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isInTheWay}" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_dist_obstacle: ' + $kAAIT_dist_obstacle" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<set_value name="$kAAIT_dist_dest" exact="this.assignedcontrolled.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]" />
@@ -1786,9 +1808,11 @@
 					<do_if value="$kAAIT_result_isTakeRisk">
 						<do_if value="$kAAIT_test_attackTargetInTheWayOrNot.threatscore gt this.assignedcontrolled.threatscore * 1.5 and $kAAIT_test_attackTargetInTheWayOrNot.primarypurpose == purpose.fight">
 							<do_if value="@this.assignedcontrolled.order.$allowothertargets">
-								<set_value name="$kAAIT_target_attack" exact="$kAAIT_test_target_isTakeRisk" />
-								<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
-								<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="@$kAAIT_result_order_attackOther.exists" />
+								<do_if value="[assignment.attack, assignment.bombardment].indexof.{this.assignedcontrolled.assignment}">
+									<set_value name="$kAAIT_target_attack" exact="$kAAIT_test_target_isTakeRisk" />
+									<include_interrupt_actions ref="kAAIT_Order_AttackOther" />
+									<set_value name="$kAAIT_result_isTargetInTheWayAttacked" exact="@$kAAIT_result_order_attackOther.exists" />
+								</do_if>
 							</do_if>
 						</do_if>
 						<do_else comment="ignore ship in the way">
@@ -2702,14 +2726,20 @@
 					{quadrant.right} = -90deg,
 				]" />
 				<set_value name="$kAAIT_attackRotateYaw" exact="$kAAIT_currentAttackRotation.yaw + $kAAIT_bestAttackRotateYawsByQuadrant.{global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bestHQuadrant}" />
-				<set_value name="$kAAIT_attackRotateRollAdj" exact="0deg" />
-				<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bestHQuadrant == quadrant.left">
-					<set_value name="$kAAIT_attackRotateRoll" exact="$kAAIT_currentAttackRotation.pitch" />
+				<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bestHQuadrant == quadrant.front">
+					<set_value name="$kAAIT_attackRotatePitch" exact="$kAAIT_currentAttackRotation.pitch" />
+					<set_value name="$kAAIT_attackRotateRoll" exact="0deg" />
 				</do_if>
 				<do_else>
-					<set_value name="$kAAIT_attackRotateRoll" exact="$kAAIT_currentAttackRotation.pitch + 180deg" />
+					<set_value name="$kAAIT_attackRotatePitch" exact="0deg" />
+					<do_if value="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$bestHQuadrant == quadrant.left">
+						<set_value name="$kAAIT_attackRotateRoll" exact="$kAAIT_currentAttackRotation.pitch" />
+					</do_if>
+					<do_else>
+						<set_value name="$kAAIT_attackRotateRoll" exact="$kAAIT_currentAttackRotation.pitch + 180deg" />
+					</do_else>
 				</do_else>
-				<create_rotation name="$kAAIT_result_bestAttackRotation" yaw="$kAAIT_attackRotateYaw" pitch="0deg" roll="$kAAIT_attackRotateRoll" />
+				<create_rotation name="$kAAIT_result_bestAttackRotation" yaw="$kAAIT_attackRotateYaw" pitch="$kAAIT_attackRotatePitch" roll="$kAAIT_attackRotateRoll" />
 				<remove_value name="$kAAIT_currentAttackRotation" />
 			</actions>
 

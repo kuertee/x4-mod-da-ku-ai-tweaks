@@ -9,9 +9,9 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-8.0.1.0, 27 Sep 2025:
-- Tweak: Optimise MTE vector query.
-- Tweak: Removed obsolete DeadAir settings from the Extension Options. Previously, some were left on the list even if they had no effect to the game because the code has been made obsolete or invalid by updates.
+8.0.1.2
+- Bug-fix: At the end of Move To Engage actions, ships weren't facing their target.
+- Bug-fix: Ships were rolling while performing the Move To Engage action.
 
 Attack AI Tweaks:
 =================
@@ -181,6 +181,11 @@ Russian localisation by leonkillerua.
 
 History
 =======
+8.0.1.0, 28 Sep 2025:
+- Tweak: Optimise MTE vector query.
+- Tweak: Removed obsolete DeadAir settings from the Extension Options. Previously, some were left on the list even if they had no effect to the game because the code has been made obsolete or invalid by updates.
+- Bug-fix: The language files may have been broken for some players that don't use English texts.
+
 8.0.0.10, 19 Sep 2025:
 - Tweak: Move to engage (MTE) and Step forward (SF) behaviours are now only performed when they need to: at the start of a station attack run and when the ships are either not firing at their target (i.e. out of range) or the ships' module targets are difficult to hit (i.e. no line-of-sight). In previous versions, ships performed MTEs at every new module target and SFs every minute even if they already have solution to their module targets.
 - Tweak: Optimised some function calls by saving their data and then using them instead of getting the game to recalculate them: destination query, MTE attack vector query, is target overwhelmed query.
