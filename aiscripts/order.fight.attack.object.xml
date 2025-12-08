@@ -154,7 +154,7 @@
 -->
 	<replace sel="//check_value[@value=&quot;event.param.id != 'Attack' and event.param.id != 'Attack_Player'&quot;]">
 		<check_all>
-			<check_value value="event.param.script != 'order.fight.attack.object' and event.param.id != 'Attack_Player'" />
+			<check_value value="not ['order.fight.attack.object', 'order.fight.board'].indexof.{event.param.script} and event.param.id != 'Attack_Player'" />
 			<check_value value="not @event.param.$kAAITParam_iskAAITOrder" />
 		</check_all>
 	</replace>
@@ -170,6 +170,7 @@
 	<add pos="prepend" sel="//interrupts">
 		<handler ref="kAAIT_CheckVersion" />
 		<handler ref="kAAIT_Handler_OrderNewSubordinateToAttack" />
+		<handler ref="kAAIT_Handler_Boarding_AttackOnlyWhenValid" />
 	</add>
 <!-- add. purpose: debug
 	<init>
@@ -207,6 +208,51 @@
 		<include_interrupt_actions ref="kAAIT_Order_MoveToEngagePosition" />
 		<wait min="1s" max="3s" comment="stop this order from continuing as the new order is created" />
 		<resume label="start" comment="in case the new order fails, do this" />
+	</add>
+<!--
+	boarding fix
+	============
+	ensure that $boardingbehaviour is the same as commander's $boardingbehaviour.
+	bug is that, sometimes, ships in a fleet within a fleet acquire the toplevel commander's boarding behaviour instead of their immediate commander's boarding behaviour.
+	<do_if value="$boardingtarget? and $boardingbehavior and $primarytarget.isoperational and $boardingtarget == $primarytarget">
+-->
+	<!-- <add pos="prepend" sel="//do_if[@value=&quot;$boardingtarget? and $boardingbehavior and $primarytarget.isoperational and $boardingtarget == $primarytarget&quot;]">
+		<do_if value="
+			@this.assignedcontrolled.orders.{2}.script == 'order.fight.board'
+			and this.assignedcontrolled.commander
+			and this.assignedcontrolled.toplevelcommander != this.assignedcontrolled.commander
+			and @this.assignedcontrolled.commander.order.$boardingbehavior">
+			<do_if value="$boardingbehavior != @this.assignedcontrolled.commander.order.$boardingbehavior">
+				<set_value name="$boardingbehavior" exact="this.assignedcontrolled.commander.order.$boardingbehavior" />
+				<debug_text text="@this.assignedcontrolled.idcode + ' $boardingbehavior (ensure same as commander) %s'.[$boardingbehavior]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+			</do_if>
+		</do_if>
+	</add> -->
+<!--
+	boarding fix
+	============
+	prevent ships from continuing attack if their boarding order (e.g. target turrets) becomes invalid
+	<do_if value="$boardingtarget? and $boardingbehavior and $primarytarget.isoperational and $boardingtarget == $primarytarget">
+		<do_while value="not $validbehavior">
+		...
+		<do_if value="$behaviorindex == 1">
+        <do_else>
+          <set_value name="$target" exact="$primarytarget"/>
+        </do_else>
+-->
+	<add pos="before" sel="//do_if[@value=&quot;$boardingtarget? and $boardingbehavior and $primarytarget.isoperational and $boardingtarget == $primarytarget&quot;]/do_while[@value=&quot;not $validbehavior&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $behaviors.{%s} (default) %s'.[$behaviorindex, @$behaviors.{$behaviorindex}]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+	</add>
+	<add pos="after" sel="//do_if[@value=&quot;$boardingtarget? and $boardingbehavior and $primarytarget.isoperational and $boardingtarget == $primarytarget&quot;]/do_while[@value=&quot;not $validbehavior&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' $behaviors.{%s} (fall-back) %s'.[$behaviorindex, @$behaviors.{$behaviorindex}]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+	</add>
+	<add pos="before" sel="//do_if[@value=&quot;$boardingtarget? and $boardingbehavior and $primarytarget.isoperational and $boardingtarget == $primarytarget&quot;]/do_else/set_value[@name=&quot;$target&quot;][@exact=&quot;$primarytarget&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+			<include_interrupt_actions ref="kAAIT_GetIsBoardingBehaviourValid" />
+			<do_if value="not $kAAIT_isBoardingAttackBehaviourValid">
+				<resume label="finish" />
+			</do_if>
+		</do_if>
 	</add>
 <!-- add. purpose: debug
 	<set_value name="$skiptargetselection"/> x 3

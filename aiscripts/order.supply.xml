@@ -4,6 +4,7 @@
 	<params>
 -->
 	<add sel="//params">
+		<param name="kAAITParam_iskAAITOrder" required="false" default="false" type="internal" />
 		<param name="kAAITParam_isAvoidHighRisk" required="false" type="bool" text="{1111920, 3}" default="
 			if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
 			(
@@ -37,6 +38,59 @@
 				)
 			) then true else false
 		" />
+		<param name="kAAITParam_isStepForwardWithdraw" required="false" type="bool" text="{1111920, 109}" default="
+			if (not this.assignedcontrolled.isunit) and (not this.assignedcontrolled.islasertower) and
+			(
+				(
+					this.assignedcontrolled.isplayerowned and
+					(
+						(not @this.assignedcontrolled.iscapitalship) or
+						this.assignedcontrolled.primarypurpose != purpose.fight
+					) and
+					@global.$kAAIT_Data.$xssm_isAvoidHighRisk and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					(
+						(not @this.assignedcontrolled.iscapitalship) or
+						this.assignedcontrolled.primarypurpose != purpose.fight
+					) and
+					@global.$kAAIT_Data.$xssm_isAvoidHighRisk_allFactions
+				) or
+				(
+					this.assignedcontrolled.isplayerowned and
+					@this.assignedcontrolled.iscapitalship and
+					(
+						@global.$kAAIT_Data.$lxl_isStepForward_vShip or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip or
+						@global.$kAAIT_Data.$lxl_isStepForward_vStation or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation
+					) and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user
+					)
+				) or
+				(
+					(not this.assignedcontrolled.isplayerowned) and
+					@this.assignedcontrolled.iscapitalship and
+					(
+						@global.$kAAIT_Data.$lxl_isStepForward_vShip_allFactions or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vShip_allFactions or
+						@global.$kAAIT_Data.$lxl_isStepForward_vStation_allFactions or
+						@global.$kAAIT_Data.$lxl_isMoveOutOfRange_vStation_allFactions
+					) and
+					(
+						(not global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user?) or
+						@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$kAAIT_isStepForwardWithdraw_user
+					)
+				)
+			) then true else false
+		" />
 	</add>
 <!-- add. purpose: debug.
 	<run_script name="'order.fight.escort'">
@@ -55,6 +109,14 @@
 	</add>
 	<add pos="before" sel="//run_script[@name=&quot;'order.move.wait'&quot;]">
 		<debug_text text="@this.assignedcontrolled.idcode + ' run_script order.move.wait'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)"/>
+	</add>
+<!-- add. purpose: add handlers.
+	<interrupts>
+-->
+	<add pos="prepend" sel="//interrupts">
+		<handler ref="kAAIT_CheckVersion" />
+		<handler ref="kAAIT_Handler_AvoidWithdrawOrJustFight" />
+		<handler ref="kAAIT_Handler_NewBigTarget" />
 	</add>
 <!-- add after. purpose: finish.
 	<label name="finish" />
