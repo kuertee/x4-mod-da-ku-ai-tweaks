@@ -918,62 +918,40 @@
 
 			<!-- boarding fix
 			     ============
-			     1. prevent boarding attacks from destroying the ship by checking if targets are valid.
-			     2. stop attack when boarding starts. required because boarding attacks are now a create_order Attack (order.fight.board) instead of run_script Attack.
+			     stop attack when boarding starts or when hullpercentage < 45 and shield < 25.
 			-->
-			<handler name="kAAIT_Handler_Boarding_AttackOnlyWhenValid">
+			<handler name="kAAIT_Handler_Boarding_StopAttack">
 				<conditions>
 					<check_any>
-						<check_all comment="boarding fix 1">
-							<check_any>
-								<check_all>
-									<event_object_hull_damaged object="@$target" check="false" />
-									<check_value value="this.assignedcontrolled.order.script == 'order.fight.board'" />
-									<check_value value="$target.hullpercentage le 50" />
-									<set_value name="$kAAIT_boardingAttackBehaviour" exact="$activebehavior" />
-								</check_all>
-								<check_all>
-									<event_object_hull_damaged object="@$primarytarget" check="false" />
-									<check_value value="this.assignedcontrolled.order.script == 'order.fight.attack.object'" />
-									<check_value value="$primarytarget.hullpercentage le 50" />
-									<set_value name="$kAAIT_boardingAttackBehaviour" exact="$boardingbehavior" />
-								</check_all>
-							</check_any>
-							<check_value value="@$kAAIT_boardingAttackBehaviour" />
-							<check_value value="[
-									boardingbehaviour.targetengines,
-									boardingbehaviour.targetturrets,
-									boardingbehaviour.disabletarget,
-								].indexof.{$kAAIT_boardingAttackBehaviour}" />
-							<check_any>
-								<check_value value="not $kAAIT_time_boardingAttackSpamStopper?" />
-								<check_value value="player.age - $kAAIT_time_boardingAttackSpamStopper gt 1s" />
-							</check_any>
+						<check_all>
+							<event_object_signalled object="@$target" param2="'kAAIT_boarding__stop_attack'" check="false" />
+							<check_value value="this.assignedcontrolled.order.script == 'order.fight.board'" />
+							<check_value value="not @$kAAIT_isLaunchingPods" />
+							<check_value value="event.param2 != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" />
+							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" exact="event.param2" />
 						</check_all>
-						<check_all comment="boarding fix 2">
-							<check_any>
-								<!-- <check_all>
-									<event_object_signalled object="@$target" param2="'boarding__movetolaunch_boardingpods'" check="false" />
-									<check_value value="this.assignedcontrolled.order.script == 'order.fight.board'" />
-								</check_all> -->
-								<check_all>
-									<event_object_signalled object="@$primarytarget" param2="'boarding__movetolaunch_boardingpods'" check="false" />
-									<check_value value="this.assignedcontrolled.order.script == 'order.fight.attack.object'" />
-								</check_all>
-							</check_any>
-							<debug_text text="@this.assignedcontrolled.idcode + ' boarding event.name %s event.param2 %s'.[event.name, event.param2]" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-							<debug_text text="@this.assignedcontrolled.idcode + ' boarding this.assignedcontrolled.allmarinesdispatched %s'.[this.assignedcontrolled.allmarinesdispatched]" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+						<check_all>
+							<event_object_signalled object="@$target" param2="'kAAIT_boarding__reevaluate_behaviour'" check="false" />
+							<check_value value="this.assignedcontrolled.order.script == 'order.fight.board'" />
+							<check_value value="not @$kAAIT_isLaunchingPods" />
+							<check_value value="event.param2 != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" />
+							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" exact="event.param2" />
+						</check_all>
+						<check_all>
+							<event_object_signalled object="@$primarytarget" param2="'kAAIT_boarding__stop_attack'" check="false" />
+							<check_value value="this.assignedcontrolled.order.script == 'order.fight.object'" />
+							<check_value value="event.param2 != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" />
+							<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" exact="event.param2" />
+						</check_all>
+						<check_all>
+							<event_object_signalled object="@$primarytarget" param2="'boarding__movetolaunch_boardingpods'" check="false" comment="required because boarding attacks are now a create_order Attack (order.fight.board) instead of run_script Attack." />
+							<check_value value="this.assignedcontrolled.order.script == 'order.fight.attack.object'" />
 							<check_value value="not this.assignedcontrolled.allmarinesdispatched"/>
-							<debug_text text="@this.assignedcontrolled.idcode + ' boarding event.object %s'.[event.object.knownname]" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 							<check_value value="event.object.owner != this.owner"/>
-							<debug_text text="@this.assignedcontrolled.idcode + ' boarding $boardingbehavior %s'.[@this.assignedcontrolled.order.$boardingbehavior]" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-							<debug_text text="@this.assignedcontrolled.idcode + ' boarding $behaviortargetclasses %s'.[@this.assignedcontrolled.order.$behaviortargetclasses]" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 							<check_any>
 								<check_value value="@this.assignedcontrolled.order.$boardingbehavior" />
 								<check_value value="@this.assignedcontrolled.order.$behaviortargetclasses.count" />
 							</check_any>
-							<debug_text text="@this.assignedcontrolled.idcode + ' boarding $kAAITParam_isAvoidHighRisk %s'.[$kAAITParam_isAvoidHighRisk]" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-							<debug_text text="@this.assignedcontrolled.idcode + ' boarding $kAAITParam_isStepForwardWithdraw %s'.[$kAAITParam_isStepForwardWithdraw]" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 						</check_all>
 					</check_any>
 					<check_any comment="only when kuda is in effect">
@@ -982,31 +960,18 @@
 					</check_any>
 				</conditions>
 				<actions>
-					<do_if value="event.name == 'event_object_hull_damaged'" comment="boarding fix 1">
-						<debug_text text="@this.assignedcontrolled.idcode + ' $target.hullpercentage %s'.[$target.hullpercentage]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-						<set_value name="$kAAIT_time_boardingAttackSpamStopper" exact="player.age" />
-						<include_interrupt_actions ref="kAAIT_GetIsBoardingBehaviourValid" />
-						<do_if value="not $kAAIT_isBoardingAttackBehaviourValid">
-							<do_if value="this.assignedcontrolled.order.script == 'order.fight.board'">
-								<abort_called_scripts resume="start" />
-							</do_if>
-							<do_elseif value="this.assignedcontrolled.order.script == 'order.fight.attack.object'">
-								<abort_called_scripts resume="finish" />
-							</do_elseif>
-						</do_if>
-					</do_if>
-					<do_elseif value="event.name == 'event_object_signalled'" comment="boarding fix 2">
-						<debug_text text="@this.assignedcontrolled.idcode + ' boarding (confirmed) event.name %s event.param2 %s'.[event.name, event.param2]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+					<debug_text text="@this.assignedcontrolled.idcode + ' boarding (confirmed) event.name %s event.param2 %s'.[event.name, event.param2]" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0))" />
+					<do_if value="event.param2 == 'boarding__movetolaunch_boardingpods'">
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_object" exact="event.object" />
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_param" exact="event.param" />
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_param2" exact="event.param2" />
 						<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_param3" exact="event.param3" />
-						<do_if value="this.assignedcontrolled.order.script == 'order.fight.board'">
-							<abort_called_scripts resume="start" />
-						</do_if>
-						<do_elseif value="this.assignedcontrolled.order.script == 'order.fight.attack.object'">
-							<abort_called_scripts resume="finish" />
-						</do_elseif>
+					</do_if>
+					<do_if value="this.assignedcontrolled.order.script == 'order.fight.board'">
+						<abort_called_scripts resume="start" />
+					</do_if>
+					<do_elseif value="this.assignedcontrolled.order.script == 'order.fight.attack.object'">
+						<abort_called_scripts resume="finish" />
 					</do_elseif>
 				</actions>
 			</handler>
@@ -2947,36 +2912,42 @@
 			<actions name="kAAIT_GetIsBoardingBehaviourValid">
 				<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="false" />
 				<do_if value="this.assignedcontrolled.order.script == 'order.fight.board'">
-					<set_value name="$kAAIT_boardingAttackTarget" exact="$target" />
+					<set_value name="$kAAIT_boardingAttackTarget" exact="this.assignedcontrolled.order.$target" />
 					<set_value name="$kAAIT_boardingAttackBehaviour" exact="@$activebehavior" />
 				</do_if>
 				<do_elseif value="this.assignedcontrolled.order.script == 'order.fight.attack.object'">
-					<set_value name="$kAAIT_boardingAttackTarget" exact="$primarytarget" />
-					<set_value name="$kAAIT_boardingAttackBehaviour" exact="@$behaviors.{$behaviorindex}" />
-					<do_if value="not $kAAIT_boardingAttackBehaviour">
-						<set_value name="$kAAIT_boardingAttackBehaviour" exact="@this.assignedcontrolled.order.$boardingbehaviour" />
-					</do_if>
+					<set_value name="$kAAIT_boardingAttackTarget" exact="this.assignedcontrolled.order.$primarytarget" />
+					<set_value name="$kAAIT_boardingAttackBehaviour" exact="this.assignedcontrolled.order.$boardingbehavior" />
 				</do_elseif>
+				<set_value name="$kAAIT_isTargetHealthy" exact="$kAAIT_boardingAttackTarget.hullpercentage gt 45 or $kAAIT_boardingAttackTarget.shieldpercentage gt 25" />
 				<do_if value="$kAAIT_boardingAttackBehaviour == boardingbehaviour.attackescorts">
-					<set_value name="$kAAIT_targets" exact="$target.allsubordinates"/>
+					<set_value name="$kAAIT_targets" exact="$kAAIT_boardingAttackTarget.allsubordinates"/>
 					<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_targets.count" />
 				</do_if>
-				<do_elseif value="$kAAIT_boardingAttackBehaviour == boardingbehaviour.targetengines">
-					<find_object_component name="$kAAIT_targets" object="$target" class="class.engine" checkoperational="true" indestructible="false" invulnerable="false" integrated="false" multiple="true"/>
-					<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_targets.count or $kAAIT_boardingAttackTarget.hullpercentage gt 45" />
-				</do_elseif>
-				<do_elseif value="$kAAIT_boardingAttackBehaviour == boardingbehaviour.targetturrets">
-					<find_object_component name="$kAAIT_targets" object="$target" class="[class.turret, class.weapon]" checkoperational="true" indestructible="false" invulnerable="false" integrated="false" multiple="true"/>
-					<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_targets.count or $kAAIT_boardingAttackTarget.hullpercentage gt 45" />
-				</do_elseif>
-				<do_elseif value="$kAAIT_boardingAttackBehaviour == boardingbehaviour.disabletarget">
-					<find_object_component name="$kAAIT_targets" object="$target" surfaceelement="true" checkoperational="true" indestructible="false" invulnerable="false" integrated="false" multiple="true"/>
-					<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_targets.count or $kAAIT_boardingAttackTarget.hullpercentage gt 45" />
-				</do_elseif>
 				<do_else>
-					<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_boardingAttackTarget.hullpercentage gt 45" />
+					<do_if value="(not $kAAIT_isBoardingAttackBehaviourValid) or $kAAIT_boardingAttackBehaviour == boardingbehaviour.targetengines">
+						<find_object_component name="$kAAIT_targets" object="$kAAIT_boardingAttackTarget" class="class.engine" checkoperational="true" indestructible="false" invulnerable="false" integrated="false" multiple="true"/>
+						<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_targets.count and $kAAIT_isTargetHealthy" />
+					</do_if>
+					<do_if value="(not $kAAIT_isBoardingAttackBehaviourValid) or $kAAIT_boardingAttackBehaviour == boardingbehaviour.targetturrets">
+						<find_object_component name="$kAAIT_targets" object="$kAAIT_boardingAttackTarget" class="[class.turret, class.weapon]" checkoperational="true" indestructible="false" invulnerable="false" integrated="false" multiple="true"/>
+						<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_targets.count and $kAAIT_isTargetHealthy" />
+					</do_if>
+					<do_if value="(not $kAAIT_isBoardingAttackBehaviourValid) or $kAAIT_boardingAttackBehaviour == boardingbehaviour.disabletarget">
+						<find_object_component name="$kAAIT_targets" object="$kAAIT_boardingAttackTarget" surfaceelement="true" checkoperational="true" indestructible="false" invulnerable="false" integrated="false" multiple="true"/>
+						<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_targets.count and $kAAIT_isTargetHealthy" />
+					</do_if>
 				</do_else>
-				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_boardingAttackBehaviour %s $kAAIT_isBoardingAttackBehaviourValid %s'.[$kAAIT_boardingAttackBehaviour, $kAAIT_isBoardingAttackBehaviourValid]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+				<do_if value="not $kAAIT_isBoardingAttackBehaviourValid">
+					<set_value name="$kAAIT_isBoardingAttackBehaviourValid" exact="$kAAIT_isTargetHealthy" />
+				</do_if>
+				<do_if value="$kAAIT_isBoardingAttackBehaviourValid">
+					<signal_objects object="$kAAIT_boardingAttackTarget" param2="'kAAIT_boarding__reevaluate_behaviour'" />
+				</do_if>
+				<do_else>
+					<signal_objects object="$kAAIT_boardingAttackTarget" param2="'kAAIT_boarding__stop_attack'" />
+				</do_else>
+				<debug_text text="@this.assignedcontrolled.idcode + ' $kAAIT_boardingAttackTarget %s $kAAIT_boardingAttackBehaviour %s $behaviortargetclasses.count %s $kAAIT_isTargetHealthy %s $kAAIT_isBoardingAttackBehaviourValid %s'.[$kAAIT_boardingAttackTarget, $kAAIT_boardingAttackBehaviour, @$behaviortargetclasses.count, $kAAIT_isTargetHealthy, $kAAIT_isBoardingAttackBehaviourValid]" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0))" />
 			</actions>
 
 			<!--

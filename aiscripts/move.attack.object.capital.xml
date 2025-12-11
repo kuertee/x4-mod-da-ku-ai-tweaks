@@ -194,6 +194,19 @@
 			</do_if>
 		</do_if>
 		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL fight'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
+		<!--
+			boarding fix
+			============
+			prevent ships from continuing attack if their boarding order (e.g. target turrets) becomes invalid
+		-->
+		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+			<do_if value="$boardingbehavior or @$behaviortargetclasses.count">
+				<include_interrupt_actions ref="kAAIT_GetIsBoardingBehaviourValid" />
+				<do_if value="not $kAAIT_isBoardingAttackBehaviourValid">
+					<resume label="finish" />
+				</do_if>
+			</do_if>
+		</do_if>
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<debug_text text="@this.assignedcontrolled.idcode + ' $target %s %s %s'.[$target, $target.knownname, @$target.idcode]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 			<do_if value="@$kAAITParam_isAvoidHighRisk">
@@ -230,6 +243,23 @@
 					</do_if>
 				</do_else>
 			</do_elseif>
+		</do_if>
+	</add>
+
+<!--
+	boarding fix
+	============
+	prevent ships from continuing attack if their boarding order (e.g. target turrets) becomes invalid
+	<do_while value="$target.canbeattacked and this.ship.defencenpc.exists">
+-->
+	<add pos="prepend" sel="//do_while[@value=&quot;$target.canbeattacked and this.ship.defencenpc.exists&quot;]">
+		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
+			<do_if value="$boardingbehavior or @$behaviortargetclasses.count">
+				<include_interrupt_actions ref="kAAIT_GetIsBoardingBehaviourValid" />
+				<do_if value="not $kAAIT_isBoardingAttackBehaviourValid">
+					<resume label="finish" />
+				</do_if>
+			</do_if>
 		</do_if>
 	</add>
 <!--

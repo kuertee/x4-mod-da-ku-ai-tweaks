@@ -133,13 +133,14 @@
 		<handler ref="kAAIT_CheckVersion" />
 		<handler ref="kAAIT_Handler_AvoidWithdrawOrJustFight" />
 		<handler ref="kAAIT_Handler_NewBigTarget" />
-		<handler ref="kAAIT_Handler_Boarding_AttackOnlyWhenValid" />
+		<handler ref="kAAIT_Handler_Boarding_StopAttack" />
 	</add>
 <!-- add. purpose: debug.
 	<init>
 -->
 	<add sel="//init">
-		<debug_text text="@this.assignedcontrolled.idcode + ' EVENT init'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0)" />
+		<set_value name="$kAAIT_isAttacking" exact="false" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' EVENT init'" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0))" />
 	</add>
 <!--
 	boarding fix
@@ -151,20 +152,25 @@
 	<!-- <event_object_signalled object="$target" param="$boardingoperation" param2="'boarding__movetolaunch_boardingpods'"/> -->
 	<replace sel="//event_object_signalled[@object=&quot;$target&quot;][@param=&quot;$boardingoperation&quot;]">
 		<check_any>
-			<event_object_signalled object="this.assignedcontrolled" param="'kAAIT_start_boarding'"/>
+			<check_all>
+				<event_object_signalled object="this.assignedcontrolled" param2="'kAAIT_start_boarding'"/>
+				<check_value value="not @$kAAIT_isLaunchingPods" />
+				<check_value value="event.param2 != @global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" />
+				<set_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_lastSignal" exact="event.param2" />
+			</check_all>
 			<event_object_signalled object="$target" param="$boardingoperation" param2="'boarding__movetolaunch_boardingpods'"/>
 		</check_any>
 	</replace>
 	<!-- <debug_text text="'signal received. moving to launch pods.'" chance="$debugchance"/> -->
 	<add pos="after" sel="//debug_text[@text=&quot;'signal received. moving to launch pods.'&quot;]">
-		<debug_text text="@this.assignedcontrolled.idcode + ' signal received. moving to launch pods.'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0)" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' signal received. moving to launch pods.'" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0))" />
 	</add>
 	<!-- <label name="start" /> -->
 	<add pos="after" sel="//label[@name=&quot;start&quot;]">
-		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0)" />
-		<set_value name="$kAAIT_isAttacking" exact="false" />
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL start'" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0))" />
+		<set_value name="$kAAIT_isLaunchingPods" exact="false" />
 		<do_if value="@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_object">
-			<debug_text text="@this.assignedcontrolled.idcode + ' $boarding_object %s'.[@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_object]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0)" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $boarding_object %s'.[@global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_object]" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0))" />
 			<!-- <event_object_signalled object="$target" param="$boardingoperation" param2="'boarding__movetolaunch_boardingpods'"/> -->
 			<signal_objects object="this.assignedcontrolled" param="'kAAIT_start_boarding'" />
 			<remove_value name="global.$kAAITByShipId.{'$' + @this.assignedcontrolled.idcode}.$attackData.$boarding_object" />
@@ -195,7 +201,7 @@
 		<set_value name="$kAAIT_runScriptAttackChance" exact="100" />
 		<do_if value="@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw">
 			<set_value name="$kAAIT_runScriptAttackChance" exact="0" />
-			<debug_text text="@this.assignedcontrolled.idcode + ' $activebehavior %s'.[$activebehavior]" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0)" />
+			<debug_text text="@this.assignedcontrolled.idcode + ' $activebehavior %s'.[$activebehavior]" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0))" />
 			<set_value name="$kAAIT_isAttacking" exact="true" />
 			<create_order name="$kAAIT_attackOrder" object="this.assignedcontrolled" id="'Attack'" immediate="true">
 				<param name="primarytarget" value="$target"/>
@@ -219,6 +225,18 @@
 		</do_if>
 	</add>
 	<add sel="//run_script[@name=&quot;'order.fight.attack.object'&quot;]" type="@chance">$kAAIT_runScriptAttackChance</add>
+	<!--
+		half the normal wait time
+		<param name="timeout" value="1000s / ([this.assignedcontrolled.combinedskill, 1].max)s"/>
+	-->
+	<replace sel="//param[@name=&quot;timeout&quot;][@value=&quot;1000s / ([this.assignedcontrolled.combinedskill, 1].max)s&quot;]/@value">500s / ([this.assignedcontrolled.combinedskill, 1].max)s</replace>
+	<!--
+		<label name="launchpods"/>
+	-->
+	<add pos="after" sel="//label[@name=&quot;launchpods&quot;]">
+		<debug_text text="@this.assignedcontrolled.idcode + ' LABEL launchpods'" chance="if global.$kAAIT_Data.$debugChance_boarding then global.$kAAIT_Data.$debugChance_boarding else (if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT.$debugChance_idCode or (@global.$kAAIT.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_boarding else 0))" />
+		<set_value name="$kAAIT_isLaunchingPods" exact="true" />
+	</add>
 	<!--
 		<label name="end"/>
 		<on_abort>
