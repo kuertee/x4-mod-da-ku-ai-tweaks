@@ -22,14 +22,19 @@
 						<reset_cue cue="this" />
 					</actions>
 				</cue>
-				<cue name="kAAIT2_Config" namespace="this" version="28">
+				<cue name="kAAIT2_Config" namespace="this" version="29">
 					<actions>
 						<set_value name="global.$kAAIT_Data" exact="this" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="0" />
+						<set_value name="global.$kAAIT_Data.$debugChance_idCode" exact="null" />
 						<set_value name="global.$kAAIT_Data.$debugChance_nameTags" exact="0" />
 						<set_value name="global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight" exact="0" />
 						<set_value name="global.$kAAIT_Data.$debugChance_getAngleDiffandMid" exact="0" />
 						<set_value name="global.$kAAIT_Data.$debugChance_boarding" exact="0" />
+						<do_if value="player.module == 'ku_simulator'">
+							<set_value name="$global.$kAAIT_Data.$debugChance" exact="100" />
+							<set_value name="$global.$kAAIT_Data.$debugChance_idCode" exact="'all'" />
+						</do_if>
 						<!-- configs: -->
 						<!-- kAAIT_ApplyCustomBehaviourOrNot, kAAIT_MoveAroundOrNot -->
 						<set_value name="global.$kAAIT_Data.$xssm_isAvoidHighRisk" exact="true" />
@@ -68,7 +73,7 @@
 						-->
 						<!--
 							global.$kAAIT_Data.$byShipId.{'$' + this.assignedcontrolled.idcode} = table[
-								$version = kAAIT2.version (or global.$kAAIT.version),
+								$version = global.$kAAIT.version,
 								$ship = this.assighnedcontrolled,
 								$attackData = table[],
 								$kAAIT_lxl_repair_queue = (this assignedcontrolled if LXL) OR (wingman LXL going to repair,)
@@ -227,6 +232,10 @@
 						<debug_text text="'patch sinceversion 28, state: ' + this.state" />
 						<set_value name="global.$kAAIT_Data.$debugChance_boarding" exact="0" />
 					</patch>
+					<patch sinceversion="29">
+						<debug_text text="'patch sinceversion 29, state: ' + this.state" />
+						<set_value name="global.$kAAIT_Data.$debugChance_idCode" exact="null" />
+					</patch>
 				</cue>
 			</cues>
 		</cue>
@@ -288,10 +297,10 @@
 						</check_any>
 					</conditions>
 					<actions>
-						<set_value name="$debugChance_old" exact="@global.$kAAIT_Data.$debugChance" />
-						<set_value name="$debugChance_idCode_old" exact="@global.$kAAIT.$debugChance_idCode" />
+						<set_value name="$debugChance_old" exact="global.$kAAIT_Data.$debugChance" />
+						<set_value name="$debugChance_idCode_old" exact="global.$kAAIT_Data.$debugChance_idCode" />
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="100" />
-						<set_value name="global.$kAAIT.$debugChance_idCode" exact="'all'" />
+						<set_value name="global.$kAAIT_Data.$debugChance_idCode" exact="'all'" />
 						<debug_text text="event.name" chance="@global.$kAAIT_Data.$debugChance" />
 						<do_if value="global.$kAAIT_Data.$ships?">
 							<debug_text text="'global.$kAAIT_Data.$ships.count (pre): ' + global.$kAAIT_Data.$ships.count" chance="@global.$kAAIT_Data.$debugChance" />
@@ -318,7 +327,7 @@
 					<delay exact="1s" />
 					<actions comment="allow scripts to run for 1 second with debug chance enabled on game loaded">
 						<set_value name="global.$kAAIT_Data.$debugChance" exact="$debugChance_old" />
-						<remove_value name="global.$kAAIT.$debugChance_idCode" />
+						<set_value name="global.$kAAIT_Data.$debugChance_idCode" exact="$debugChance_idCode_old" />
 						<reset_cue cue="this" />
 					</actions>
 				</cue>
@@ -1539,7 +1548,7 @@
 				<event_cue_signalled />
 			</conditions>
 			<actions>
-				<set_value name="kAAIT2.$debugChance_idCode" exact="'all'" />
+				<set_value name="global.$kAAIT_Data.$debugChance_idCode" exact="'all'" />
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
@@ -1549,8 +1558,8 @@
 			</conditions>
 			<actions>
 				<set_value name="$interact_target" exact="@event.param.$object" />
-				<set_value name="kAAIT2.$debugChance_idCode" exact="$interact_target.idcode" />
-				<debug_text text="'$debugChance_idCode %s'.[kAAIT2.$debugChance_idCode]" />
+				<set_value name="global.$kAAIT_Data.$debugChance_idCode" exact="$interact_target.idcode" />
+				<debug_text text="'$debugChance_idCode %s'.[global.$kAAIT_Data.$debugChance_idCode]" />
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
@@ -1559,7 +1568,7 @@
 				<event_cue_signalled />
 			</conditions>
 			<actions>
-				<remove_value name="kAAIT2.$debugChance_idCode" />
+				<remove_value name="global.$kAAIT_Data.$debugChance_idCode" />
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
@@ -1616,9 +1625,9 @@
 					<debug_text text="'    $ship.distanceto.[$ship.order.$radiusanchorspace, $ship.order.$radiusanchorpos]: ' + @$ship.distanceto.[$ship.order.$radiusanchorspace, $ship.order.$radiusanchorpos]" />
 				</do_if>
 				<debug_text text="'    $ship.order.$allowothertargets: ' + @$ship.order.$allowothertargets" />
-				<debug_text text="'    kAAIT2.$debugChance_idCode: ' + @kAAIT2.$debugChance_idCode" />
+				<debug_text text="'    global.$kAAIT_Data.$debugChance_idCode: ' + @global.$kAAIT_Data.$debugChance_idCode" />
 				<debug_text text="'    $ship.idcode: ' + @$ship.idcode" />
-				<do_if value="kAAIT2.$debugChance_idCode == $ship.idcode">
+				<do_if value="global.$kAAIT_Data.$debugChance_idCode == $ship.idcode">
 					<edit_order_param order="$ship.order" param="'debugchance'" value="100" />
 				</do_if>
 				<debug_text text="'    $ship.order.$debugchance: ' + @$ship.order.$debugchance" />
@@ -2036,7 +2045,7 @@
 						<signal_cue_instantly cue="md.Interact_Menu_API.Add_Action" param = "table[
 							$id = 'Debug2_DebugThisShip',
 							$section = $section,
-							$text = 'Debug2_DebugThisShip (' + @kAAIT2.$debugChance_idCode + ')',
+							$text = 'Debug2_DebugThisShip (' + @global.$kAAIT_Data.$debugChance_idCode + ')',
 							$icon = null,
 							$callback = Debug2_DebugThisShip
 						]" />
