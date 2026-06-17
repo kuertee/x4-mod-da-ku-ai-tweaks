@@ -9,16 +9,17 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-8.0.1.2
-- Bug-fix: At the end of Move To Engage actions, ships weren't facing their target.
-- Bug-fix: Ships were rolling while performing the Move To Engage action.
+v9.0.0.4, 17 Jun 2026:
+- Compatibility: 9.0.
+- Bug-fix: Attack AI Tweaks: Station attackers would stick to their module targets even if a new attack order was given either by the player or the AI.
+- Tweak: DeadAir's AI Tweaks: I have tried to remove options from its Extension Options menu that's become invalid from the 9.0 changes. But I might have missed some. Regardless of the options listed in the Extension Options menu, all changes that's become invalid, primarily because of the 9.0 code has changed, have been disabled.
 
 Attack AI Tweaks:
 =================
 
 Mod effects
 ===========
-All ships acquire the "Avoid High-risk Enemies" and "Move To Engage Target" behaviours. Destroyers and larger ships acquire the "Step Forward" and "Withdraw (to regenerate shields)" behaviours.
+All ships acquire the "Avoid High-risk Enemies" and "Move To Engage Target" behaviours. Destroyers and larger ships acquire the "Step Forward" and "Withdraw (to regenerate shields)" behaviours. Coordinated Attack QOL changes. Boarding QOL changes.
 
 Requirements
 ============
@@ -142,6 +143,11 @@ Coordinated Attack Quality-Of-Life Changes
 	Addresses this problem: The ships continue to wait at the rally point when they should just attack.
 6. The Coordinated Attack order of the lead ship is replaced with the normal Attack order when the attack starts. The new behaviours work better when the Attack order is not "embedded" in the Coordinated Attack order.
 
+Boarding Quality-Of-Life Changes
+================================
+1. Ships with boarding attack assignments (e.g. target turrets) will stop their attacks when their component targets have become invalid AND when their boarding target have less than 45% hull. With the base-game behaviour, ships on boarding attack assignments continually attack their boarding target until destruction when their all their component targets are destroyed.
+2. Ships will now use their travel drive when traveling to their boarding pod launch positions. With the base-game behaviour, ships didn't use their travel drive allowing their boarding target time to escape.
+
 What this mod doesn't do
 ========================
 1. Order fleet subordinates to attack. Fleet subordinates only acquire this mod's attack behaviours WHEN they acquire an attack order from either their commander or the player. This mod will never start their attacks. How they behave at the start of their attack, defend and intercept stances are determined by their AI commander's orders.
@@ -181,6 +187,28 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v8.0.3.4.2, 11 Dec 2025:
+- Performance tweak: Boarding: The hull damaged event listener for when attacks should be stopped is removed and added to the attack AI script's general tick as simple tests. The hull damaged event listener requires heavier resource because received damage could occur many times over a second.
+- New feature: Boarding: Ships with attack behaviours now signal each other on when to stop attacks or re-start attacks. In previous versions, and in the base-game, ships with attack behaviours determine their attacks on their own timeouts and are often not synchronised with other ships by several seconds depending on when their last action finished. These new signals ensure that all ships stop or attack at the same time when one ship takes either action. This minimises the chance the boarding target escapes.
+- Tweak: Boarding: Allow ships to continue their attack if shields of the target is at 25% or more. In previous versions, ships paused their attacks on components (e.g. turrets, engines) when the target's hull is less than 45%. This allowed the target to escape as their engines are still operational. With this tweak, ships will continue their attack on the target's components even when the target has less than 45% hull as long as shields are at 25% or more.
+
+v8.0.3.4.1, 9 Dec 2025:
+- Bug-fix: Re-enabled the boarding fixes. I had them disabled for testing and forgot to re-enable them for the 8.0.3.4 release. :D
+
+v8.0.3.4, 9 Dec 2025:
+- Bug-fix: Ships on Supply orders weren't avoiding high-risk enemies.
+- Bug-fix: Ships on attack during boarding operations were continually avoiding their targets because the Board order wasn't considered an attack order in previous versions.
+- New feature: Base-game boarding fix: Ships with boarding attack assignments (e.g. target turrets) will stop their attacks when their component targets have become invalid AND when their boarding target have less than 45% hull. With the base-game behaviour, ships on boarding attack assignments continually attack their boarding target until destruction.
+- New feature: Base-game boarding fix: Ships will now use their travel drive when traveling to their boarding pod launch positions. With the base-game behaviour, ships didn't use their travel drive allowing their boarding target time to escape.
+
+8.0.3.0, 31 Oct 2025:
+- Tweak: Dead Air's Notifications - SubordinateBounties now only gets paid when the player is in the same sector as their NPC subordinates.
+
+8.0.2.0, 16 Oct 2025:
+- Bug-fix: At the end of Move To Engage actions, ships weren't facing their target.
+- Bug-fix: Ships were rolling while performing the Move To Engage action.
+- Bug-fix: Interception ships were attacking capital ships.
+
 8.0.1.0, 28 Sep 2025:
 - Tweak: Optimise MTE vector query.
 - Tweak: Removed obsolete DeadAir settings from the Extension Options. Previously, some were left on the list even if they had no effect to the game because the code has been made obsolete or invalid by updates.
