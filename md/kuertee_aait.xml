@@ -292,7 +292,7 @@
 					<conditions>
 						<check_any>
 							<event_cue_signalled />
-							<event_game_loaded />
+							<event_cue_signalled cue="md.Setup.Start" />
 							<!-- <event_ui_triggered screen="'OptionsMenu'" /> -->
 						</check_any>
 					</conditions>
@@ -1184,7 +1184,7 @@
 						$bgColor = 'Helper.color.red',
 						$onClick = kAAIT_ExtOpts_OnCheckboxChange
 					]"/>
-				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
+				<!-- <signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
 				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 18}, $color='Helper.color.red']"/>
 				<signal_cue_instantly
 					cue = "md.Simple_Menu_API.Make_CheckBox"
@@ -1195,7 +1195,7 @@
 						$width = 'Helper.standardButtonHeight', $height = 'Helper.standardButtonHeight',
 						$bgColor = 'Helper.color.red',
 						$onClick = kAAIT_ExtOpts_OnCheckboxChange
-					]"/>
+					]"/> -->
 				<signal_cue_instantly cue="md.Simple_Menu_API.Add_Row"/>
 				<signal_cue_instantly cue="md.Simple_Menu_API.Make_Text" param="table[$col=1, $text={1111920, 20}, $color='Helper.color.red']"/>
 				<signal_cue_instantly
@@ -2135,54 +2135,6 @@
 				<reset_cue cue="this" />
 			</actions>
 		</cue>
-		<cue name="DebugChat">
-			<conditions>
-				<check_all>
-					<event_ui_triggered screen="'Chat_Window_API'" control="'text_entered'" />
-					<check_any>
-						<check_value value="event.param3.$text == 'debug aait yaw'" />
-					</check_any>
-				</check_all>
-			</conditions>
-			<actions>
-				<debug_text text="@event.param3" />
-				<do_if value="event.param3.$text == 'debug aait yaw'">
-					<create_position name="$pos1" space="player.sector" object="player.ship" />
-					<set_value name="$dist" exact="100km" />
-
-					<set_value name="$yaw" min="0" max="359" />
-					<set_value name="$pitch" exact="0" />
-					<debug_text text="'$yaw: ' + $yaw + ' $pitch: ' + $pitch" />
-					<create_position name="$posLookAt"
-						x="$pos1.x + $dist * sin ($yaw * pi / 180) * cos ($pitch * pi / 180)"
-						y="$pos1.y + $dist * sin ($pitch * pi / 180) + [-5m, -2.5m, 0, 2.5m, 5m].random"
-						z="$pos1.z + $dist * cos ($yaw * pi / 180) * cos ($pitch * pi / 180)"
-					/>
-					<create_orientation name="$rot" orientation="look_at" refposition="$posLookAt">
-						<position value="$pos1" />
-					</create_orientation>
-					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
-					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
-					<debug_text text="'$yaw (double-check): ' + $yaw + ' $pitch: ' + $pitch" />
-
-					<set_value name="$yaw" min="0" max="359" />
-					<set_value name="$pitch" exact="60" />
-					<debug_text text="'$yaw: ' + $yaw + ' $pitch: ' + $pitch" />
-					<create_position name="$posLookAt"
-						x="$pos1.x + $dist * sin ($yaw * pi / 180) * cos ($pitch * pi / 180)"
-						y="$pos1.y + $dist * sin ($pitch * pi / 180) + [-5m, -2.5m, 0, 2.5m, 5m].random"
-						z="$pos1.z + $dist * cos ($yaw * pi / 180) * cos ($pitch * pi / 180)"
-					/>
-					<create_orientation name="$rot" orientation="look_at" refposition="$posLookAt">
-						<position value="$pos1" />
-					</create_orientation>
-					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
-					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
-					<debug_text text="'$yaw (double-check): ' + $yaw + ' $pitch: ' + $pitch" />
-				</do_if>
-				<reset_cue cue="this" />
-			</actions>
-		</cue>
 	    <library name="CreateShip" purpose="run_actions">
 	      <params>
 	        <param name="MissionCue" default="null" />
@@ -2288,5 +2240,87 @@
 	        <return value="$Ship" />
 	      </actions>
 	    </library>
+		<cue name="DebugChat">
+			<conditions>
+				<check_all>
+					<event_ui_triggered screen="'Chat_Window_API'" control="'text_entered'" />
+					<check_any>
+						<check_value value="event.param3.$text == 'kuertee deactivate'" />
+						<check_value value="event.param3.$text == 'debug aait yaw'" />
+					</check_any>
+				</check_all>
+			</conditions>
+			<actions>
+				<debug_text text="@event.param3" />
+				<do_if value="event.param3.$text == 'kuertee deactivate'">
+					<cancel_cue cue="md.kuertee_aait.kAAIT2" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_SettingsByShip" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_InteractMenu" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Attack_all_enemies" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Attack_one_only" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Enable_Avoid_high_risk" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Disable_Avoid_high_risk" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Enable_Step_foward_withdraw" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Disable_Step_foward_withdraw" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_ExtOpts" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_ExtOpts_Build" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_ExtOpts_OnSliderChange" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_ExtOpts_OnCheckboxChange" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_ExtOpts_OnDropDownConfirmed" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Debug2" />
+					<cancel_cue cue="md.kuertee_aait.Debug2_DestroyWeapons" />
+					<cancel_cue cue="md.kuertee_aait.Debug2_DebugAllShip" />
+					<cancel_cue cue="md.kuertee_aait.Debug2_DebugThisShip" />
+					<cancel_cue cue="md.kuertee_aait.Debug2_UndebugThisShip" />
+					<cancel_cue cue="md.kuertee_aait.Debug_ShowShipData" />
+					<cancel_cue cue="md.kuertee_aait.DebugSignalResupply" />
+					<cancel_cue cue="md.kuertee_aait.DebugDestroyShipTarget" />
+					<cancel_cue cue="md.kuertee_aait.DebugDestroy" />
+					<cancel_cue cue="md.kuertee_aait.DebugForceWithdraw" />
+					<cancel_cue cue="md.kuertee_aait.DebugIsPrimaryTargetInFront" />
+					<cancel_cue cue="md.kuertee_aait.DebugShowRandomModule" />
+					<cancel_cue cue="md.kuertee_aait.DebugShowBounds" />
+					<cancel_cue cue="md.kuertee_aait.kAAIT_Debug_InteractMenu" />
+					<cancel_cue cue="md.kuertee_aait.DebugChat" />
+				</do_if>
+				<do_if value="event.param3.$text == 'debug aait yaw'">
+					<create_position name="$pos1" space="player.sector" object="player.ship" />
+					<set_value name="$dist" exact="100km" />
+
+					<set_value name="$yaw" min="0" max="359" />
+					<set_value name="$pitch" exact="0" />
+					<debug_text text="'$yaw: ' + $yaw + ' $pitch: ' + $pitch" />
+					<create_position name="$posLookAt"
+						x="$pos1.x + $dist * sin ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+						y="$pos1.y + $dist * sin ($pitch * pi / 180) + [-5m, -2.5m, 0, 2.5m, 5m].random"
+						z="$pos1.z + $dist * cos ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+					/>
+					<create_orientation name="$rot" orientation="look_at" refposition="$posLookAt">
+						<position value="$pos1" />
+					</create_orientation>
+					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
+					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
+					<debug_text text="'$yaw (double-check): ' + $yaw + ' $pitch: ' + $pitch" />
+
+					<set_value name="$yaw" min="0" max="359" />
+					<set_value name="$pitch" exact="60" />
+					<debug_text text="'$yaw: ' + $yaw + ' $pitch: ' + $pitch" />
+					<create_position name="$posLookAt"
+						x="$pos1.x + $dist * sin ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+						y="$pos1.y + $dist * sin ($pitch * pi / 180) + [-5m, -2.5m, 0, 2.5m, 5m].random"
+						z="$pos1.z + $dist * cos ($yaw * pi / 180) * cos ($pitch * pi / 180)"
+					/>
+					<create_orientation name="$rot" orientation="look_at" refposition="$posLookAt">
+						<position value="$pos1" />
+					</create_orientation>
+					<set_value name="$yaw" exact="$rot.yaw * 180 / pi" />
+					<set_value name="$pitch" exact="$rot.pitch * 180 / pi" />
+					<debug_text text="'$yaw (double-check): ' + $yaw + ' $pitch: ' + $pitch" />
+				</do_if>
+				<do_if value="event.param3.$text != 'kuertee deactivate'">
+					<reset_cue cue="this" />
+				</do_if>
+			</actions>
+		</cue>
 	</cues>
 </mdscript>
