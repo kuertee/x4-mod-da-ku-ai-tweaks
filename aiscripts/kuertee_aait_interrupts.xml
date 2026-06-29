@@ -317,6 +317,7 @@
 								<event_object_attacked object="this.assignedcontrolled" />
 								<event_object_attacked_object object="this.assignedcontrolled" />
 							</check_any>
+							<!-- <debug_text text="'%s $debugchance %s $debugChance_idCode %s $debugChance %s $debugChance_avoidWithdrawOrJustFight %s'.[@this.assignedcontrolled.idcode, $debugchance, @global.$kAAIT_Data.$debugChance_idCode, @global.$kAAIT_Data.$debugChance, @global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight]" /> -->
 							<check_value value="not this.assignedcontrolled.dock" />
 							<check_any comment="prevent event stack">
 								<check_value value="not @this.$time_avoidWithdrawEvent" />
@@ -340,6 +341,7 @@
 						</check_all>
 						<check_all chance="if (not @$kAAITParam_iskAAITOrder) and @$kAAITParam_isAvoidHighRisk then 100 else 0">
 							<event_gravidar_has_scanned object="if @$kAAITParam_isAvoidHighRisk then this.assignedcontrolled else null" check="false"/>
+							<!-- <debug_text text="'%s $debugchance %s $debugChance_idCode %s $debugChance %s $debugChance_avoidWithdrawOrJustFight %s'.[@this.assignedcontrolled.idcode, $debugchance, @global.$kAAIT_Data.$debugChance_idCode, @global.$kAAIT_Data.$debugChance, @global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight]" /> -->
 							<check_value value="not this.assignedcontrolled.dock" />
 							<check_any comment="prevent event stack">
 								<check_value value="not @this.$time_avoidWithdrawEvent" />
@@ -660,7 +662,13 @@
 										fight (self-sacrifice): shield le 5, hull le 50.
 									-->
 									<check_all comment="good shields: fight. poor shields: withdraw">
-										<set_value name="$kAAIT_isShieldsLow" exact="(this.assignedcontrolled.shieldpercentage / ($kAAIT_attacker.shieldpercentage)f) le ($kAAIT_shield_withdrawAt / 100.0)" />
+										<check_any>
+											<check_all>
+												<check_value value="$kAAIT_attacker.shieldpercentage" />
+												<set_value name="$kAAIT_isShieldsLow" exact="(this.assignedcontrolled.shieldpercentage / ($kAAIT_attacker.shieldpercentage)f) le ($kAAIT_shield_withdrawAt / 100.0)" />
+											</check_all>
+											<set_value name="$kAAIT_isShieldsLow" exact="false" />
+										</check_any>
 										<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight $kAAIT_isShieldsLow?                      ' + $kAAIT_isShieldsLow + ' eval: ' + (this.assignedcontrolled.shieldpercentage / ($kAAIT_attacker.shieldpercentage)f) + ' le ' + ($kAAIT_shield_withdrawAt / 100.0)" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT_Data.$debugChance_idCode or (@global.$kAAIT_Data.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight else 0)" />
 										<check_value value="$kAAIT_isShieldsLow" />
 										<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_Handler_AvoidWithdrawOrJustFight                                           yes'" debugchance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT_Data.$debugChance_idCode or (@global.$kAAIT_Data.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance_avoidWithdrawOrJustFight else 0)" />
@@ -880,7 +888,7 @@
 								this.assignedcontrolled.assignment == assignment.defence and
 								event.param2.$from == this.assignedcontrolled.commander
 							)">
-							<set_value name="$kAAIT_target_attack" exact="$kAAIT_attacker" />
+							<set_value name="$kAAIT_target_attack" exact="@$kAAIT_attacker" />
 							<set_value name="$kAAIT_is_attack_order_tactical" exact="
 								(
 									event.name == 'event_player_alert' or
@@ -1828,24 +1836,6 @@
 						<set_value name="$kAAIT_result_destinationPosition" exact="position.[0,0,0]" />
 					</do_else>
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_test_target_isInTheWayOf_position: ' + @$kAAIT_test_target_isInTheWayOf_position" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT_Data.$debugChance_idCode or (@global.$kAAIT_Data.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
-					<do_if value="$kAAIT_result_destination.isclass.sector">
-						<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination" />
-						<do_if value="@$kAAIT_result_destinationPosition">
-							<set_value name="$kAAIT_result_destinationSectorPosition" exact="$kAAIT_result_destinationPosition" />
-						</do_if>
-						<do_else comment="get maxradarrange front from ship. not the ideal destination point as ship can be facing away from its destination, but there's no other better value.">
-							<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="this.assignedcontrolled" z="this.maxradarrange" />
-						</do_else>
-					</do_if>
-					<do_else>
-						<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination.sector" />
-						<do_if value="@$kAAIT_result_destinationPosition">
-							<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" value="$kAAIT_result_destinationPosition" />
-						</do_if>
-						<do_else>
-							<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" />
-						</do_else>
-					</do_else>
 					<remove_value name="$kAAIT_test_target_isInTheWayOf" />
 					<remove_value name="$kAAIT_test_target_isInTheWayOf_position" />
 				</do_if>
@@ -1853,10 +1843,28 @@
 					<include_interrupt_actions ref="kAAIT_GetDestination" comment="this sets $kAAIT_result_destination and $kAAIT_result_destinationPosition" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (from kAAIT_GetDestination): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT_Data.$debugChance_idCode or (@global.$kAAIT_Data.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				</do_else>
+				<do_if value="$kAAIT_result_destination.isclass.sector">
+					<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination" />
+					<do_if value="@$kAAIT_result_destinationPosition">
+						<set_value name="$kAAIT_result_destinationSectorPosition" exact="$kAAIT_result_destinationPosition" />
+					</do_if>
+					<do_else comment="get maxradarrange front from ship. not the ideal destination point as ship can be facing away from its destination, but there's no other better value.">
+						<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="this.assignedcontrolled" z="this.maxradarrange" />
+					</do_else>
+				</do_if>
+				<do_elseif value="$kAAIT_result_destination and $kAAIT_result_destination.sector">
+					<set_value name="$kAAIT_result_destinationSector" exact="$kAAIT_result_destination.sector" />
+					<do_if value="@$kAAIT_result_destinationPosition">
+						<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" value="$kAAIT_result_destinationPosition" />
+					</do_if>
+					<do_else>
+						<create_position name="$kAAIT_result_destinationSectorPosition" space="$kAAIT_result_destinationSector" object="$kAAIT_result_destination" />
+					</do_else>
+				</do_elseif>
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destination (final): ' + @$kAAIT_result_destination.knownname + ' (' + @$kAAIT_result_destination.idcode + ')'" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT_Data.$debugChance_idCode or (@global.$kAAIT_Data.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_result_destinationPosition (final): ' + @$kAAIT_result_destinationPosition" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT_Data.$debugChance_idCode or (@global.$kAAIT_Data.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 				<set_value name="$kAAIT_result_isTargetInTheWay" exact="false" />
-				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and $kAAIT_result_destination and $kAAIT_result_destination.exists and @$kAAIT_result_destinationPosition and $kAAIT_test_target_isInTheWay.hascontext.{$kAAIT_result_destinationSector}" comment="at this point this is in same sector as ship">
+				<do_if value="$kAAIT_result_destination != $kAAIT_test_target_isInTheWay and $kAAIT_result_destination and $kAAIT_result_destination.exists and @$kAAIT_result_destinationPosition and $kAAIT_result_destinationSector and $kAAIT_test_target_isInTheWay.hascontext.{$kAAIT_result_destinationSector}" comment="at this point this is in same sector as ship">
 					<set_value name="$kAAIT_dist_obstacle" exact="this.assignedcontrolled.bboxdistanceto.{$kAAIT_test_target_isInTheWay}" />
 					<debug_text text="@this.assignedcontrolled.idcode + ' kAAIT_GetIsInTheWay $kAAIT_dist_obstacle: ' + $kAAIT_dist_obstacle" chance="if @$debugchance then $debugchance else (if @this.assignedcontrolled.idcode == @global.$kAAIT_Data.$debugChance_idCode or (@global.$kAAIT_Data.$debugChance_idCode == 'all' and (@$kAAITParam_isAvoidHighRisk or @$kAAITParam_isStepForwardWithdraw or @$kAAITParam_iskAAITOrder)) then @global.$kAAIT_Data.$debugChance else 0)" />
 					<set_value name="$kAAIT_dist_dest" exact="this.assignedcontrolled.distanceto.[$kAAIT_result_destination, $kAAIT_result_destinationPosition]" />

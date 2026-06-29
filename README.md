@@ -9,10 +9,10 @@ DeadAir's AI Tweaks read-me is here: https://github.com/kuertee/x4-mod-da-ku-ai-
 
 Updates
 =======
-v9.0.0.4, 17 Jun 2026:
-- Compatibility: 9.0.
-- Bug-fix: Attack AI Tweaks: Station attackers would stick to their module targets even if a new attack order was given either by the player or the AI.
-- Tweak: DeadAir's AI Tweaks: I have tried to remove options from its Extension Options menu that's become invalid from the 9.0 changes. But I might have missed some. Regardless of the options listed in the Extension Options menu, all changes that's become invalid, primarily because of the 9.0 code has changed, have been disabled.
+v9.0.0.6, 29 Jun 2026:
+- Bug-fix: Avoid (i.e. take risk or not) behaviour of ships on escort only triggered when they initiate an attack. They now evaluate whether they should take the risk before initiating an attack as intended. E.g. Carriers were not avoiding/staying away from high-risk targets of their fleet because they needed to initiate an attack first. But sometimes, based on their base-game behaviours, they don't initiate an attack order except when attacked. In this version, they should stay away from high-risk targets when their fleet initiates an attack.
+- New feature: Deactivating the mod from the Settings > Extensions menu deactivates the mod's scripts and zeroes its data. More information is in the "Uninstall" section.
+- Note: Read the "Uninstall" section for important information on deactivating the mod and creating "clean" saves.
 
 Attack AI Tweaks:
 =================
@@ -162,18 +162,22 @@ Install
 
 Uninstall
 =========
-- Delete the mod folder.
+Summary: Load the save; Deactivate from the menu; Save the game (This is the "deactivated mod" save.); Exit the game; Load the "deactivate mod" save; Save the game (This is the "clean" save).
 
-Debugging
-=========
+1. Load a game that contains the running mod.
+2. Move away from nearby stations where station data is no longer shown in the Information panel.
+3. Deactivate the mod from the Settings > Extensions menu. This safely removes objects (missions, npcs, etc.) the scripts created and then safely cancels the scripts. Its Extension Options, if one exists, should be blank.
+4. Save the game. This is the "deactivated mod" save. This still contains the deactivated scripts and zeroed data because the mod still "exists" in the game environment. They are simply deactivated and zeroed.
+5. Exit the game.
+6. Load the "deactivated mod" save. The game will identify then remove the invalid scripts and data because the mod doesn't "exist" in the game environment anymore.
+7. Save the game. This is the "clean" save. This doesn't contain the mod's scripts and data anymore.
+
+Troubleshooting
+===============
 1. Allow the game to log events to a text file by adding "-debug all -logfile debug.log" to its launch parameters.
 2. If an Extension Options entry exists for the mod, enable the mod-specific Debug Log.
 3. Play for long enough for the mod to log its events. Or force the error that you are experiencing.
 4. Send the log found in My Documents\Egosoft\X4\(your player-specific number)\debug.log to my e-mail (kuertee@gmail.com) with the mod name in the subject line.
-
-Uninstall
-=========
-- Delete the mod folder.
 
 Credits
 =======
@@ -187,6 +191,11 @@ Russian localisation by leonkillerua.
 
 History
 =======
+v9.0.0.4, 17 Jun 2026:
+- Compatibility: 9.0.
+- Bug-fix: Attack AI Tweaks: Station attackers would stick to their module targets even if a new attack order was given either by the player or the AI.
+- Tweak: DeadAir's AI Tweaks: I have tried to remove options from its Extension Options menu that's become invalid from the 9.0 changes. But I might have missed some. Regardless of the options listed in the Extension Options menu, all changes that's become invalid, primarily because of the 9.0 code has changed, have been disabled.
+
 v8.0.3.4.2, 11 Dec 2025:
 - Performance tweak: Boarding: The hull damaged event listener for when attacks should be stopped is removed and added to the attack AI script's general tick as simple tests. The hull damaged event listener requires heavier resource because received damage could occur many times over a second.
 - New feature: Boarding: Ships with attack behaviours now signal each other on when to stop attacks or re-start attacks. In previous versions, and in the base-game, ships with attack behaviours determine their attacks on their own timeouts and are often not synchronised with other ships by several seconds depending on when their last action finished. These new signals ensure that all ships stop or attack at the same time when one ship takes either action. This minimises the chance the boarding target escapes.
